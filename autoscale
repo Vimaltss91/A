@@ -1,12 +1,17 @@
-deployments=$(kubectl get deployments -n your-namespace -o jsonpath='{.items[*].metadata.name}')
+#!/bin/bash
+
+namespace="your-namespace"
+
+deployments=$(kubectl get deployments -n "$namespace" -o jsonpath='{.items[*].metadata.name}')
 
 for deployment in $deployments; do
-    cat <<EOF | kubectl apply -f -
+    if [[ $deployment == *"$namespace"* ]]; then
+        cat <<EOF | kubectl apply -f -
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: vpa-$deployment
-  namespace: your-namespace
+  namespace: $namespace
 spec:
   targetRef:
     apiVersion: apps/v1
@@ -15,4 +20,8 @@ spec:
   updatePolicy:
     updateMode: "Auto"
 EOF
+        echo "VPA applied to $deployment"
+    else
+        echo "Skipping $deployment as it doesn't contain $namespace in the name"
+    fi
 done
