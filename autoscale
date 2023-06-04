@@ -46,3 +46,7 @@ spec:
       maxAllowed:
         cpu:    0
         memory: 0
+        
+       
+kubectl get pods --namespace <namespace> -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{range .spec.containers[*]}{.name}{"\t"}{.resources.requests.cpu}{"\t"}{.resources.limits.cpu}{"\n"}{end}{"\n"}{end}'
+
