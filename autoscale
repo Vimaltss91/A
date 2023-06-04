@@ -25,3 +25,24 @@ EOF
         echo "Skipping $deployment as it doesn't contain $namespace in the name"
     fi
 done
+
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: my-vpa
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind:       "Deployment"
+    name:       "my-deployment"
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: "*"
+      minAllowed:
+        cpu:    100m
+        memory: 128Mi
+      maxAllowed:
+        cpu:    0
+        memory: 0
