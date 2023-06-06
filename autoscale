@@ -50,3 +50,5 @@ spec:
        
 kubectl get pods --namespace <namespace> -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{range .spec.containers[*]}{.name}{"\t"}{.resources.requests.cpu}{"\t"}{.resources.limits.cpu}{"\n"}{end}{"\n"}{end}'
 
+kubectl get nodes -o json | jq '.items[] | {name: .metadata.name, allocatable_pods: .status.allocatable.pods, total_pods: .status.capacity.pods}'
+
