@@ -54,3 +54,5 @@ kubectl get nodes -o json | jq '.items[] | {name: .metadata.name, allocatable_po
 
 kubectl get nodes -o custom-columns=NAME:.metadata.name,PODS:.status.capacity.pods,ALLOCATED:.status.allocatable.pods
 
+kubectl get pods -o=jsonpath='{range .items[*]}{.spec.nodeName}:{.status.phase}{"\n"}{end}' | awk '{count[$1]++} END {for (i in count) print i, count[i]}'
+
