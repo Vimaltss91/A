@@ -131,3 +131,6 @@ for DEPLOYMENT in $DEPLOYMENTS; do
     "[{ \"op\": \"add\", \"path\": \"/spec/template/spec/nodeSelector\", \"value\": { \"$NODE_SELECTOR\" } }]"
 done
 
+
+sed -i 's/\(^\s*request:\)\s*$/\1\n\2    cpu: <new-cpu-value>\n\2    memory: <new-memory-value>/' file.yaml
+
