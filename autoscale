@@ -120,3 +120,14 @@ for DEPLOYMENT in $DEPLOYMENTS; do
 done
 
 
+#!/bin/bash
+
+NODE_SELECTOR="key=value"
+
+DEPLOYMENTS=$(kubectl get deployments -o json | jq -r '.items[].metadata.name')
+
+for DEPLOYMENT in $DEPLOYMENTS; do
+  kubectl patch deployment $DEPLOYMENT --type=json -p \
+    "[{ \"op\": \"add\", \"path\": \"/spec/template/spec/nodeSelector\", \"value\": { \"$NODE_SELECTOR\" } }]"
+done
+
