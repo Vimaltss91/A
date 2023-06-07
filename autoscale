@@ -56,3 +56,26 @@ kubectl get nodes -o custom-columns=NAME:.metadata.name,PODS:.status.capacity.po
 
 kubectl get pods -o=jsonpath='{range .items[*]}{.spec.nodeName}:{.status.phase}{"\n"}{end}' | awk '{count[$1]++} END {for (i in count) print i, count[i]}'
 
+
+NAMESPACE="your-namespace"
+KEY="key-to-tolerate"
+VALUE="value-to-tolerate"
+OPERATOR="Equal"
+EFFECT="NoSchedule"
+
+PODS=$(kubectl get pods -n $NAMESPACE -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+
+for POD in $PODS; do
+  TMP_FILE=$(mktemp)
+  kubectl get pod $POD -n $NAMESPACE -o yaml > $TMP_FILE
+
+  # Add toleration to each container in the pod
+  CONTAINERS=$(kubectl get pod $POD -n $NAMESPACE -o jsonpath='{range .spec.containers[*]}{.name}{" "}{end}')
+  for CONTAINER in $CONTAINERS; do
+    kubectl patch pod $POD -n $NAMESPACE --type=json -p \
+      "[{ \"op\": \"add\", \"path\": \"/spec/containers?(@.name=='$CONTAINER')/tolerations\", \"value\": [{ \"key\": \"$KEY\", \"operator\": \"$OPERATOR\", \"value\": \"$VALUE\", \"effect\": \"$EFFECT\" }] }]"
+  done
+
+  rm $TMP_FILE
+done
+
