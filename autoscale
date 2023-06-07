@@ -79,3 +79,44 @@ for POD in $PODS; do
   rm $TMP_FILE
 done
 
+
+NAMESPACE="your-namespace"
+LABEL_KEY="key"
+LABEL_VALUE="value"
+
+PODS=$(kubectl get pods -n $NAMESPACE -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+
+for POD in $PODS; do
+  TMP_FILE=$(mktemp)
+  kubectl get pod $POD -n $NAMESPACE -o yaml > $TMP_FILE
+
+  # Add node selector to the pod's YAML definition
+  kubectl patch pod $POD -n $NAMESPACE --type='json' -p \
+    "[{\"op\": \"add\", \"path\": \"/spec/nodeSelector\", \"value\": {\"$LABEL_KEY\": \"$LABEL_VALUE\"}}]"
+
+  rm $TMP_FILE
+done
+
+
+
+#!/bin/bash
+
+LABEL_KEY="key"
+LABEL_VALUE="value"
+
+DEPLOYMENTS=$(kubectl get deployments -o json | jq -r '.items[].metadata.name')
+
+for DEPLOYMENT in $DEPLOYMENTS; do
+  TMP_FILE=$(mktemp)
+  kubectl get deployment $DEPLOYMENT -o yaml > $TMP_FILE
+
+  # Add nodeSelector to the Deployment YAML
+  sed -i "s/template:/template:\n    spec:\n      nodeSelector:\n        $LABEL_KEY: $LABEL_VALUE/g" $TMP_FILE
+
+  # Apply the changes to the Deployment
+  kubectl apply -f $TMP_FILE
+
+  rm $TMP_FILE
+done
+
+
