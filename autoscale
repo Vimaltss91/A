@@ -134,3 +134,5 @@ done
 
 sed -i 's/\(^\s*request:\)\s*$/\1\n\2    cpu: <new-cpu-value>\n\2    memory: <new-memory-value>/' file.yaml
 
+sed -i '/<word>/,+2 {/<word>/!b;d;}' file.txt
+
