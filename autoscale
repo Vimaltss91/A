@@ -136,3 +136,10 @@ sed -i 's/\(^\s*request:\)\s*$/\1\n\2    cpu: <new-cpu-value>\n\2    memory: <ne
 
 sed -i '/<word>/,+2 {/<word>/!b;d;}' file.txt
 
+my_array=("element1" "element2" "element3")
+
+# Iterate over the array elements
+for element in "${my_array[@]}"; do
+    echo "$element"
+done
+
