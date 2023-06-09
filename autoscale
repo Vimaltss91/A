@@ -143,3 +143,5 @@ for element in "${my_array[@]}"; do
     echo "$element"
 done
 
+
+find /path/to/search -type f -name "*.yaml" -exec sed -i 's/word_to_replace/replacement_word/g' {} +
