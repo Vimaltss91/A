@@ -148,5 +148,7 @@ jq --arg current_date "$current_date" '.data[] | select(.["time-created"] | cont
 
 jq --arg current_date "$current_date" '.data[] | select((.["lifecycle-state"] == "test") and (.["time-created"] | contains($current_date)))' <your_json_file>
 
+jq --arg current_date "$current_date" '.data[] | select((.["lifecycle-state"] == "test") and (.["time-created"] | contains($current_date) | not))' <your_json_file>
+
 
 find /path/to/search -type f -name "*.yaml" -exec sed -i 's/word_to_replace/replacement_word/g' {} +
