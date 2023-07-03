@@ -143,5 +143,8 @@ for element in "${my_array[@]}"; do
     echo "$element"
 done
 
+current_date=$(date +%Y-%m-%d)
+jq --arg current_date "$current_date" '.data[] | select(.["time-created"] | contains($current_date))' <your_json_file>
+
 
 find /path/to/search -type f -name "*.yaml" -exec sed -i 's/word_to_replace/replacement_word/g' {} +
