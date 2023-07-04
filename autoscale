@@ -176,3 +176,29 @@ else
   echo "No namespace found that matches the specified criteria."
 fi
 
+
+# Define an array with values
+my_array=("value1" "value2" "value3")
+
+# Value to check
+value_to_check="value2"
+
+# Flag to indicate if the value is found
+found=false
+
+# Iterate over each element in the array
+for element in "${my_array[@]}"
+do
+  # Compare the element with the value to check
+  if [[ "$element" == "$value_to_check" ]]; then
+    found=true
+    break
+  fi
+done
+
+# Check if the value was found or not
+if [[ $found == true ]]; then
+  echo "The value '$value_to_check' is present in the array."
+else
+  echo "The value '$value_to_check' is not present in the array."
+fi
