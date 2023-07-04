@@ -152,3 +152,27 @@ jq --arg current_date "$current_date" '.data[] | select((.["lifecycle-state"] ==
 
 
 find /path/to/search -type f -name "*.yaml" -exec sed -i 's/word_to_replace/replacement_word/g' {} +
+
+
+current_date=$(date -d "$(date +%Y-%m-%d) 00:00:00" +%s)
+two_days_ago=$(date -d "-2 days" +%s)
+
+while IFS= read -r line; do
+  namespace=$(echo "$line" | awk '{print $1}')
+  creation_date=$(kubectl get namespace "$namespace" -o jsonpath='{.metadata.creationTimestamp}')
+  creation_date=$(date -d "$creation_date" +%s)
+
+  if [[ $creation_date -ge $two_days_ago && $creation_date -lt $current_date ]]; then
+    namespace_to_delete="$namespace"
+    break
+  fi
+done < <(kubectl get namespaces --no-headers)
+
+
+if [[ -n $namespace_to_delete ]]; then
+  kubectl delete namespace "$namespace_to_delete"
+  echo "Namespace '$namespace_to_delete' deleted."
+else
+  echo "No namespace found that matches the specified criteria."
+fi
+
