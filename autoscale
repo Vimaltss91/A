@@ -205,3 +205,5 @@ fi
 
 
 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+sum(rate(container_cpu_usage_seconds_total{container_name!="POD", container_name!="", image!="", pod_name!=""}[1m])) by (instance) / count(node_cpu_seconds_total{mode="system"}) * 100
