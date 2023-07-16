@@ -202,3 +202,6 @@ if [[ $found == true ]]; then
 else
   echo "The value '$value_to_check' is not present in the array."
 fi
+
+
+100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
