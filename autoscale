@@ -208,4 +208,26 @@ fi
 
 sum(rate(container_cpu_usage_seconds_total{container_name!="POD", container_name!="", image!="", pod_name!=""}[1m])) by (instance) / count(node_cpu_seconds_total{mode="system"}) * 100
 
+
+#!/bin/bash
+
+url="YOUR_URL_HERE"
+loop_duration=300 # 5 minutes in seconds
+wait_interval=30   # 30 seconds
+
+# Loop for 5 minutes
+end_time=$((SECONDS + loop_duration))
+while [ $SECONDS -lt $end_time ]; do
+    response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+    if [ "$response" -eq 200 ]; then
+        echo "200 OK received"
+        sleep $wait_interval
+        echo "Running echo command"
+        break
+    else
+        echo "Response was not 200 OK (HTTP $response)"
+        sleep 5  # Wait for 5 seconds before trying again
+    fi
+done
+
 kubectl get namespaces -o=jsonpath='{range .items[*]}{"\nNamespace: "}{.metadata.name}{"\nCPU Request: "}{.spec[''resourceQuotas''][''requests.cpu'']}{"\n"}{end}'
