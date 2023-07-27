@@ -230,4 +230,6 @@ while [ $SECONDS -lt $end_time ]; do
     fi
 done
 
+docker exec CONTAINER_ID_OR_NAME curl -s -o /dev/null -w "%{http_code}" "http://localhost:CONTAINER_PORT/ENDPOINT_PATH"
+
 kubectl get namespaces -o=jsonpath='{range .items[*]}{"\nNamespace: "}{.metadata.name}{"\nCPU Request: "}{.spec[''resourceQuotas''][''requests.cpu'']}{"\n"}{end}'
