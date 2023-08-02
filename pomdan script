@@ -1,54 +1,44 @@
-import subprocess
+import json
 
-# List Podman images
-def list_images():
-    cmd = ['podman', 'images', '--format', '{{.ID}}']
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode == 0:
-        return result.stdout.strip().split('\n')
-    else:
-        print('Failed to list images:')
-        print(result.stderr)
-        return []
+def update_json_with_text_data(text_file_path, json_file_path):
+    try:
+        # Read the contents of the text file
+        with open(text_file_path, 'r') as text_file:
+            text_data = text_file.read()
 
-# Retag images from docker.io to localhost
-def retag_images(images):
-    for image in images:
-        cmd = ['podman', 'image', 'inspect', '-f', '{{.RepoDigests}}', image]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0:
-            digest = result.stdout.strip().replace('[', '').replace(']', '').split('@')[1]
-            new_image = image.replace('docker.io', 'localhost') + '@' + digest
-            cmd = ['podman', 'image', 'tag', image, new_image]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode == 0:
-                print(f'Retagged image {image} to {new_image}')
-            else:
-                print(f'Failed to retag image {image}:')
-                print(result.stderr)
-        else:
-            print(f'Failed to inspect image {image}:')
-            print(result.stderr)
+        # Load the existing JSON data
+        with open(json_file_path, 'r') as json_file:
+            json_data = json.load(json_file)
 
-# Delete images that start with docker.io
-def delete_images(images):
-    for image in images:
-        if image.startswith('docker.io'):
-            cmd = ['podman', 'image', 'rm', '-f', image]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode == 0:
-                print(f'Deleted image {image}')
-            else:
-                print(f'Failed to delete image {image}:')
-                print(result.stderr)
+        # Convert text data to a dictionary
+        text_dict = {}
+        pairs = text_data.strip().split('\n')
+        for pair in pairs:
+            key, value = pair.split('=')
+            text_dict[key.strip()] = value.strip()
 
-# Main function
-def main():
-    images = list_images()
-    if images:
-        retag_images(images)
-        delete_images(images)
+        # Find the index of the dictionary in "data" list with matching job_id
+        index_to_update = -1
+        for idx, data_entry in enumerate(json_data["data"]):
+            if data_entry.get("job_id") == text_dict.get("job_id"):
+                index_to_update = idx
+                break
 
-# Run the script
-if __name__ == '__main__':
-    main()
+        # Update the existing data with the new values for the matched job_id
+        if index_to_update != -1:
+            json_data["data"][index_to_update].update(text_dict)
+
+        # Save the updated JSON data back to the file
+        with open(json_file_path, 'w') as json_file:
+            json.dump(json_data, json_file, indent=4)
+
+        print("JSON file updated successfully.")
+    except FileNotFoundError:
+        print("File not found. Please check the file paths.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    text_file_path = "path/to/your_text_file.txt"
+    json_file_path = "path/to/your_json_file.json"
+    update_json_with_text_data(text_file_path, json_file_path)
