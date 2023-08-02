@@ -311,3 +311,41 @@ if __name__ == "__main__":
     text_file_path = "path/to/your_text_file.txt"
     json_file_path = "path/to/your_json_file.json"
     append_text_to_json(text_file_path, json_file_path)
+
+
+import json
+
+def append_text_to_json(text_file_path, json_file_path):
+    try:
+        # Read the contents of the text file
+        with open(text_file_path, 'r') as text_file:
+            text_data = text_file.read()
+
+        # Load the existing JSON data
+        with open(json_file_path, 'r') as json_file:
+            json_data = json.load(json_file)
+
+        # Convert text data to a dictionary
+        text_dict = {}
+        pairs = text_data.strip().split('\n')
+        for pair in pairs:
+            key, value = pair.split('=')
+            text_dict[key.strip()] = value.strip()
+
+        # Append the new data to the existing "data" key in the JSON
+        json_data["data"].append(text_dict)
+
+        # Save the updated JSON data back to the file
+        with open(json_file_path, 'w') as json_file:
+            json.dump(json_data, json_file, indent=4)
+
+        print("Text data appended to the JSON file successfully.")
+    except FileNotFoundError:
+        print("File not found. Please check the file paths.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    text_file_path = "path/to/your_text_file.txt"
+    json_file_path = "path/to/your_json_file.json"
+    append_text_to_json(text_file_path, json_file_path)
