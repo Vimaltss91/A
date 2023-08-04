@@ -349,3 +349,6 @@ if __name__ == "__main__":
     text_file_path = "path/to/your_text_file.txt"
     json_file_path = "path/to/your_json_file.json"
     append_text_to_json(text_file_path, json_file_path)
+
+
+echo "Took 0h29m Initial Run:- Features RUN 7, PASS 6, FAIL 1 1st ReRun:- Features RUN 7, PASS 6, FAIL 1 Final Result:- Total-Features RUN 7, PASS 7, FAIL 0.." | grep -oP '(?<=FAIL )\d+' | tail -1
