@@ -94,3 +94,30 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def find_total_feature_with_previous_line(file_path):
+    with open(file_path, "r") as file:
+        previous_line = None
+        for line in file:
+            if "Total-Feature" in line and previous_line and "Final Result" in previous_line:
+                return line.strip()  # Return the line containing "Total-Feature"
+            previous_line = line  # Store the current line for the next iteration
+    return None  # If not found, return None
+
+file_path = "data.log"  # Replace with the actual file path
+
+result_line = find_total_feature_with_previous_line(file_path)
+if result_line:
+    print(result_line)
+else:
+    print("Total-Feature with preceding 'Final Result' not found.")
+In this Python code, the find_total_feature_with_previous_line function reads the file line by line. It checks for the presence of "Total-Feature" in the current line and also verifies if the previous line contains "Final Result." If both conditions are met, the function returns the line containing "Total-Feature" (stripped of leading/trailing spaces). Otherwise, it continues to the next line until the end of the file.
+
+Replace "data.log" with the actual path to the file containing the log data. The variable result_line will contain the line with "Total-Feature" if it's found, and you will get the desired output. If the condition is not met, it will print "Total-Feature with preceding 'Final Result' not found."
+
+
+
+
+
+
