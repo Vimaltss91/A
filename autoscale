@@ -352,3 +352,16 @@ if __name__ == "__main__":
 
 
 echo "Took 0h29m Initial Run:- Features RUN 7, PASS 6, FAIL 1 1st ReRun:- Features RUN 7, PASS 6, FAIL 1 Final Result:- Total-Features RUN 7, PASS 7, FAIL 0.." | grep -oP '(?<=FAIL )\d+' | tail -1
+
+def build_type(release_tag):
+    if "nb" in release_tag:
+        BUILD_TYPE = "NIGHTLY"
+        BUILD_BRANCH = "DEV"
+    elif "rc" in release_tag:
+        BUILD_TYPE = "RC_BUILD"
+        BUILD_BRANCH = "Staging"
+    else:
+        BUILD_TYPE = "GA"
+        BUILD_BRANCH = "Master"
+    
+    return BUILD_TYPE, BUILD_BRANCH
