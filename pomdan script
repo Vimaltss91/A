@@ -55,3 +55,42 @@ def helm_check_version():
 
 helm = helm_check_version()
 print(helm)
+
+
+import subprocess
+import os
+
+def get_helm_list(namespace):
+    try:
+        helm_list_cmd = f"{helm} list -n {namespace}"
+        output = subprocess.check_output(helm_list_cmd, shell=True, text=True)
+        return output
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
+        return None
+
+def get_release_tag(namespace):
+    helm_output = get_helm_list(namespace)
+    if helm_output:
+        lines = helm_output.strip().split('\n')
+        for line in lines:
+            if namespace in line and 'csf' in line and 'ats' not in line and 'dns' not in line:
+                parts = line.split()
+                tag = parts[8].replace("ocbsf-", "")
+                return tag
+    return None
+
+def main():
+    CSF_SUITE = os.environ.get("CSF_SUITE", "")
+    NAMESPACE = os.environ.get("NAMESPACE", "")
+    helm = "helm"
+
+    if CSF_SUITE == "CSF":
+        RELEASE_TAG = get_release_tag(NAMESPACE)
+        if RELEASE_TAG is None:
+            RELEASE_TAG = "CSF_RELEASE_TAG"
+    
+    print(RELEASE_TAG)
+
+if __name__ == "__main__":
+    main()
