@@ -42,3 +42,16 @@ if __name__ == "__main__":
     text_file_path = "path/to/your_text_file.txt"
     json_file_path = "path/to/your_json_file.json"
     update_json_with_text_data(text_file_path, json_file_path)
+
+import os
+
+def helm_check_version():
+    cne_version = os.environ.get("CNE_VERSION", "")
+    if "1.8" in cne_version:
+        helm = "helm3"
+    else:
+        helm = "helm"
+    return helm
+
+helm = helm_check_version()
+print(helm)
