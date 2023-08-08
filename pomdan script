@@ -117,6 +117,30 @@ In this Python code, the find_total_feature_with_previous_line function reads th
 Replace "data.log" with the actual path to the file containing the log data. The variable result_line will contain the line with "Total-Feature" if it's found, and you will get the desired output. If the condition is not met, it will print "Total-Feature with preceding 'Final Result' not found."
 
 
+# Open the file for reading
+with open('your_file.txt', 'r') as file:
+    lines = file.readlines()
+
+# Initialize variables to store the extracted lines
+start_index = None
+end_index = None
+
+# Find the indices of the lines that contain "Overall Result" and "Total-Features"
+for i, line in enumerate(lines):
+    if "Overall Result" in line:
+        start_index = i
+    if "Total-Features" in line:
+        end_index = i
+        break
+
+# Extract the lines between the start and end indices
+if start_index is not None and end_index is not None:
+    extracted_lines = lines[start_index:end_index+1]
+    for line in extracted_lines:
+        print(line.strip())
+else:
+    print("Lines not found.")
+
 
 
 
