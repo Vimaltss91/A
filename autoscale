@@ -365,3 +365,36 @@ def build_type(release_tag):
         BUILD_BRANCH = "Master"
     
     return BUILD_TYPE, BUILD_BRANCH
+
+
+def update_or_add_key_value(filename, input_string):
+    if '=' in input_string:
+        key, value = input_string.split('=')
+
+        data = {}
+
+        # Read existing data from the file
+        try:
+            with open(filename, 'r') as file:
+                for line in file:
+                    line = line.strip()
+                    if '=' in line:
+                        k, v = line.split('=', 1)
+                        data[k.strip()] = v.strip()
+        except FileNotFoundError:
+            pass  # File doesn't exist yet, which is okay
+
+        # Update or add the key-value pair
+        data[key] = value
+
+        # Write the updated data back to the file
+        with open(filename, 'w') as file:
+            for k, v in data.items():
+                file.write(f"{k}={v}\n")
+
+if __name__ == "__main__":
+    filename = "data.txt"
+    input_string = input("Enter the key-value pair (key=value): ")
+
+    update_or_add_key_value(filename, input_string)
+    print("Data has been updated or added.")
