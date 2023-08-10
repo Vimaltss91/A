@@ -142,6 +142,27 @@ else:
     print("Lines not found.")
 
 
+#!/bin/bash
+
+# Define the IP addresses or hostnames of the nodes
+nodes=("node1" "node2" "node3")
+
+# Define the content to append to /etc/hosts
+content="100.100.100.100 mydomain.com"
+
+# Loop through the nodes and perform the operation
+for node in "${nodes[@]}"; do
+    echo "Updating /etc/hosts on $node..."
+    
+    # Use SSH to append the content to /etc/hosts
+    ssh -i /path/to/your/private/key.pem user@$node "echo '$content' | sudo tee -a /etc/hosts"
+    
+    echo "Update completed on $node."
+done
+
+echo "Script execution completed."
+
+
 
 
 
