@@ -163,6 +163,37 @@ done
 echo "Script execution completed."
 
 
+from datetime import datetime
 
+def extract_time(line):
+    parts = line.strip().split('=')
+    return parts[0], parts[1]
+
+def calculate_duration(start_time, end_time):
+    start_datetime = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+    end_datetime = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
+    duration = end_datetime - start_datetime
+    return duration
+
+# Read the log file
+with open('sample.log', 'r') as log_file:
+    lines = log_file.readlines()
+
+# Extract relevant data
+data = {}
+for line in lines:
+    key, value = extract_time(line)
+    data[key] = value
+
+# Calculate duration
+if 'start_time' in data and 'end_time' in data:
+    start_time = data['start_time']
+    end_time = data['end_time']
+    duration = calculate_duration(start_time, end_time)
+    print(f"Start Time: {start_time}")
+    print(f"End Time: {end_time}")
+    print(f"Duration: {duration}")
+else:
+    print("Missing start_time or end_time in the log file.")
 
 
