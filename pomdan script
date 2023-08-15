@@ -244,17 +244,24 @@ print("Total time:", total_time)
 
 import re
 
-def extract_version_and_branch(tag):
+def identify_branch(tag):
     match = re.match(r'^(\d{2}\.\d{1,2}\.\d{1,2})', tag)
     if match:
         version = match.group(1)
         last_digit = int(version.split('.')[-1])
         if last_digit == 0:
-            branch = "dev"
+            if "-nb" in tag:
+                branch = "dev"
+            elif "beta.1" in tag:
+                branch = "staging"
+            elif "rc" in tag:
+                branch = "master"
+            else:
+                branch = "master"
         else:
             branch = f"{version.split('.')[0]}.{version.split('.')[1]}.x-patch"
-        return version, branch
-    return "unknown", "unknown"
+        return branch
+    return "unknown"
 
 # Example release tags
 release_tags = [
@@ -269,10 +276,10 @@ release_tags = [
 ]
 
 for tag in release_tags:
-    version, branch = extract_version_and_branch(tag)
-    if version == "unknown":
+    branch = identify_branch(tag)
+    if branch == "unknown":
         print(f"Tag '{tag}' format is unknown.")
     else:
-        print(f"Tag '{tag}' => Version: {version}, Branch: {branch}")
+        print(f"Tag '{tag}' belongs to the '{branch}' branch.")
 
 
