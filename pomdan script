@@ -283,3 +283,23 @@ for tag in release_tags:
         print(f"Tag '{tag}' belongs to the '{branch}' branch.")
 
 
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: <namespace>
+imagePullSecrets:
+  - name: your-docker-registry-secret
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+  namespace: <namespace>
+spec:
+  containers:
+    - name: my-container
+      image: your-private-image:tag
+
+
