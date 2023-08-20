@@ -396,5 +396,28 @@ if __name__ == "__main__":
     filename = "data.txt"
     input_string = input("Enter the key-value pair (key=value): ")
 
+
+import re
+
+def validate_tag(tag):
+    pattern = r'^\d{2}\.\d\.\d$'
+    return re.match(pattern, tag) is not None
+
+# Test cases
+valid_tags = ["23.3.0", "24.3.1", "23.2.0-ocngf"]
+invalid_tags = ["23.a.0", "24.3.1.5", "10.10.10"]
+
+for tag in valid_tags:
+    if validate_tag(tag):
+        print(f"{tag} is a valid tag.")
+    else:
+        print(f"{tag} is NOT a valid tag.")
+
+for tag in invalid_tags:
+    if validate_tag(tag):
+        print(f"{tag} is a valid tag.")
+    else:
+        print(f"{tag} is NOT a valid tag.")
+
     update_or_add_key_value(filename, input_string)
     print("Data has been updated or added.")
