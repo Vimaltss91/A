@@ -303,3 +303,38 @@ spec:
       image: your-private-image:tag
 
 
+import os
+import requests
+
+# GitLab API endpoint
+api_url = "https://gitlab.com/api/v4/projects/{project_id}/jobs/{job_id}/retry"
+
+# Personal Access Token
+token = os.environ.get("GITLAB_TOKEN")
+
+# Job details
+project_id = os.environ.get("CI_PROJECT_ID")
+job_id = os.environ.get("CI_JOB_ID")
+
+# Retry the job using GitLab API
+headers = {
+    "PRIVATE-TOKEN": token
+}
+retry_url = api_url.format(project_id=project_id, job_id=job_id)
+response = requests.post(retry_url, headers=headers)
+
+if response.status_code == 201:
+    print("Retry request successful")
+else:
+    print("Retry request failed")
+
+
+trigger_retry:
+  stage: test
+  script:
+    - python retry_script.py
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^(dev|master|staging)$/
+      when: on_failure
+
+
