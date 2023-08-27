@@ -42,3 +42,52 @@ if [ -n "$FAILED_JOBS" ]; then
 else
   echo "No failed jobs in pipeline $PIPELINE_ID."
 fi
+
+
+
+#!/bin/bash
+
+# Set your GitLab access token and project ID
+GITLAB_TOKEN="YOUR_ACCESS_TOKEN"
+PROJECT_ID="YOUR_PROJECT_ID"
+PIPELINE_ID="YOUR_PIPELINE_ID"
+
+# API endpoint to get pipeline details
+API_URL="https://gitlab.com/api/v4/projects/$PROJECT_ID/pipelines/$PIPELINE_ID/jobs"
+
+# Function to check if any job is in running state
+function check_running_jobs {
+  RUNNING_JOBS=$(echo "$1" | jq -r '.[] | select(.status == "running") | .name')
+  if [ -n "$RUNNING_JOBS" ]; then
+    echo "Waiting for running jobs to complete..."
+    sleep 180  # Wait for 3 minutes
+  fi
+}
+
+# Function to retry failed jobs on 'dev', 'staging', or 'master'
+function retry_failed_jobs {
+  JOBS=$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$API_URL")
+  FAILED_JOBS=$(echo "$JOBS" | jq -r '.[] | select(.status == "failed" and (.name != "trigger_retry") and (.ref == "dev" or .ref == "staging" or .ref == "master")) | .name')
+  
+  for job in $FAILED_JOBS; do
+    # Retry the job two times using GitLab API
+    for i in {1..2}; do
+      echo "Retrying $job (attempt $i)..."
+      curl --request POST --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$API_URL/$job/retry"
+      sleep 10  # Add a small delay between retries
+    done
+  done
+}
+
+# Check if any job is running and wait if needed
+while true; do
+  RUNNING_JOBS=$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$API_URL" | jq -r '.[] | select(.status == "running")')
+  if [ -n "$RUNNING_JOBS" ]; then
+    check_running_jobs "$RUNNING_JOBS"
+  else
+    break
+  fi
+done
+
+# Retry failed jobs on 'dev', 'staging', or 'master'
+retry_failed_jobs
