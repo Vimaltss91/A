@@ -359,4 +359,25 @@ for job in failed_jobs:
     print(f"Failed job: {job['name']} (ID: {job['id']})")
 
 
+#!/bin/bash
+
+# Set your GitLab access token and project ID
+GITLAB_TOKEN="YOUR_ACCESS_TOKEN"
+PROJECT_ID="YOUR_PROJECT_ID"
+PIPELINE_ID="YOUR_PIPELINE_ID"
+
+# API endpoint to get pipeline details
+API_URL="https://gitlab.com/api/v4/projects/$PROJECT_ID/pipelines/$PIPELINE_ID/jobs"
+
+# Get pipeline jobs using GitLab API
+JOBS=$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$API_URL")
+
+# Parse and filter failed jobs
+FAILED_JOBS=$(echo "$JOBS" | jq -r '.[] | select(.status == "failed") | .name')
+
+# Print the list of failed jobs
+echo "Failed jobs in pipeline $PIPELINE_ID:"
+echo "$FAILED_JOBS"
+
+
 
