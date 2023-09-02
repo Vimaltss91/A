@@ -91,3 +91,52 @@ done
 
 # Retry failed jobs on 'dev', 'staging', or 'master'
 retry_failed_jobs
+
+
+
+import requests
+
+# GitLab API URL
+gitlab_api_url = "https://gitlab.example.com/api/graphql"
+
+# Personal access token for authentication
+access_token = "YOUR_ACCESS_TOKEN"
+
+# GraphQL query to get downstream jobs for a specific job
+graphql_query = """
+query {
+  project(fullPath: "namespace/project") {
+    job(jobId: "JOB_ID") {
+      downstreamPipelines {
+        nodes {
+          id
+          status
+          created_at
+        }
+      }
+    }
+  }
+}
+"""
+
+# Replace "namespace/project" with your GitLab project's namespace and name
+# Replace "JOB_ID" with the ID of the job you want to query
+
+# Define the HTTP headers with the access token
+headers = {
+    "Authorization": f"Bearer {access_token}",
+}
+
+# Make the GraphQL request
+response = requests.post(gitlab_api_url, json={"query": graphql_query}, headers=headers)
+
+# Check if the request was successful
+if response.status_code == 200:
+    data = response.json()
+    # Extract downstream job information from the response
+    downstream_jobs = data["data"]["project"]["job"]["downstreamPipelines"]["nodes"]
+    for job in downstream_jobs:
+        print(f"Job ID: {job['id']}, Status: {job['status']}, Created At: {job['created_at']}")
+else:
+    print(f"Failed to fetch data. Status code: {response.status_code}")
+    print(response.text)
