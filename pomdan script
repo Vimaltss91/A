@@ -410,3 +410,35 @@ else
 fi
 
 
+
+#!/bin/bash
+
+# Define the source and destination paths for docker cp
+SOURCE_PATH="container_id:/path/to/source"
+DESTINATION_PATH="/path/to/destination"
+
+# Define the maximum number of attempts
+MAX_ATTEMPTS=5
+
+# Loop to run docker cp
+for ((attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)); do
+    # Run docker cp
+    docker cp "$SOURCE_PATH" "$DESTINATION_PATH"
+
+    # Check the exit status of the docker cp command
+    if [ $? -eq 0 ]; then
+        echo "docker cp succeeded on attempt $attempt."
+        break  # Exit the loop if docker cp succeeded
+    else
+        echo "docker cp failed on attempt $attempt. Retrying..."
+    fi
+
+    # Add a delay between attempts (optional)
+    sleep 2
+done
+
+# Check if the maximum number of attempts has been reached
+if [ $attempt -gt $MAX_ATTEMPTS ]; then
+    echo "Maximum number of attempts reached. docker cp failed."
+fi
+
