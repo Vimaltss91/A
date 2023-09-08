@@ -380,4 +380,33 @@ echo "Failed jobs in pipeline $PIPELINE_ID:"
 echo "$FAILED_JOBS"
 
 
+# Define the name of the Docker container
+CONTAINER_NAME="your_container_name"
+
+# Get the PID of the Docker container
+PID=$(docker inspect --format "{{.State.Pid}}" "$CONTAINER_NAME")
+
+# Check if the container is running (PID exists)
+if [ -z "$PID" ]; then
+    echo "Container '$CONTAINER_NAME' is not running."
+else
+    # Stop the container gracefully
+    docker stop "$CONTAINER_NAME"
+
+    # Check if the container was stopped successfully
+    if [ $? -eq 0 ]; then
+        echo "Container '$CONTAINER_NAME' stopped successfully."
+    else
+        echo "Failed to stop container '$CONTAINER_NAME'. Trying to kill it..."
+        docker kill "$CONTAINER_NAME"
+
+        # Check if the container was killed successfully
+        if [ $? -eq 0 ]; then
+            echo "Container '$CONTAINER_NAME' killed successfully."
+        else
+            echo "Failed to kill container '$CONTAINER_NAME'."
+        fi
+    fi
+fi
+
 
