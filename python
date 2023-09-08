@@ -1,0 +1,54 @@
+import importlib
+import subprocess
+
+def check_and_install_module(module_name):
+    try:
+        importlib.import_module(module_name)
+        print(f"'{module_name}' is installed and can be imported.")
+    except ImportError:
+        print(f"'{module_name}' is not installed.")
+        print(f"Installing '{module_name}' now...")
+        try:
+            subprocess.check_call(['pip', 'install', module_name])
+        except subprocess.CalledProcessError as e:
+            print(f"Error installing '{module_name}': {e}")
+        else:
+            print(f"Installation of '{module_name}' complete. You can now import '{module_name}'.")
+
+# Check and install required modules
+required_modules = ['requests', 'json']
+for module in required_modules:
+    check_and_install_module(module)
+
+# Now that the required modules are installed, import them
+import requests
+import json
+
+# Use the requests and json modules in your code
+response = requests.get('https://api.example.com/data')
+data = response.json()
+print(data)
+
+
+import importlib
+import subprocess
+
+def check_and_install_module(module_name):
+    try:
+        importlib.import_module(module_name)
+        print(f"'{module_name}' is installed and can be imported.")
+    except ImportError:
+        print(f"'{module_name}' is not installed.")
+        print(f"Installing '{module_name}' now...")
+        try:
+            subprocess.check_call(['pip', 'install', module_name])
+        except subprocess.CalledProcessError as e:
+            print(f"Error installing '{module_name}': {e}")
+        else:
+            print(f"Installation of '{module_name}' complete. You can now import '{module_name}'.")
+
+# Example usage:
+if __name__ == "__main__":
+    modules_to_check = ['requests', 'json', 'subprocess', 'nonexistent_module']
+    for module in modules_to_check:
+        check_and_install_module(module)
