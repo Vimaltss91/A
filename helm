@@ -1,0 +1,34 @@
+apiVersions:
+  deployment: apps/v1
+  service: v1
+  configMap: v1
+
+
+
+K8S_VERSION=$(kubectl version --short | awk '/Server Version:/ {print $3}')
+
+case $K8S_VERSION in
+  "1.19"|"1.20")
+    DEPLOYMENT_API_VERSION="apps/v1"
+    SERVICE_API_VERSION="v1"
+    CONFIGMAP_API_VERSION="v1"
+    ;;
+  "1.21"|"1.22")
+    DEPLOYMENT_API_VERSION="apps/v1"
+    SERVICE_API_VERSION="v1"
+    CONFIGMAP_API_VERSION="v1"
+    ;;
+  *)
+    echo "Unsupported Kubernetes version: $K8S_VERSION"
+    exit 1
+    ;;
+esac
+
+# Pass these API versions to Helm
+helm install my-release my-chart \
+  --set apiVersions.deployment=$DEPLOYMENT_API_VERSION \
+  --set apiVersions.service=$SERVICE_API_VERSION \
+  --set apiVersions.configMap=$CONFIGMAP_API_VERSION
+
+
+apiVersion: {{ .Values.apiVersions.deployment }}
