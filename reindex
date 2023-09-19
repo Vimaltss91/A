@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Define the URL of the file to download
+file_url="https://example.com/path/to/your/file.txt"
+
+# Define the tag or condition you want to check in the file
+desired_tag="your_tag_here"
+
+# Maximum number of retry attempts
+max_retries=5
+
+# Retry interval in seconds (2 minutes)
+retry_interval=120
+
+# Loop through the download and check process
+for ((attempt = 1; attempt <= max_retries; attempt++)); do
+    # Download the file
+    wget -O downloaded_file.txt "$file_url"
+    
+    # Check if the tag is present in the downloaded file
+    if grep -q "$desired_tag" downloaded_file.txt; then
+        echo "Tag found in the file! Exiting..."
+        exit 0
+    else
+        echo "Tag not found in attempt $attempt. Retrying in 2 minutes..."
+        sleep $retry_interval
+    fi
+done
+
+# If the tag is not found after all retries, exit with an error code
+echo "Tag not found after $max_retries attempts. Exiting..."
+exit 1
