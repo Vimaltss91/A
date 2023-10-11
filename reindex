@@ -30,3 +30,4 @@ done
 # If the tag is not found after all retries, exit with an error code
 echo "Tag not found after $max_retries attempts. Exiting..."
 exit 1
+awk '/karate/ {count++} count == 2 {flag=1; next} count == 3 {flag=0} flag && flag++ <= 5' filename
