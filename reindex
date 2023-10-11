@@ -31,3 +31,5 @@ done
 echo "Tag not found after $max_retries attempts. Exiting..."
 exit 1
 awk '/karate/ {count++} count == 2 {flag=1; next} count == 3 {flag=0} flag && flag++ <= 5' filename
+
+awk -v pattern="karate" 'index($0, pattern) {count++} count == 2 {print; next} count == 2 && !index($0, pattern) {count = 0} count > 0 && count <= 5 {print}' filename
