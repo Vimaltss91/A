@@ -46,3 +46,11 @@ if comm -23 <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File1 | sort) <(sed 's/^[
 else
     echo "Fail"
 fi
+
+#!/bin/bash
+
+if comm -23 <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File1 | sort) <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File2 | sort) | diff - File2 >/dev/null; then
+    echo "Pass"
+else
+    echo "Fail"
+fi
