@@ -40,3 +40,9 @@ if comm -23 <(sort File1) <(sort File2) | diff - File2 >/dev/null; then
 else
     echo "Fail"
 fi
+
+if comm -23 <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File1 | sort) <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File2 | sort) | diff - File2 >/dev/null; then
+    echo "Pass"
+else
+    echo "Fail"
+fi
