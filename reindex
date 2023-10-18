@@ -33,3 +33,10 @@ exit 1
 awk '/karate/ {count++} count == 2 {flag=1; next} count == 3 {flag=0} flag && flag++ <= 5' filename
 
 awk -v pattern="karate" 'index($0, pattern) {count++} count == 2 {print; next} count == 2 && !index($0, pattern) {count = 0} count > 0 && count <= 5 {print}' filename
+
+
+if comm -23 <(sort File1) <(sort File2) | diff - File2 >/dev/null; then
+    echo "Pass"
+else
+    echo "Fail"
+fi
