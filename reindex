@@ -54,3 +54,23 @@ if comm -23 <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File1 | sort) <(sed 's/^[
 else
     echo "Fail"
 fi
+
+#!/bin/bash
+
+# Get the contents of the two files
+file1_contents=$(cat file1)
+file2_contents=$(cat file2)
+
+# Create an array of the contents of file2
+file2_array=(${file2_contents})
+
+# Iterate over the contents of file2 and check if each line is present in file1
+for line in "${file2_array[@]}"; do
+  if [[ ! $file1_contents =~ $line ]]; then
+    echo "fail"
+    exit 1
+  fi
+done
+
+# If we reach this point, then all of the lines in file2 are present in file1
+echo "pass"
