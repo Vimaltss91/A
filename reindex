@@ -74,3 +74,30 @@ done
 
 # If we reach this point, then all of the lines in file2 are present in file1
 echo "pass"
+
+
+#!/bin/bash
+
+# Get the paths to the two files
+file1_path="$1"
+file2_path="$2"
+
+# Check if both files exist
+if [[ ! -f "$file1_path" ]]; then
+  echo "File $file1_path does not exist."
+  exit 1
+fi
+
+if [[ ! -f "$file2_path" ]]; then
+  echo "File $file2_path does not exist."
+  exit 1
+fi
+
+# Iterate over the lines in file2
+while read line; do
+  # Check if the line is present in file1
+  if [[ ! $(grep -Fx "$line" "$file1_path") ]]; then
+    # If the line is not present in file1, print it to the console
+    echo "$line"
+  fi
+done < "$file2_path"
