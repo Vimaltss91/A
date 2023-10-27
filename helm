@@ -32,3 +32,6 @@ helm install my-release my-chart \
 
 
 apiVersion: {{ .Values.apiVersions.deployment }}
+
+<span style="font-size: 24px; font-weight: bold; color: green;">Your Text Goes Here</span>
+
