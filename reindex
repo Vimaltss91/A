@@ -101,3 +101,5 @@ while read line; do
     echo "$line"
   fi
 done < "$file2_path"
+
+curl -u username:password -X GET https://your-artifactory-url/api/docker/<repository>/v2/<image>/blobs/<digest>
