@@ -103,3 +103,25 @@ while read line; do
 done < "$file2_path"
 
 curl -u username:password -X GET https://your-artifactory-url/api/docker/<repository>/v2/<image>/blobs/<digest>
+
+Subject: Re: Missing Breakdown of Package Charges for Procedure Treatment
+
+Dear [Recipient's Name],
+
+I hope this message finds you well. I recently received your email regarding the missing breakdown of the package charges for the single procedure treatment I underwent. I understand your concern and would like to clarify that in this particular case, the hospital has provided a consolidated final receipt, and there were no individual itemized charges associated with the treatment.
+
+I can certainly appreciate the importance of having a detailed breakdown for your records and verification. I would like to offer the following information to assist you:
+
+Date of Treatment: [Insert the date of the procedure]
+Patient Name: [Insert your full name]
+Hospital Name: [Insert the name of the hospital]
+Procedure Description: [Specify the procedure]
+If there are any additional details or specific information you require, please let me know, and I will do my best to provide it. I understand the need for transparency and accountability in healthcare billing, and I want to ensure that you have all the necessary information to process the claim accurately.
+
+If there are any specific forms or documents that need to be filled out on my end, please guide me, and I will complete them promptly to expedite the resolution of this matter.
+
+Thank you for your understanding, and I look forward to your guidance on the next steps in addressing this issue. Please feel free to contact me at [Your Contact Information] for any further assistance or clarifications.
+
+Warm regards,
+
+[Your Name]
