@@ -121,3 +121,18 @@ Thank you for your understanding and support.
 Warm regards,
 
 [Your Name]
+
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: my-service-account-binding
+  namespace: my-namespace
+subjects:
+  - kind: ServiceAccount
+    name: my-service-account
+    namespace: my-namespace
+roleRef:
+  kind: ClusterRole  # or Role if needed
+  name: my-custom-role  # specify the role if needed
+  apiGroup: rbac.authorization.k8s.io
