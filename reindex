@@ -136,3 +136,32 @@ roleRef:
   kind: ClusterRole  # or Role if needed
   name: my-custom-role  # specify the role if needed
   apiGroup: rbac.authorization.k8s.io
+
+
+
+NEW
+
+kubectl get secret myregistrykey -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode
+
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader-binding
+subjects:
+- kind: ServiceAccount
+  name: default-sa
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
