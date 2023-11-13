@@ -173,3 +173,42 @@ metadata:
   name: default-sa
   annotations:
     kubernetes.io/dockerconfigjson: "your-base64-encoded-secret-data"
+
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: image-puller-role
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: image-puller-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: my-service-account
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: image-puller-role
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-image-pull-secret
+type: docker-registry
+data:
+  .dockerconfigjson: <base64-encoded-docker-config-json>
+
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+imagePullSecrets:
+- name: my-image-pull-secret
