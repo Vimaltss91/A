@@ -421,3 +421,21 @@ for tag in invalid_tags:
 
     update_or_add_key_value(filename, input_string)
     print("Data has been updated or added.")
+
+
+# List of remote servers
+remote_hosts=("remote_host1" "remote_host2" "remote_host3")
+
+# Common details
+remote_user="your_normal_user"
+local_path="/path/to/source/file"
+destination_path="/path/to/destination/location"
+
+# Loop through the remote hosts
+for remote_host in "${remote_hosts[@]}"; do
+    # Copy file as a normal user to /tmp location on the remote server
+    scp "$local_path" "$remote_user@$remote_host:/tmp/"
+
+    # Move the file to a different location on the remote server using sudo
+    ssh "$remote_user@$remote_host" "sudo mv /tmp/$(basename $local_path) $destination_path/"
+done
