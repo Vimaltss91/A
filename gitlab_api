@@ -140,3 +140,18 @@ if response.status_code == 200:
 else:
     print(f"Failed to fetch data. Status code: {response.status_code}")
     print(response.text)
+
+
+
+We have implemented auto-scaling in our system, but its efficiency is hindered by the use of the 'safe auto-evict' parameter in all our pods. Consequently, when new nodes are scaled up, the system does not scale down efficiently, even when the overall resource usage is low. This is because pods are distributed across multiple nodes, leading to underutilization of resources on these nodes
+
+
+"We've implemented auto-scaling, but its efficiency is compromised due to the uniform use of the 'safe auto-evict' parameter across all our pods. Consequently, scaling up new nodes doesn't lead to the scaling down of underutilized nodes, as our pods are distributed across multiple nodes. In response to this, we've already reduced the OCPU from 16 to 8 for worker nodes and plan to further reduce it to 6 this weekend.
+
+To address this issue, we are considering two options:
+
+Develop a script to monitor CPU utilization, enabling the cordoning of nodes. This would terminate new nodes once the associated namespaces are deleted.
+
+Implement the 'safe to evict' parameter selectively, applying it only to necessary pods rather than all pods. This involves identifying the specific pods that require this setting.
+
+We would appreciate your insights on these options and any additional suggestions you may have for effectively scaling down nodes."
