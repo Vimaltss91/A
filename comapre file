@@ -49,3 +49,25 @@ while IFS= read -r line; do
         echo "Image $line is not present in the registry list."
     fi
 done < "$docker_image_list"
+
+#!/bin/bash
+
+# Define file paths
+docker_image_list="docker_image_list"
+registry_list="registry_list.txt"
+
+# Read the registry_list file into an array
+mapfile -t registry_array < "$registry_list"
+
+# Process each line in the docker_image_list file
+while IFS= read -r line; do
+    # Remove "phx.acir.io/namespace/" and anything after ":" from the current line
+    image_name=$(echo "$line" | sed -e 's|phx.acir.io/namespace/||' -e 's|:.*$||')
+
+    # Check if the modified image_name is present in the registry_array
+    if printf '%s\n' "${registry_array[@]}" | grep -q "^${image_name}$"; then
+        echo "Image $line is present in the registry list."
+    else
+        echo "Image $line is not present in the registry list."
+    fi
+done < "$docker_image_list"
