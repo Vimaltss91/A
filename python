@@ -52,3 +52,10 @@ if __name__ == "__main__":
     modules_to_check = ['requests', 'json', 'subprocess', 'nonexistent_module']
     for module in modules_to_check:
         check_and_install_module(module)
+
+
+Modify the deployment script to make Persistent Volume Claims (PVC) the default configuration for Oracle Cloud Infrastructure (OCI), eliminating the need for the INCLUDE_OCC_Feature parameter.
+
+Address concerns related to volume creation across Availability Domains (ADs), as there's a potential issue when pods are recreated in different ADs, leading to potential resource unavailability. It's advisable to consolidate resources within a single AD to avoid such disruptions, a recommendation also endorsed by Benson.
+
+Given the default volume size of 50GB, reducing the size of ats volumes may not effectively address the issue. 
