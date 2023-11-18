@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Read the contents of docker_image_list into an array
+docker_images=($(cat docker_image_list))
+
+# Read the contents of registry_list into an array
+registry_images=($(cat registry_list.txt))
+
+# Loop through each item in the registry_images array
+for registry_image in "${registry_images[@]}"; do
+  # Remove double quotes from the registry_image
+  registry_image="${registry_image//\"/}"
+
+  # Loop through each item in the docker_images array
+  for docker_image in "${docker_images[@]}"; do
+    # Remove "phx.acir.io/namespace/" from docker_image
+    docker_image="${docker_image/phx.acir.io\/namespace\//}"
+
+    # Remove everything after ":" in docker_image
+    docker_image="${docker_image%%:*}"
+
+    # Compare the modified docker_image with the current registry_image
+    if [ "$docker_image" == "$registry_image" ]; then
+      echo "Match found: $docker_image"
+      # You can add your logic here for further processing if needed
+    fi
+  done
+done
