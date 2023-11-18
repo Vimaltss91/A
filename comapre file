@@ -26,3 +26,26 @@ for registry_image in "${registry_images[@]}"; do
     fi
   done
 done
+
+
+#!/bin/bash
+
+# Define file paths
+docker_image_list="docker_image_list"
+registry_list="registry_list.txt"
+
+# Read the registry_list file into an array
+IFS=$'\n' read -d '' -r -a registry_array < "$registry_list"
+
+# Process each line in the docker_image_list file
+while IFS= read -r line; do
+    # Remove "phx.acir.io/namespace/" and ":21.1.0" from the current line
+    image_name=$(echo "$line" | sed -e 's|phx.acir.io/namespace/||' -e 's|:21.1.0$||')
+
+    # Check if the modified image_name is present in the registry_array
+    if [[ " ${registry_array[@]} " =~ " ${image_name} " ]]; then
+        echo "Image $line is present in the registry list."
+    else
+        echo "Image $line is not present in the registry list."
+    fi
+done < "$docker_image_list"
