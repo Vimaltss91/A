@@ -212,3 +212,21 @@ metadata:
   name: my-service-account
 imagePullSecrets:
 - name: my-image-pull-secret
+
+
+#!/bin/bash
+
+# Your array
+image_array=("image1" "image2" "image3")
+
+# Your file
+image_list="path/to/image_list.txt"
+
+# Iterate through the array
+for image in "${image_array[@]}"; do
+    # Check if the full string is present in the file
+    if ! grep -q "$image" "$image_list"; then
+        # If not present, echo it
+        echo "$image not found in $image_list"
+    fi
+done
