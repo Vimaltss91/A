@@ -443,3 +443,24 @@ done
 
 GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, LOCK TABLES, REFERENCES, CREATE TEMPORARY TABLES, EXECUTE, CREATE VIEW, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, EVENT, TRIGGER ON your_database.* TO 'your_user'@'your_host';
 
+#!/bin/bash
+
+# Set your Slack OAuth token
+SLACK_TOKEN="YOUR_OAUTH_TOKEN"
+
+# Set the Slack channel where you want to send the notification
+CHANNEL="#your_channel"
+
+# Set the message you want to send
+MESSAGE="Hello, this is a test message from your Bash script!"
+
+# Slack API URL for chat.postMessage
+SLACK_API_URL="https://slack.com/api/chat.postMessage"
+
+# Make the API request using curl
+curl -X POST -H "Content-type: application/json" \
+     -H "Authorization: Bearer $SLACK_TOKEN" \
+     --data "{
+       \"channel\": \"$CHANNEL\",
+       \"text\": \"$MESSAGE\"
+     }" $SLACK_API_URL
