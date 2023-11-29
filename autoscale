@@ -1,3 +1,6 @@
+kubectl patch deployment <deployment-name> -p '{"spec":{"template":{"metadata":{"annotations":{"safe-to-evict":null}}}}}'
+
+
 #!/bin/bash
 
 namespace="your-namespace"
