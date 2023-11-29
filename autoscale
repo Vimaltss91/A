@@ -1,5 +1,19 @@
 kubectl patch deployment <deployment-name> -p '{"spec":{"template":{"metadata":{"annotations":{"safe-to-evict":null}}}}}'
 
+#!/bin/bash
+
+deployments=("deploy1" "deploy2" "deploy3")
+
+for deployment in "${deployments[@]}"; do
+  # Check if the deployment exists before attempting to patch
+  if kubectl get deployment "$deployment" &> /dev/null; then
+    kubectl patch deployment "$deployment" -p '{"spec":{"template":{"metadata":{"annotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict":"false"}}}}}'
+    echo "Deployment $deployment patched successfully."
+  else
+    echo "Deployment $deployment not found. Skipping patch."
+  fi
+done
+
 
 #!/bin/bash
 
