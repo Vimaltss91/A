@@ -1,5 +1,9 @@
 #!/bin/bash
 
+curl -I -X HEAD -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" http://<registry>:<port>/v2/<repository>/manifests/<tag> | grep Docker-Content-Digest
+
+curl -X DELETE http://<registry>:<port>/v2/<repository>/manifests/<digest>
+
 # Define the URL of the file to download
 file_url="https://example.com/path/to/your/file.txt"
 
