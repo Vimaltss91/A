@@ -1,3 +1,32 @@
+variables:
+  COUNTRY:
+    predefined: true
+    options:
+      - "United States"
+      - "United Kingdom"
+      - "India"
+  STATE:
+    predefined: true
+    depends_on: COUNTRY
+    options:
+      - label: "Select State"
+        value: ""
+      - label: "California"
+        value: "California"
+        when: '$COUNTRY == "US"'
+      - label: "New York"
+        value: "New York"
+        when: '$COUNTRY == "US"'
+      - # ... Add remaining state options
+      - label: "England"
+        value: "England"
+        when: '$COUNTRY == "UK"'
+      - # ... Add remaining state options
+      - label: "Maharashtra"
+        value: "Maharashtra"
+        when: '$COUNTRY == "IN"'
+      - # ... Add remaining state options
+
 #!/bin/bash
 
 curl -I -X HEAD -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" http://<registry>:<port>/v2/<repository>/manifests/<tag> | grep Docker-Content-Digest
