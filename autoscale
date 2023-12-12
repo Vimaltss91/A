@@ -1,4 +1,5 @@
 jq '.data | reverse | map(select(.city | contains("madurai")))[:2]' your_file.json
+jq '.data | map(select(.city | contains("madurai"))) | reverse | .[:2]' your_file.json
 
 
 
