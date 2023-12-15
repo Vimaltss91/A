@@ -3,6 +3,8 @@ jq '.data | map(select(.city | contains("madurai"))) | reverse | .[:2]' your_fil
 
 new_content=$(awk -F, '!a[$1]++' example.txt)
 
+new_content=$(cat example.txt | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+
 kubectl patch deployment <deployment-name> -p '{"spec":{"template":{"metadata":{"annotations":{"safe-to-evict":null}}}}}'
 
 #!/bin/bash
