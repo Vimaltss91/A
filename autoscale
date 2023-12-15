@@ -1,7 +1,7 @@
 jq '.data | reverse | map(select(.city | contains("madurai")))[:2]' your_file.json
 jq '.data | map(select(.city | contains("madurai"))) | reverse | .[:2]' your_file.json
 
-
+new_content=$(awk -F, '!a[$1]++' example.txt)
 
 kubectl patch deployment <deployment-name> -p '{"spec":{"template":{"metadata":{"annotations":{"safe-to-evict":null}}}}}'
 
