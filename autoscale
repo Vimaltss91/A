@@ -1,3 +1,13 @@
+# Get the Kubernetes API server URL
+APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+
+# Set the API token
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+# Query the API
+curl -k -H "Authorization: Bearer $TOKEN" $APISERVER/api/v1/namespaces/<your-namespace>/pods
+
+
 jq '.data | reverse | map(select(.city | contains("madurai")))[:2]' your_file.json
 jq '.data | map(select(.city | contains("madurai"))) | reverse | .[:2]' your_file.json
 
