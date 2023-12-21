@@ -1,3 +1,38 @@
+
+import requests
+
+# GitLab API credentials and project information
+gitlab_url = 'https://gitlab.example.com'
+private_token = 'your_access_token'
+project_id = '29'
+schedule_id = '13'
+variable_key = 'NEW_VARIABLE'
+updated_value = 'updated value'
+
+# API endpoint URL
+url = f'{gitlab_url}/api/v4/projects/{project_id}/pipeline_schedules/{schedule_id}/variables/{variable_key}'
+
+# Headers
+headers = {
+    'PRIVATE-TOKEN': private_token,
+}
+
+# Form data
+data = {
+    'value': updated_value,
+}
+
+# Make the PUT request
+response = requests.put(url, headers=headers, data=data)
+
+# Check the response
+if response.status_code == 200:
+    print(f'Successfully updated variable "{variable_key}"')
+else:
+    print(f'Error updating variable: {response.status_code}, {response.text}')
+
+
+
 import gitlab
 import datetime
 
