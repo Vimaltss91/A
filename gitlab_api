@@ -4,6 +4,50 @@ import requests
 gitlab_url = 'https://gitlab.example.com'
 private_token = 'your_access_token'
 project_id = 'your_project_id'
+
+# Array of schedule names
+schedule_names = ['schedule1', 'schedule2', 'schedule3', 'schedule4', 'schedule5']
+
+# Variables to update for each schedule
+variables_to_update = {
+    'qa_release_tag': '23.5.0',
+    'dev_release_tag': '22.2.0',
+    'ga_release_tag': '10',
+}
+
+# Iterate through schedules and update variables
+for schedule_name in schedule_names:
+    for variable_key, updated_value in variables_to_update.items():
+        # API endpoint URL
+        url = f'{gitlab_url}/api/v4/projects/{project_id}/pipeline_schedules/{schedule_name}/variables/{variable_key}'
+
+        # Headers
+        headers = {
+            'PRIVATE-TOKEN': private_token,
+        }
+
+        # Form data
+        data = {
+            'value': updated_value,
+        }
+
+        # Make the PUT request
+        response = requests.put(url, headers=headers, data=data)
+
+        # Check the response
+        if response.status_code == 200:
+            print(f'Successfully updated variable "{variable_key}" for schedule "{schedule_name}"')
+        else:
+            print(f'Error updating variable for schedule "{schedule_name}": {response.status_code}, {response.text}')
+
+
+
+import requests
+
+# GitLab API credentials and project information
+gitlab_url = 'https://gitlab.example.com'
+private_token = 'your_access_token'
+project_id = 'your_project_id'
 schedule_suffix = '_A'
 
 # API endpoint URL to get pipeline schedules
