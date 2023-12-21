@@ -1,4 +1,50 @@
 
+
+import requests
+
+# GitLab API credentials and project information
+gitlab_url = 'https://gitlab.example.com'
+private_token = 'your_access_token'
+project_id = 'your_project_id'
+
+# Variables to update for each schedule
+variables_to_update = {
+    'schedule1': {'qa_release_tag': '23.5.0', 'dev_release_tag': '22.2.0', 'ga_release_tag': '10'},
+    'schedule2': {'qa_release_tag': '23.5.0', 'dev_release_tag': '22.2.0', 'ga_release_tag': '10'},
+    'schedule3': {'qa_release_tag': '23.5.0', 'dev_release_tag': '22.2.0', 'ga_release_tag': '10'},
+    'schedule4': {'qa_release_tag': '23.5.0', 'dev_release_tag': '22.2.0', 'ga_release_tag': '10'},
+    'schedule5': {'qa_release_tag': '23.5.0', 'dev_release_tag': '22.2.0', 'ga_release_tag': '10'},
+}
+
+# Iterate through schedules and update variables
+for schedule_name, variables in variables_to_update.items():
+    for variable_key, updated_value in variables.items():
+        # API endpoint URL
+        url = f'{gitlab_url}/api/v4/projects/{project_id}/pipeline_schedules/{schedule_name}/variables/{variable_key}'
+
+        # Headers
+        headers = {
+            'PRIVATE-TOKEN': private_token,
+        }
+
+        # Form data
+        data = {
+            'value': updated_value,
+        }
+
+        # Make the PUT request
+        response = requests.put(url, headers=headers, data=data)
+
+        # Check the response
+        if response.status_code == 200:
+            print(f'Successfully updated variable "{variable_key}" for schedule "{schedule_name}"')
+        else:
+            print(f'Error updating variable for schedule "{schedule_name}": {response.status_code}, {response.text}')
+
+
+==================================
+
+
 import requests
 
 # GitLab API credentials and project information
