@@ -1,4 +1,45 @@
+import requests
 
+# GitLab API credentials and project information
+gitlab_url = 'https://gitlab.example.com'
+private_token = 'your_access_token'
+project_id = 'your_project_id'
+schedule_suffix = '_A'
+
+# API endpoint URL to get pipeline schedules
+url = f'{gitlab_url}/api/v4/projects/{project_id}/pipeline_schedules'
+
+# Headers
+headers = {
+    'PRIVATE-TOKEN': private_token,
+}
+
+# Make the GET request to retrieve pipeline schedules
+response = requests.get(url, headers=headers)
+
+# Check the response
+if response.status_code == 200:
+    schedules = response.json()
+    schedule_ids_to_update = []
+
+    # Iterate through schedules and find those ending with "_A"
+    for schedule in schedules:
+        if schedule['name'].endswith(schedule_suffix):
+            schedule_ids_to_update.append(schedule['id'])
+
+    # Print schedule IDs to be used in the update script
+    print(f'Schedule IDs to update: {schedule_ids_to_update}')
+
+    # Continue with the update script (replace with your update script logic)
+    for schedule_id in schedule_ids_to_update:
+        # Your update logic here using the schedule_id
+        # ...
+
+else:
+    print(f'Error retrieving pipeline schedules: {response.status_code}, {response.text}')
+
+
+====================================
 
 import requests
 
