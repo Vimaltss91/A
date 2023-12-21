@@ -1,3 +1,80 @@
+import gitlab
+import datetime
+
+# GitLab API credentials and project information
+gitlab_url = 'https://gitlab.com'  # Update with your GitLab instance URL
+private_token = 'YOUR_PRIVATE_TOKEN'  # Replace with your GitLab private token
+project_id = 'your/project'  # Replace with your project ID or path (e.g., 'namespace/project')
+
+# Schedule information
+schedule_name = 'Trigger_NB'
+release_tag = '23.4.0'
+
+# Create a GitLab API client
+gl = gitlab.Gitlab(gitlab_url, private_token=private_token)
+
+# Find the project by ID or path
+project = gl.projects.get(project_id)
+
+# Get all CI/CD schedules for the project
+schedules = project.schedules.list()
+
+# Find the schedule with the specified name
+target_schedule = None
+for schedule in schedules:
+    if schedule.name == schedule_name:
+        target_schedule = schedule
+        break
+
+# Update the release_tag parameter in the schedule
+if target_schedule:
+    target_schedule.variables = [
+        {'key': 'release_tag', 'value': release_tag}
+    ]
+
+    # Save the changes
+    target_schedule.save()
+    print(f'Schedule "{schedule_name}" updated successfully.')
+else:
+    print(f'Schedule "{schedule_name}" not found.')
+
+--------------------------
+
+import requests
+
+# Replace with your GitLab credentials and schedule details
+gitlab_url = "https://gitlab.example.com"
+private_token = "your_personal_access_token"
+project_id = 12345
+pipeline_schedule_id = 67890
+
+headers = {
+    "Authorization": f"Bearer {private_token}",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "description": "Trigger_NB",  # Optional, update description if needed
+    "ref": "release_tag",
+    "cron": "0 1 * * *",  # Adjust cron expression as needed
+    "cron_timezone": "UTC",  # Specify desired time zone
+    "variables": [
+        { "key": "release_tag", "value": "23.4.0" }
+    ]
+}
+
+url = f"{gitlab_url}/api/v4/projects/{project_id}/pipeline_schedules/{pipeline_schedule_id}"
+
+response = requests.put(url, headers=headers, json=data)
+
+if response.status_code == 200:
+    print("Schedule updated successfully!")
+else:
+    print("Error updating schedule:", response.text)
+
+
+
+
 #!/bin/bash
 
 # Set your GitLab access token and project ID
