@@ -1,61 +1,77 @@
-from flask import Flask, jsonify
-from subprocess import check_output
+from flask import Flask, render_template
+import csv
 
 app = Flask(__name__)
 
-@app.route('/api/namespaces')
-def get_namespaces():
-    try:
-        # Run kubectl command to get namespaces
-        namespaces_bytes = check_output(['kubectl', 'get', 'ns', '-o', 'jsonpath={.items[*].metadata.name}'])
-        namespaces_str = namespaces_bytes.decode('utf-8').strip()
-        namespaces = namespaces_str.split()
+def read_data():
+    # Read the content of the datasheet file and parse it as CSV
+    data = []
+    with open('datasheet.txt', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            data.append(row)
+    return data
 
-        return jsonify({'namespaces': namespaces})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route('/')
+def index():
+    # Get the data from the datasheet file
+    data = read_data()
+
+    # Render the template with the list of rows
+    return render_template('index.html', data=data)
 
 if __name__ == '__main__':
     app.run(debug=True)
 
-python app.py
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Namespace Viewer</title>
+    <title>Simple UI</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;  /* Blue color for column headers */
+            color: #fff;  /* White text color for column headers */
+        }
+    </style>
 </head>
 <body>
-    <h1>Namespace Viewer</h1>
-    <div id="namespaces-list"></div>
-
-    <script>
-        async function fetchNamespaces() {
-            try {
-                const response = await fetch('http://localhost:5000/api/namespaces');
-                const data = await response.json();
-
-                if (response.ok) {
-                    displayNamespaces(data.namespaces);
-                } else {
-                    console.error('Error fetching namespaces:', data.error);
-                }
-            } catch (error) {
-                console.error('Error fetching namespaces:', error.message);
-            }
-        }
-
-        function displayNamespaces(namespaces) {
-            const namespacesList = document.getElementById('namespaces-list');
-            const namespacesHTML = namespaces.map(namespace => `<div>${namespace}</div>`).join('');
-            namespacesList.innerHTML = `<h2>Available Namespaces</h2>${namespacesHTML}`;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchNamespaces();
-        });
-    </script>
+    <table>
+        <thead>
+            <tr>
+                <th>Namespace</th>
+                <th>Active</th>
+                <th>CreationDate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row['Namespace'] }}</td>
+                    <td>{{ row['Active'] }}</td>
+                    <td>{{ row['CreationDate'] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
+
+
+Namespace,Active,CreationDate
+Namespace-1,Active,23_04_1991
+Namespace-2,InActive,01_01_01
+Namespace-3,Active,02_09_09
