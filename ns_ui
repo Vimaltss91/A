@@ -1,0 +1,61 @@
+from flask import Flask, jsonify
+from subprocess import check_output
+
+app = Flask(__name__)
+
+@app.route('/api/namespaces')
+def get_namespaces():
+    try:
+        # Run kubectl command to get namespaces
+        namespaces_bytes = check_output(['kubectl', 'get', 'ns', '-o', 'jsonpath={.items[*].metadata.name}'])
+        namespaces_str = namespaces_bytes.decode('utf-8').strip()
+        namespaces = namespaces_str.split()
+
+        return jsonify({'namespaces': namespaces})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+python app.py
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Namespace Viewer</title>
+</head>
+<body>
+    <h1>Namespace Viewer</h1>
+    <div id="namespaces-list"></div>
+
+    <script>
+        async function fetchNamespaces() {
+            try {
+                const response = await fetch('http://localhost:5000/api/namespaces');
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayNamespaces(data.namespaces);
+                } else {
+                    console.error('Error fetching namespaces:', data.error);
+                }
+            } catch (error) {
+                console.error('Error fetching namespaces:', error.message);
+            }
+        }
+
+        function displayNamespaces(namespaces) {
+            const namespacesList = document.getElementById('namespaces-list');
+            const namespacesHTML = namespaces.map(namespace => `<div>${namespace}</div>`).join('');
+            namespacesList.innerHTML = `<h2>Available Namespaces</h2>${namespacesHTML}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchNamespaces();
+        });
+    </script>
+</body>
+</html>
