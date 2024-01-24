@@ -1,4 +1,5 @@
-sed -i "/\"IGW\"}{\"host\": \".*\"/{s/\"host\": \".*\"/\"host\": \"${HELM_RELEASE}-occnp-ingress-gateway.${K8S_NAMESPACE}.svc\"/}}" test.json
+sed -i "/\"IGW\"}{\"host\": \".*\"/{s/\"host\": \".*\"/\"host\": \"${HELM_RELEASE}-occnp-ingress-gateway.${K8S_NAMESPACE}.svc\"/;}" test.json
+
 
 
 # Get the Kubernetes API server URL
