@@ -1,3 +1,32 @@
+#!/bin/bash
+
+BASTION_HOST="your_bastion_host"
+BASTION_USER="your_bastion_user"
+BASTION_PORT="your_bastion_port"
+TARGET_HOST="your_target_host"
+TARGET_USER="your_target_user"
+
+# Function to check if the bastion host is reachable
+check_bastion_reachability() {
+    ssh -q -o "BatchMode=yes" -o "ConnectTimeout=5" -p "$BASTION_PORT" "$BASTION_USER@$BASTION_HOST" exit
+    return $?
+}
+
+# Main script
+if check_bastion_reachability; then
+    echo "Bastion host is reachable. Proceeding with sshpass script."
+
+    # You can add your sshpass command or other actions here
+    # Example:
+    # sshpass -p 'your_password' ssh -o "ProxyJump=$BASTION_USER@$BASTION_HOST:$BASTION_PORT" "$TARGET_USER@$TARGET_HOST" 'your_command'
+
+else
+    echo "Bastion host is not reachable. Exiting script."
+    exit 1
+fi
+
+
+
 sed -i "/\"IGW\"}{\"host\": \".*\"/{s/\"host\": \".*\"/\"host\": \"${HELM_RELEASE}-occnp-ingress-gateway.${K8S_NAMESPACE}.svc\"/;}" test.json
 sed -i "/\"IGW\"}{\"host\": \".*\"/{s/\"host\": \".*\"/\"host\": \"${HELM_RELEASE}-occnp-ingress-gateway.${K8S_NAMESPACE}.svc\"/;}" test.json
 sed -i '/"IGW"}{/"host": ".*"/{s/"host": ".*"/"host": "'"$HELM_RELEASE"'-occnp-ingress-gateway.'"$K8S_NAMESPACE"'.svc"/}}' test.json
