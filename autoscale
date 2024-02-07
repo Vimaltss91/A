@@ -1,3 +1,5 @@
+echo "$original_string" | sed "s/^FROM:.*/$replacement_string/"
+
 kubectl api-resources --verbs=list --namespaced -o name | xargs -n 1 -I {} sh -c 'echo "Resource: {}"; kubectl get --show-kind --namespace <namespace> {} || echo "No resources found for {}"'
 
 
