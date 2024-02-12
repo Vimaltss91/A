@@ -1,3 +1,5 @@
+Individual images experience a reduction of 150 to 200 MB, but TGA image compression remains unaffected. Docker save efficiency is limited due to diverse dependencies across services.
+
 extracted_strings=$(echo "$input_string" | sed -n 's/.*href="\([^"]*\.yaml\)".*/\1/p')
 
 echo "$original_string" | sed "s/^FROM:.*/$replacement_string/"
