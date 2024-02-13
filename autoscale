@@ -1,3 +1,6 @@
+We need to create a separate compartment in OCI for OCPM. As part of the process, we have to raise a ticket to the OCI team to handle the creation of the compartment and the movement of resources from the existing compartment. However, the OCI team is currently facing issues with OIM, causing a delay in their response. It's possible that Bilial can assist in resolving this matter.
+
+
 Transition to JRE Integration
 
 We've optimized our system by transitioning to using JRE instead of a full JDK image. This allows us to include only the necessary dependencies, rather than shipping all JDK modules along with the Java compiler.
