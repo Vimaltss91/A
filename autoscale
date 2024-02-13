@@ -1,3 +1,18 @@
+JRE Integration instead of JDK Image
+
+Objective:
+To optimize our system, we've shifted from using JDK images to JRE images, allowing us to ship only the necessary dependencies rather than the entire JDK with the Java compiler.
+
+Dependency Identification:
+We've used static analysis with jlink to identify project dependencies and documented them in "module.dep." However, it's worth noting that static analysis may not capture all runtime dependencies. Notably, we've identified the need for jdk.crypto.cryptoki for SSL-related dependencies and included tools like jdep and jstack from the jdk.cmd module for debugging and logging purposes, as per the development team's request.
+
+Test Results:
+After integrating the identified dependencies, we conducted various tests, including ATS regression tests, testing of new features, and contract tests. All test results have been positive. However, we acknowledge that this may not cover all necessary Java packages.
+
+Package Size Reduction:
+While we didn't observe a significant reduction in normal package sizes due to Docker's compression limitations, the sizes of server and CSAR image packages have decreased from 12GB to 9GB. Moreover, individual image sizes have been reduced by 100 to 150MB.
+
+
 Individual images experience a reduction of 150 to 200 MB, but TGA image compression remains unaffected. Docker save efficiency is limited due to diverse dependencies across services.
 
 extracted_strings=$(echo "$input_string" | sed -n 's/.*href="\([^"]*\.yaml\)".*/\1/p')
