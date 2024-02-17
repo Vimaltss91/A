@@ -1,3 +1,6 @@
+kubectl get ns -o=json | jq -r '.items[] | select((now - (.metadata.creationTimestamp | fromdateiso8601)) > 86400) | .metadata.name, .metadata.creationTimestamp'
+
+
 kubectl get ns -o=jsonpath='{range .items[?(@.metadata.creationTimestamp < (now()-86400000))]}{.metadata.name}{"\t"}{.metadata.creationTimestamp}{"\n"}{end}' | awk '{print $1, "created more than 24 hours ago at", $2}'
 
 
