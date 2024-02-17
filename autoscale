@@ -1,4 +1,5 @@
-kubectl get nodes --sort-by=.metadata.creationTimestamp -o json | tail -n 30 | jq -r '.items[].metadata.name' | xargs -I {} kubectl cordon {}
+kubectl get nodes --sort-by=.metadata.creationTimestamp -o json | jq -r '.items[-30:].metadata.name' | xargs -I {} kubectl cordon {}
+
 
 
 sudo journalctl -u kubelet | grep <pod_name>
