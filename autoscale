@@ -1,3 +1,6 @@
+sudo journalctl -u kubelet | grep <pod_name>
+
+
 kubectl get ns -o=json | jq -r '.items[] | select((now - (.metadata.creationTimestamp | fromdateiso8601)) > 86400) | .metadata.name, .metadata.creationTimestamp'
 
 
