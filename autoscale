@@ -1,3 +1,5 @@
+kubectl get ns -o=json | jq -r '.items[] | select((now - (.metadata.creationTimestamp | fromdate)) | . >= 86400) | .metadata.name'
+
 Subject: Check for Addition of Parental Policy
 
 Dear [Medi Assist Representative/HR Manager],
