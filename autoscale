@@ -1,3 +1,13 @@
+Let's initiate the discussion regarding the DB-tier.
+
+Background: The DB-tier team has released version 24.1.0-rc.1. However, our deployment script is encountering failures during installation, as reported in a current ticket. Nevertheless, the QA team has managed to deploy using DB replicas without the installation script.
+
+Discussion Points:
+
+The deployment script needs to accommodate for General Release (GR) conditions to ensure seamless installation.
+We should assess the resource impact of deploying with DB replicas as an alternative solution.
+
+
 kubectl get nodes --sort-by=.metadata.creationTimestamp -o json | jq -r '.items[-30:].metadata.name' | xargs -I {} kubectl cordon {}
 kubectl get nodes --no-headers | shuf -n 30 | awk '{print $1}' | xargs -I {} kubectl cordon {}
 
