@@ -1,3 +1,7 @@
+In our testing with the JRE base image, we noticed a reduction in image size by approximately 200 MB. However, when we create a tar file containing all images, we don't observe a significant reduction in the size of the resulting tgz file. We suspect that this could be due to differences in module dependencies for each service, leading to variations in Docker layers and contributing to increased size.
+
+We're curious about how other companies, like SCP, have addressed this issue. Do they utilize a common module dependency configuration shared across all services?
+
 Let's initiate the discussion regarding the DB-tier.
 
 Background: The DB-tier team has released version 24.1.0-rc.1. However, our deployment script is encountering failures during installation, as reported in a current ticket. Nevertheless, the QA team has managed to deploy using DB replicas without the installation script.
