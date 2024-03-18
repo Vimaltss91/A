@@ -1,3 +1,6 @@
+sed -i '' '/statusCheck:/,/replication:/ {/enable: true/ s/enable: true/enable: false/}' values.yaml
+
+
 sed -i '' '/statusCheck:/,/replication:/ s/enable: true/enable: false/' values.yaml
 
 
