@@ -1,13 +1,4 @@
-Problem Summary:
-Intermittent connectivity issues encountered while using OCI VM as a bastion to connect to the OKE Cluster.
-
-Problem Description:
-Users are facing recurring connectivity problems when attempting to connect to the OKE Cluster via the OCI VM bastion. The issues manifest as follows:
-
-Users encounter an "Unauthorised" error message (Timestamp: Mar 18 22:16).
-Installation failures occur with a message indicating the server requires client credentials (Timestamp: Mar 15 15:07 - 15:10).
-Connectivity problems are reported with a "context deadline exceeded" error (Timestamp: Mar 13 05:04 - 05:10).
-We seek investigation into the intermittent nature of these issues and clarification on whether server-side problems are contributing to these occurrences.
+sed -i '/^\s*replication:/,/^\s*\S\+:/ { /^\s*enable:/ s/true/false/ }' custom_values.yaml
 
 sed -i '' '/^ *statusCheck:/,/^ *replication:/ {/^ *enable: true/ s/^ *enable: true/    enable: false/}' values.yaml
 
