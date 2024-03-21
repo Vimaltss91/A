@@ -1,3 +1,13 @@
+jlink: This is a tool provided by the JDK (Java Development Kit) that is used to create a custom Java runtime image.
+
+--add-modules: This option specifies the modules to include in the custom runtime image. It takes the list of modules from the 'module.dep' file using the 'cat' command.
+
+$(cat module.dep): This part of the command dynamically retrieves the list of modules from the 'module.dep' file and passes them as arguments to the '--add-modules' option.
+
+--output ./ocpmslimjre: This option specifies the output directory where the custom runtime image will be created. In this case, it's creating a directory named 'ocpmslimjre' in the current directory ('./').
+
+So, overall, this command creates a custom Java runtime image named 'ocpmslimjre', including the modules listed in the 'module.dep' file.
+
 For Developers: How to Determine JRE Modules for a Project
 
 When it comes to identifying the required modules for the JRE in a project, developers need to follow specific steps. Here's a guide tailored for the 'notifier' project:
