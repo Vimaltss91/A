@@ -1,3 +1,9 @@
+"Hey there! I've set up a Confluence page to keep track of a few things:
+
+Cleaning up stale branches across all projects.
+Closing any lingering merge requests that are no longer relevant or have been open for a while.
+Spotting any jobs that run longer than 8 to 10 hours and exploring ways to optimize them. Additionally, we'll review the expiration time of artifacts if they're being utilized."
+
 sed -i '/^\s*replication:/,/^\s*\S\+:/ { /^\s*enable:/ s/true/false/ }' custom_values.yaml
 
 sed -i '' '/^ *statusCheck:/,/^ *replication:/ {/^ *enable: true/ s/^ *enable: true/    enable: false/}' values.yaml
