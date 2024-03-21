@@ -1,3 +1,19 @@
+Subject: Important: Guide for Developers on Generating and Testing JRE Modules
+
+Hi Team,
+
+I hope this email finds you well. I wanted to inform you that with the recent merge of the JRE changes, we've prepared a comprehensive guide for developers to navigate through the process of generating and testing JRE modules.
+
+You can find the guide page [insert link here], which provides clear instructions and best practices for generating and testing JRE modules effectively.
+
+We believe that this guide will streamline the integration process and ensure smoother development workflows for everyone involved. If you have any questions or need further clarification, please don't hesitate to reach out.
+
+Thank you for your attention to this matter.
+
+Best regards,
+[Your Name]
+
+
 jlink: This is a tool provided by the JDK (Java Development Kit) that is used to create a custom Java runtime image.
 
 --add-modules: This option specifies the modules to include in the custom runtime image. It takes the list of modules from the 'module.dep' file using the 'cat' command.
