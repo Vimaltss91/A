@@ -1,3 +1,8 @@
+For Developers: How to Determine JRE Modules for a Project
+
+When it comes to identifying the required modules for the JRE in a project, developers need to follow specific steps. Here's a guide tailored for the 'notifier' project:
+
+
 "Hey there! I've set up a Confluence page to keep track of a few things:
 
 Cleaning up stale branches across all projects.
