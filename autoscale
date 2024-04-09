@@ -1,1 +1,4 @@
+pip install my_package --extra-index-url=https://username:api_key@artifactory.example.com/python-repo
+
+
 env | sed 's/^\(.*\)$/export \1/' > .env
