@@ -49,3 +49,34 @@ def delete_artifacts():
 # Call the function to delete artifacts
 delete_artifacts()
 
+
+
+import requests
+
+# GitLab Personal Access Token
+token = 'YOUR_PERSONAL_ACCESS_TOKEN'
+
+# GitLab project ID
+project_id = 'YOUR_PROJECT_ID'
+
+# GitLab base URL
+base_url = 'https://gitlab.com/api/v4'
+
+def get_jobs():
+    # Get all jobs in the project
+    jobs_url = f"{base_url}/projects/{project_id}/jobs"
+    headers = {'Private-Token': token}
+    response = requests.get(jobs_url, headers=headers)
+    
+    if response.status_code == 200:
+        jobs = response.json()
+        return jobs
+    else:
+        print(f"Failed to fetch jobs. Status code: {response.status_code}")
+        return []
+
+# Call the function to get list of jobs
+jobs_list = get_jobs()
+print(jobs_list)
+
+
