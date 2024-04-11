@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime, timedelta
 
 # GitLab Personal Access Token
 token = 'YOUR_PERSONAL_ACCESS_TOKEN'
@@ -34,12 +35,24 @@ def get_all_jobs(max_pages=100):
 
     return jobs
 
+def get_old_jobs(jobs, days=60):
+    old_jobs = []
+    threshold_date = datetime.now() - timedelta(days=days)
+    for job in jobs:
+        created_at = datetime.strptime(job['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        if created_at < threshold_date:
+            old_jobs.append(job)
+    return old_jobs
+
 # Call the function to get all jobs (with a maximum of 100 pages)
 all_jobs = get_all_jobs(max_pages=100)
 
+# Filter jobs older than 60 days
+old_jobs = get_old_jobs(all_jobs, days=60)
+
 # Extract job IDs
-job_ids = [job['id'] for job in all_jobs]
-print("All Job IDs:", job_ids)
+old_job_ids = [job['id'] for job in old_jobs]
+print("Job IDs older than 60 days:", old_job_ids)
 
 
 
