@@ -9,18 +9,18 @@ project_id = 'YOUR_PROJECT_ID'
 # GitLab base URL
 base_url = 'https://gitlab.com/api/v4'
 
-def get_all_jobs():
+def get_all_jobs(max_pages=100):
     jobs = []
     page = 1
     per_page = 100  # Maximum items per page
 
-    while True:
+    while page <= max_pages:
         # Get jobs for the current page
         jobs_url = f"{base_url}/projects/{project_id}/jobs?page={page}&per_page={per_page}"
         headers = {'Private-Token': token}
         response = requests.get(jobs_url, headers=headers)
 
-        if response.status_code == 200:
+        if response.ok:
             jobs_page = response.json()
             jobs.extend(jobs_page)
             # Check if there are more pages
@@ -34,12 +34,13 @@ def get_all_jobs():
 
     return jobs
 
-# Call the function to get all jobs
-all_jobs = get_all_jobs()
+# Call the function to get all jobs (with a maximum of 100 pages)
+all_jobs = get_all_jobs(max_pages=100)
 
 # Extract job IDs
 job_ids = [job['id'] for job in all_jobs]
 print("All Job IDs:", job_ids)
+
 
 
 
