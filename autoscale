@@ -1,4 +1,49 @@
 import requests
+
+# GitLab Personal Access Token
+token = 'YOUR_PERSONAL_ACCESS_TOKEN'
+
+# GitLab project ID
+project_id = 'YOUR_PROJECT_ID'
+
+# GitLab base URL
+base_url = 'https://gitlab.com/api/v4'
+
+def get_all_jobs():
+    jobs = []
+    page = 1
+    per_page = 100  # Maximum items per page
+
+    while True:
+        # Get jobs for the current page
+        jobs_url = f"{base_url}/projects/{project_id}/jobs?page={page}&per_page={per_page}"
+        headers = {'Private-Token': token}
+        response = requests.get(jobs_url, headers=headers)
+
+        if response.status_code == 200:
+            jobs_page = response.json()
+            jobs.extend(jobs_page)
+            # Check if there are more pages
+            if len(jobs_page) < per_page:
+                break
+            else:
+                page += 1
+        else:
+            print(f"Failed to fetch jobs. Status code: {response.status_code}")
+            break
+
+    return jobs
+
+# Call the function to get all jobs
+all_jobs = get_all_jobs()
+
+# Extract job IDs
+job_ids = [job['id'] for job in all_jobs]
+print("All Job IDs:", job_ids)
+
+
+
+import requests
 from datetime import datetime, timedelta
 
 # GitLab Personal Access Token
