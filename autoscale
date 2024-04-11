@@ -1,3 +1,66 @@
+import requests
+from datetime import datetime, timedelta
+
+# GitLab Personal Access Token
+token = 'YOUR_PERSONAL_ACCESS_TOKEN'
+
+# GitLab project ID
+project_id = 'YOUR_PROJECT_ID'
+
+# GitLab base URL
+base_url = 'https://gitlab.com/api/v4'
+
+def get_jobs():
+    # Get all jobs in the project
+    jobs_url = f"{base_url}/projects/{project_id}/jobs"
+    headers = {'Private-Token': token}
+    response = requests.get(jobs_url, headers=headers)
+    
+    if response.status_code == 200:
+        jobs = response.json()
+        return jobs
+    else:
+        print(f"Failed to fetch jobs. Status code: {response.status_code}")
+        return []
+
+def delete_artifacts():
+    # Calculate date 3 months ago
+    three_months_ago = datetime.now() - timedelta(days=90)
+
+    # Get all jobs in the project
+    jobs = get_jobs()
+    
+    for job in jobs:
+        # Get artifacts for each job
+        artifacts_url = f"{base_url}/projects/{project_id}/jobs/{job['id']}/artifacts"
+        response = requests.get(artifacts_url, headers={'Private-Token': token})
+        
+        if response.status_code == 200:
+            # Ensure that the response contains 'artifacts' key
+            if 'artifacts' in response.json():
+                artifacts = response.json()['artifacts']
+                for artifact in artifacts:
+                    # Get creation date of the artifact
+                    created_at = datetime.strptime(artifact['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
+                    # Check if the artifact is older than 3 months
+                    if created_at < three_months_ago:
+                        # Delete the artifact
+                        delete_artifact_url = f"{base_url}/projects/{project_id}/jobs/{job['id']}/artifacts/{artifact['file_type']}"
+                        response = requests.delete(delete_artifact_url, headers={'Private-Token': token})
+                        if response.status_code == 204:
+                            print(f"Deleted artifact for job {job['id']}")
+                        else:
+                            print(f"Failed to delete artifact for job {job['id']}")
+            else:
+                print("No artifacts found for job ", job['id'])
+        else:
+            print(f"Failed to fetch artifacts for job {job['id']}")
+
+# Call the function to delete artifacts
+delete_artifacts()
+
+
+
 pip install my_package --extra-index-url=https://username:api_key@artifactory.example.com/python-repo
 
 
