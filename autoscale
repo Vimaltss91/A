@@ -44,15 +44,24 @@ def get_old_jobs(jobs, days=60):
             old_jobs.append(job)
     return old_jobs
 
+def has_artifacts(job_id):
+    artifacts_url = f"{base_url}/projects/{project_id}/jobs/{job_id}/artifacts"
+    response = requests.get(artifacts_url, headers={'Private-Token': token})
+    return response.ok
+
 # Call the function to get all jobs (with a maximum of 100 pages)
 all_jobs = get_all_jobs(max_pages=100)
 
 # Filter jobs older than 60 days
 old_jobs = get_old_jobs(all_jobs, days=60)
 
+# Check if old jobs have artifacts
+old_jobs_with_artifacts = [job for job in old_jobs if has_artifacts(job['id'])]
+
 # Extract job IDs
-old_job_ids = [job['id'] for job in old_jobs]
-print("Job IDs older than 60 days:", old_job_ids)
+old_job_ids_with_artifacts = [job['id'] for job in old_jobs_with_artifacts]
+print("Job IDs older than 60 days with artifacts:", old_job_ids_with_artifacts)
+
 
 
 
