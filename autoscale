@@ -1,3 +1,5 @@
+ we're seeking assistance in removing artifacts that are older than two weeks while keeping the pipeline intact. We recall that in the past, SDaaS (Software Delivery as a Service) aided us in specifically removing artifacts
+
 import requests
 from datetime import datetime, timedelta
 
