@@ -1,4 +1,7 @@
- we're seeking assistance in removing artifacts that are older than two weeks while keeping the pipeline intact. We recall that in the past, SDaaS (Software Delivery as a Service) aided us in specifically removing artifacts
+Each job produces log artifacts necessary for reviewing its details, akin to the job's existence itself. Storing these artifacts consumes a certain amount of storage space. For example, a typical job like the SM contract test job occupies approximately 6 to 7 MB of storage per instance.
+
+
+we're seeking assistance in removing artifacts that are older than two weeks while keeping the pipeline intact. We recall that in the past, SDaaS (Software Delivery as a Service) aided us in specifically removing artifacts
 
 import requests
 from datetime import datetime, timedelta
