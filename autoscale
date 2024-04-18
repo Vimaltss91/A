@@ -1,3 +1,5 @@
+The setting readOnlyRootFileSystem: true in the security context restricts write operations within the pod, primarily affecting file modifications in read-only mode. However, write permissions are still available within certain directories, such as /tmp, where volume mounts are permitted. If there's a requirement for write permissions elsewhere, it would be advisable to consult with the security team to ensure compliance with established policies.
+
 How can I enroll parents as part of the program? Initially, parents were not considered voluntary participants, but now I aim to include them under the GMC. However, it appears that this isn't permissible. It would be beneficial to provide an alternative method for adding parents.
 
 
