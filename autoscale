@@ -1,1 +1,2 @@
-Each job automatically generates a default artifact, typically a job log, which is stored for reference. Additionally, users have the option to store additional logs or files using specified artifact paths and filenames. These additional artifacts can be stored with an expiry time, after which they are automatically deleted.
+
+We're scheduling a maintenance window this Friday to upgrade OCI Kubernetes to version 1.27. Please plan your pre-development schedule accordingly. We'll update here once the upgrades are completed.
