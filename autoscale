@@ -8,3 +8,7 @@ DEPLOYMENTS=$(kubectl get deployments -n $NAMESPACE -o=jsonpath='{.items[*].meta
 for deployment in $DEPLOYMENTS; do
     kubectl scale deployment $deployment --replicas=0 -n $NAMESPACE
 done
+
+
+kubectl get secret $(kubectl get serviceaccount <service-account-name> -o jsonpath='{.secrets[0].name}') -o jsonpath='{.data.token}' | base64 --decode
+
