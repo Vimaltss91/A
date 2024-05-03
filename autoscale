@@ -1,2 +1,10 @@
 
-We're scheduling a maintenance window this Friday to upgrade OCI Kubernetes to version 1.27. Please plan your pre-development schedule accordingly. We'll update here once the upgrades are completed.
+NAMESPACE=<your-namespace>
+
+# Get a list of all deployments in the namespace
+DEPLOYMENTS=$(kubectl get deployments -n $NAMESPACE -o=jsonpath='{.items[*].metadata.name}')
+
+# Loop through each deployment and scale down to 0 replicas
+for deployment in $DEPLOYMENTS; do
+    kubectl scale deployment $deployment --replicas=0 -n $NAMESPACE
+done
