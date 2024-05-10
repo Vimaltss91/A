@@ -14,3 +14,6 @@ pip install --extra-index-url=https://username:password@example.com/repository/s
 
 kubectl get secret $(kubectl get serviceaccount <service-account-name> -o jsonpath='{.secrets[0].name}') -o jsonpath='{.data.token}' | base64 --decode
 
+./gradlew dependencyInsight --configuration compileClasspath | grep -A 1 "Requested dependencies" | grep "from \['" | sed "s/.*from \['\(.*\)'\].*/\1/" | sort | uniq -c
+
+
