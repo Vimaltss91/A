@@ -9,6 +9,8 @@ for deployment in $DEPLOYMENTS; do
     kubectl scale deployment $deployment --replicas=0 -n $NAMESPACE
 done
 
+pip install --extra-index-url=https://username:password@example.com/repository/simple --trusted-host example.com <package_name>
+
 
 kubectl get secret $(kubectl get serviceaccount <service-account-name> -o jsonpath='{.secrets[0].name}') -o jsonpath='{.data.token}' | base64 --decode
 
