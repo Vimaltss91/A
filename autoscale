@@ -1,3 +1,38 @@
+#!/bin/bash
+
+# Define the SSH user and hostname (replace with your details)
+SSH_USER="your_username"
+SSH_HOST="your_host"
+
+# Define the directory to clone projects into (optional)
+PROJECTS_DIR="projects"
+
+# Read project names from a file (optional)
+# Replace "projects.txt" with your file name
+# uncomment the following line to use a file
+# PROJECT_NAMES=( $(cat projects.txt) )
+
+# Define project names directly in the script (alternative)
+PROJECT_NAMES=("project1" "project2" "project3")
+
+# Loop through project names
+for project in "${PROJECT_NAMES[@]}"; do
+  # Check if projects directory exists (if defined)
+  if [[ ! -z "$PROJECTS_DIR" ]]; then
+    mkdir -p "$PROJECTS_DIR"
+  fi
+
+  # Build the SSH URL for the project
+  ssh_url="ssh://${SSH_USER}@${SSH_HOST}/${project}.git"
+
+  # Clone the project using SSH
+  git clone "$ssh_url" "${PROJECTS_DIR:-$project}"
+
+  # Print success message
+  echo "Cloned project: $project"
+done
+
+echo "All projects cloned!"
 
 NAMESPACE=<your-namespace>
 
