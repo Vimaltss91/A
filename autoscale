@@ -1,5 +1,36 @@
 #!/bin/bash
 
+# Directory containing all your cloned projects
+projects_dir="/path/to/your/projects"
+
+# Loop through each project directory
+for project in "$projects_dir"/*; do
+  if [ -d "$project/.git" ]; then
+    echo "Entering $project"
+    cd "$project" || continue
+
+    # Check the current branch
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+    # Check for committed changes that haven't been pushed
+    if git log origin/"$current_branch"..HEAD | grep -q "commit"; then
+      echo "Pushing committed changes in $project on branch $current_branch"
+      git push origin "$current_branch"
+    else
+      echo "No committed changes to push in $project on branch $current_branch"
+    fi
+
+    # Go back to the projects directory
+    cd "$projects_dir" || exit
+  else
+    echo "$project is not a git repository"
+  fi
+done
+
+
+
+#!/bin/bash
+
 # Define the SSH user and hostname (replace with your details)
 SSH_USER="your_username"
 SSH_HOST="your_host"
