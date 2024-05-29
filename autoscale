@@ -1,3 +1,6 @@
+pip install --extra-index-url https://username:password@your.jfrog.io/artifactory/api/pypi/your-repo-name/simple/ package-name
+
+
 kube_pod_status_phase{phase="Running", namespace="your-namespace", pod=~".*ingress-gateway.*"} == 0
 
 
