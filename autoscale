@@ -1,3 +1,55 @@
+#!/bin/bash
+
+# Configuration
+NAMESPACE="your_namespace"
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/your/slack/webhook"
+CHECK_INTERVAL=300  # 5 minutes
+CHECK_FILE="/tmp/ingress_pod_check"
+
+# Function to send a Slack notification
+send_slack_notification() {
+    local pod_name=$1
+    local pod_status=$2
+    curl -X POST -H 'Content-type: application/json' --data "{
+        \"text\": \"Pod $pod_name is not in Running status. Current status: $pod_status\"
+    }" $SLACK_WEBHOOK_URL
+}
+
+# Function to check pod statuses
+check_pods() {
+    local non_running_pods=()
+    while read -r line; do
+        pod_name=$(echo $line | awk '{print $1}')
+        pod_status=$(echo $line | awk '{print $3}')
+        if [[ $pod_status != "Running" ]]; then
+            non_running_pods+=("$pod_name:$pod_status")
+        fi
+    done <<< "$(kubectl get pods -n $NAMESPACE | grep ingress)"
+
+    echo "${non_running_pods[@]}"
+}
+
+# Main loop
+while true; do
+    current_check=$(check_pods)
+    previous_check=$(cat $CHECK_FILE 2>/dev/null || echo "")
+
+    if [[ -n $current_check ]]; then
+        for pod_info in $current_check; do
+            pod_name=$(echo $pod_info | cut -d':' -f1)
+            pod_status=$(echo $pod_info | cut -d':' -f2)
+
+            if [[ $previous_check == *"$pod_name:$pod_status"* ]]; then
+                send_slack_notification $pod_name $pod_status
+            fi
+        done
+    fi
+
+    echo $current_check > $CHECK_FILE
+    sleep $CHECK_INTERVAL
+done
+
+
 sum(kube_pod_container_resource_requests_memory_bytes) by (node)
 
 
