@@ -1,3 +1,6 @@
+sum(kube_pod_container_resource_requests_memory_bytes) by (node)
+
+
 max_over_time(
   container_memory_usage_bytes{namespace="your_namespace", container!="POD", container!=""}[1h]
 ) * on(pod) group_left() (
