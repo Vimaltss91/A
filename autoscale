@@ -1,3 +1,10 @@
+max_over_time(
+  container_memory_usage_bytes{namespace="your_namespace", container!="POD", container!=""}[1h]
+) * on(pod) group_left() (
+  increase(kube_pod_container_status_restarts_total{namespace="your_namespace"}[1h]) > 0
+)
+
+
 #!/bin/bash
 
 # Directory containing all your cloned projects
