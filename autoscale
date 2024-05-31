@@ -1,3 +1,18 @@
+kube_pod_info{node="node-name", job="kube-state-metrics"} offset 1h
+
+(
+  kube_pod_info{node="worker-node-1", job="kube-state-metrics"} offset 1h
+  or
+  kube_pod_info{node="worker-node-2", job="kube-state-metrics"} offset 1h
+)
+
+(
+  kube_pod_info{node="worker-node-1", job="kube-state-metrics"} @ 2024-05-31T11:00:00Z
+  or
+  kube_pod_info{node="worker-node-2", job="kube-state-metrics"} @ 2024-05-31T11:00:00Z
+)
+
+
 kube_pod_status_phase * on(pod, namespace) group_left(node) (kube_pod_info * on(node) group_left(pod) kube_node_info)
 
 label_join(kube_pod_info, "node", "node", "node") * on (node) group_left(pod) kube_node_info
