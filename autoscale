@@ -1,3 +1,38 @@
+task resolveDependencies {
+    doLast {
+        def repoCounts = [:]
+
+        configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            def repoName = getRepositoryName(artifact.file.absolutePath)
+            if (repoCounts.containsKey(repoName)) {
+                repoCounts[repoName]++
+            } else {
+                repoCounts[repoName] = 1
+            }
+        }
+
+        println "Dependency counts by repository:"
+        repoCounts.each { repoName, count ->
+            println "$repoName: $count"
+        }
+    }
+}
+
+def getRepositoryName(filePath) {
+    if (filePath.contains("repo1.example.com")) {
+        return "repo1"
+    } else if (filePath.contains("repo2.example.com")) {
+        return "repo2"
+    } else {
+        return "mavenCentral"
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn resolveDependencies
+}
+
+
 plugins {
     id 'java'
 }
