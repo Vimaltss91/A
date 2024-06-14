@@ -1,3 +1,76 @@
+package com.example
+
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+class DependencyReportPlugin implements Plugin<Project> {
+    void apply(Project project) {
+        project.task('dependencyReport') {
+            doLast {
+                def repo1Count = 0
+                def repo2Count = 0
+                def mavenCentralCount = 0
+                def otherRepoCount = 0
+
+                project.configurations.each { configuration ->
+                    configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+                        def repoUrl = artifact.id.componentIdentifier.repository
+
+                        if (repoUrl == "https://repo1.example.com/maven2") {
+                            repo1Count++
+                        } else if (repoUrl == "https://repo2.example.com/maven2") {
+                            repo2Count++
+                        } else if (repoUrl == "https://repo.maven.apache.org/maven2") {
+                            mavenCentralCount++
+                        } else {
+                            otherRepoCount++
+                        }
+                    }
+                }
+
+                println "Dependencies downloaded from repo1: $repo1Count"
+                println "Dependencies downloaded from repo2: $repo2Count"
+                println "Dependencies downloaded from Maven Central: $mavenCentralCount"
+                println "Dependencies downloaded from other repositories: $otherRepoCount"
+            }
+        }
+    }
+}
+
+
+
+plugins {
+    id 'java'
+    id 'com.example.dependency-report-plugin'
+}
+
+group 'com.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven {
+        url "https://repo1.example.com/maven2"
+    }
+    maven {
+        url "https://repo2.example.com/maven2"
+    }
+    mavenCentral() // Optional
+}
+
+dependencies {
+    implementation 'com.example:some-dependency:1.0.0'
+    testImplementation 'junit:junit:4.12'
+}
+
+tasks.register('buildWithDependencyReport') {
+    dependsOn 'build'
+    finalizedBy 'dependencyReport'
+}
+
+
+gradle buildWithDependencyReport
+
+
 gradle dependencyInsight --dependency your-dependency-name --configuration compileClasspath --debug
 
 
