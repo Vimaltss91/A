@@ -1,3 +1,37 @@
+task resolveDependencies {
+    doLast {
+        def opensourcereleasemavenCount = 0
+        def opensourcereleasegradleCount = 0
+        def mavenCentralCount = 0
+        def otherRepoCount = 0
+
+        configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            def moduleId = artifact.moduleVersion.id
+            def repoUrl = artifact.file.toURI().toString()
+
+            if (repoUrl.contains("open-source-release-maven")) {
+                opensourcereleasemavenCount++
+            } else if (repoUrl.contains("open-source-release-gradle")) {
+                opensourcereleasegradleCount++
+            } else if (repoUrl.contains("repo.maven.apache.org")) {
+                mavenCentralCount++
+            } else {
+                otherRepoCount++
+            }
+        }
+
+        println "Dependencies downloaded from open-source-release-maven: $opensourcereleasemavenCount"
+        println "Dependencies downloaded from open-source-release-gradle: $opensourcereleasegradleCount"
+        println "Dependencies downloaded from Maven Central: $mavenCentralCount"
+        println "Dependencies downloaded from other repositories: $otherRepoCount"
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn resolveDependencies
+}
+
+
 plugins {
     id 'java'
 }
