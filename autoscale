@@ -1,3 +1,6 @@
+gradle dependencyInsight --dependency your-dependency-name --configuration compileClasspath --debug
+
+
 for file in *.json; do
     sed -i 's/"ForceBuild": false/"ForceBuild": true/g' "$file"
 done
