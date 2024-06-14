@@ -22,6 +22,66 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
+ext.repoCount = [opensourcereleasemaven: 0, opensourcereleasegradle: 0, mavenCentral: 0, other: 0]
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            def repoName = details.requested.module.toString()
+            if (details.requested.group == "com.example") {
+                if (repoName.contains("open-source-release-maven")) {
+                    ext.repoCount.opensourcereleasemaven++
+                } else if (repoName.contains("open-source-release-gradle")) {
+                    ext.repoCount.opensourcereleasegradle++
+                }
+            } else if (repoName.contains("central")) {
+                ext.repoCount.mavenCentral++
+            } else {
+                ext.repoCount.other++
+            }
+        }
+    }
+}
+
+task resolveDependencies {
+    doLast {
+        println "Dependencies downloaded from open-source-release-maven: ${ext.repoCount.opensourcereleasemaven}"
+        println "Dependencies downloaded from open-source-release-gradle: ${ext.repoCount.opensourcereleasegradle}"
+        println "Dependencies downloaded from Maven Central: ${ext.repoCount.mavenCentral}"
+        println "Dependencies downloaded from other repositories: ${ext.repoCount.other}"
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn resolveDependencies
+}
+
+
+
+plugins {
+    id 'java'
+}
+
+group 'com.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven {
+        url "https://artifact-hub.fb.com/open-source-release-maven"
+        name "opensourcereleasemaven"
+    }
+    maven {
+        url "https://artifact-hub.fb.com/open-source-release-gradle"
+        name "opensourcereleasegradle"
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.example:some-dependency:1.0.0'
+    testImplementation 'junit:junit:4.12'
+}
+
 task resolveDependencies {
     doLast {
         def opensourcereleasemavenCount = 0
