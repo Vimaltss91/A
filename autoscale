@@ -1,3 +1,61 @@
+plugins {
+    id 'java'
+}
+
+group 'com.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven {
+        url "https://artifact-hub.fb.com/open-source-release-maven"
+        name "opensourcereleasemaven"
+    }
+    maven {
+        url "https://artifact-hub.fb.com/open-source-release-gradle"
+        name "opensourcereleasegradle"
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.example:some-dependency:1.0.0'
+    testImplementation 'junit:junit:4.12'
+}
+
+task resolveDependencies {
+    doLast {
+        def opensourcereleasemavenCount = 0
+        def opensourcereleasegradleCount = 0
+        def mavenCentralCount = 0
+        def otherRepoCount = 0
+
+        configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            def repoUrl = artifact.file.absolutePath
+
+            if (repoUrl.contains("open-source-release-maven")) {
+                opensourcereleasemavenCount++
+            } else if (repoUrl.contains("open-source-release-gradle")) {
+                opensourcereleasegradleCount++
+            } else if (repoUrl.contains("maven2")) {
+                mavenCentralCount++
+            } else {
+                otherRepoCount++
+            }
+        }
+
+        println "Dependencies downloaded from open-source-release-maven: $opensourcereleasemavenCount"
+        println "Dependencies downloaded from open-source-release-gradle: $opensourcereleasegradleCount"
+        println "Dependencies downloaded from Maven Central: $mavenCentralCount"
+        println "Dependencies downloaded from other repositories: $otherRepoCount"
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn resolveDependencies
+}
+
+
+
 task resolveDependencies {
     doLast {
         def repoCounts = [:]
