@@ -1,3 +1,7 @@
+Project delivery times and milestones are established to ensure the timeline stays on track.
+Other enhancement work will be adjusted based on project priority as needed to avoid bottlenecks.
+Risks will be identified and communicated accordingly.
+
 kube_pod_info * on(node) group_left() (kube_node_info{provider_id="<provider-id>"})
 
 
