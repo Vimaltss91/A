@@ -1,4 +1,4 @@
-
+When you build the open-source package for versions 24.2.0 and 24.30, please update the relevant page as other NF teams have done.
 
 task resolveDependencies {
     doLast {
