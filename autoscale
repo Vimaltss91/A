@@ -1,3 +1,5 @@
+Before planning for additional resources, let's try the following approach. Currently, out of 2300 CPUs, we have observed a maximum usage of 1600 CPUs. As namespaces are scaled down or cleaned up after their run, the resources become available again. Therefore, we can plan to add an additional 3-4 pairs of namespaces for DevOps to utilize these available resources.
+
 curl --request POST \
   --header "PRIVATE-TOKEN: glpat-xxxxxxx" \
   --header "Content-Type: application/json" \
