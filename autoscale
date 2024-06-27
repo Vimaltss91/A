@@ -1,8 +1,4 @@
-Three weeks ago, we conducted a run for version 24.10 with only the Java service configured to pull from the open-source repository as the first priority. This run included both the contract tests and ATS, and the results were positive, with no issues observed.
 
-Currently, we are configuring the Python, Node, and C++ packages and planning to have a full run by today.
-
-At a high level, for the Java project, the JAR files are downloaded from the open-source repository. However, we need to validate how the JAR files are pulled from both the open-source repository and repo1 to ensure greater confidence in our tests.
 
 
 task resolveDependencies {
