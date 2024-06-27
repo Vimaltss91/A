@@ -1,6 +1,5 @@
 
 
-In Java, we use a backup repository (repo1) as a fallback. However, for Node.js, there doesn't seem to be an option to configure a fallback repository. This means packages can only be pulled from a single repository, and if it fails, there is no fallback mechanism. As a result, most of the Node package installations fail due to certain packages not being built. Has any team tried to install Node packages under these circumstances?
 task resolveDependencies {
     doLast {
         def opensourcereleasemavenCount = 0
