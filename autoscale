@@ -1,5 +1,41 @@
 task resolveDependencies {
     doLast {
+        def repoCounts = [
+            'OpenSourceReleaseMaven': 0,
+            'OpenSourceReleaseGradle': 0,
+            'MavenCentral': 0,
+            'Other': 0
+        ]
+
+        def repositoryNames = [
+            'https://repo.maven.apache.org/maven2': 'MavenCentral',
+            'https://example.com/open-source-release-maven': 'OpenSourceReleaseMaven',
+            'https://example.com/open-source-release-gradle': 'OpenSourceReleaseGradle'
+        ]
+
+        configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            def repoName = artifact.moduleVersion.id.group
+
+            if (repositoryNames.containsKey(repoName)) {
+                repoCounts[repositoryNames[repoName]]++
+            } else {
+                repoCounts['Other']++
+            }
+        }
+
+        repoCounts.each { repo, count ->
+            println "Dependencies downloaded from ${repo}: ${count}"
+        }
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn 'build', 'resolveDependencies'
+}
+
+
+task resolveDependencies {
+    doLast {
         def opensourcereleasemavenCount = 0
         def opensourcereleasegradleCount = 0
         def mavenCentralCount = 0
