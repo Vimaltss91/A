@@ -6,6 +6,39 @@ task resolveDependencies {
         def otherRepoCount = 0
 
         configurations.compileClasspath.incoming.resolutionResult.allComponents { component ->
+            def componentId = component.id.toString()
+
+            if (componentId.contains("open-source-release-maven")) {
+                opensourcereleasemavenCount++
+            } else if (componentId.contains("open-source-release-gradle")) {
+                opensourcereleasegradleCount++
+            } else if (componentId.contains("repo.maven.apache.org")) {
+                mavenCentralCount++
+            } else {
+                otherRepoCount++
+            }
+        }
+
+        println "Dependencies downloaded from open-source-release-maven: $opensourcereleasemavenCount"
+        println "Dependencies downloaded from open-source-release-gradle: $opensourcereleasegradleCount"
+        println "Dependencies downloaded from Maven Central: $mavenCentralCount"
+        println "Dependencies downloaded from other repositories: $otherRepoCount"
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn 'build', 'resolveDependencies'
+}
+
+
+task resolveDependencies {
+    doLast {
+        def opensourcereleasemavenCount = 0
+        def opensourcereleasegradleCount = 0
+        def mavenCentralCount = 0
+        def otherRepoCount = 0
+
+        configurations.compileClasspath.incoming.resolutionResult.allComponents { component ->
             def repoUrl = component.id.toString()
 
             if (repoUrl.contains("open-source-release-maven")) {
