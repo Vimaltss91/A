@@ -1,3 +1,23 @@
+def repositoryCount = [:]
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def resolvedFrom = details.getRequested().getGroup()
+        if (repositoryCount.containsKey(resolvedFrom)) {
+            repositoryCount[resolvedFrom] += 1
+        } else {
+            repositoryCount[resolvedFrom] = 1
+        }
+    }
+}
+
+gradle.buildFinished {
+    repositoryCount.each { repo, count ->
+        logger.lifecycle("Resolved ${count} dependencies from repository ${repo}")
+    }
+}
+
+
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         // Get the module identifier
