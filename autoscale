@@ -1,5 +1,23 @@
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        // Get the module identifier
+        def moduleIdentifier = details.requested
+
+        // Get the repository URLs from where the dependency is resolved
+        def repositoryUrls = details.getAllCandidatePatterns().collect { pattern ->
+            details.getFrom().findAll { pattern.isMatching(it) }.collect { it }
+        }.flatten().collect { it.toString() }.unique()
+
+        // Log the resolution information
+        repositoryUrls.each { repositoryUrl ->
+            logger.lifecycle("Resolved ${moduleIdentifier.group}:${moduleIdentifier.name}:${moduleIdentifier.version} from ${repositoryUrl}")
+        }
+    }
+}
+
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         // Get the repository URL from where the dependency is resolved
         def repository = details.requested.group + ":" + details.requested.name
         def resolvedFrom = details.resolvedArtifactRepository != null ? details.resolvedArtifactRepository.name : "unknown repository"
