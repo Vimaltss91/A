@@ -1,3 +1,31 @@
+task countRepositoryJars {
+  doLast {
+    def releaseGradleCount = 0
+    def releaseMavenCount = 0
+    def repo1Count = 0
+
+    configurations.compile.each { dependency ->
+      switch (dependency.repository.url) {
+        case 'release-gradle':
+          releaseGradleCount++
+          break
+        case 'release-maven':
+          releaseMavenCount++
+          break
+        case 'repo1':
+          repo1Count++
+          break
+      }
+    }
+
+    logger.lifecycle "Downloaded JARs from repositories:"
+    logger.lifecycle "  release-gradle: $releaseGradleCount"
+    logger.lifecycle "  release-maven: $releaseMavenCount"
+    logger.lifecycle "  repo1: $repo1Count"
+  }
+}
+
+
 repositories {
     maven {
         url 'https://repo.maven.apache.org/maven2'
