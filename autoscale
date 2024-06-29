@@ -1,3 +1,20 @@
+repositories {
+    maven {
+        url 'https://repo.maven.apache.org/maven2'
+        name 'MavenCentral'
+    }
+    maven {
+        url 'https://example.com/open-source-release-maven'
+        name 'OpenSourceReleaseMaven'
+    }
+    maven {
+        url 'https://example.com/open-source-release-gradle'
+        name 'OpenSourceReleaseGradle'
+    }
+    // Add more repositories as needed
+}
+
+
 task resolveDependencies {
     doLast {
         def repoCounts = [
