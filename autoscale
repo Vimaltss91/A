@@ -1,3 +1,42 @@
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ResolvedArtifactResult
+
+task resolveDependencies {
+    doLast {
+        def repoCounts = [:].withDefault { [url: '', count: 0] }
+
+        repositories.each { repo ->
+            if (repo instanceof MavenArtifactRepository) {
+                def repoName = repo.name
+                def repoUrl = repo.url.toString()
+                repoCounts[repoName] = [url: repoUrl, count: 0]
+            }
+        }
+
+        configurations.compileClasspath.incoming.artifacts.each { artifactResult ->
+            if (artifactResult instanceof ResolvedArtifactResult) {
+                def repoUrl = artifactResult.resolvedVariant.toString()
+                def repoName = 'Other'
+                repoCounts.each { name, info ->
+                    if (repoUrl.contains(info.url)) {
+                        repoName = name
+                    }
+                }
+                repoCounts[repoName].count++
+            }
+        }
+
+        repoCounts.each { repo, info ->
+            println "Dependencies downloaded from ${info.url}: ${info.count}"
+        }
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn 'build', 'resolveDependencies'
+}
+
+
+
 task resolveDependencies {
     doLast {
         def repoCounts = [:].withDefault { [url: '', count: 0] }
