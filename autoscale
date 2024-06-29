@@ -1,3 +1,76 @@
+import org.gradle.api.artifacts.ResolutionListener
+import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.internal.artifacts.repositories.resolver.ExternalResourceRepository
+
+// Custom ResolutionListener to track dependency repository information
+class DependencyResolutionListener implements ResolutionListener {
+    def dependencyRepoMap = [:].withDefault { [] }
+
+    @Override
+    void beforeResolve(ResolvableDependencies resolvableDependencies) {
+    }
+
+    @Override
+    void afterResolve(ResolvableDependencies resolvableDependencies) {
+        resolvableDependencies.resolutionResult.allDependencies.each { dependency ->
+            if (dependency.selected.id instanceof ModuleComponentIdentifier) {
+                ModuleComponentIdentifier id = (ModuleComponentIdentifier) dependency.selected.id
+                dependencyRepoMap[id] << resolvableDependencies.resolutionResult.root.id
+            }
+        }
+    }
+}
+
+task resolveDependencies {
+    doLast {
+        def listener = new DependencyResolutionListener()
+        configurations.all { conf ->
+            conf.incoming.beforeResolve {
+                listener.beforeResolve(it)
+            }
+            conf.incoming.afterResolve {
+                listener.afterResolve(it)
+            }
+        }
+
+        configurations.compileClasspath.resolve()
+
+        def repoCounts = [
+            'OpenSourceReleaseMaven': 0,
+            'OpenSourceReleaseGradle': 0,
+            'MavenCentral': 0,
+            'Other': 0
+        ]
+
+        listener.dependencyRepoMap.each { key, value ->
+            def repoUrl = value[0].repository?.url?.toString()
+            if (repoUrl) {
+                if (repoUrl.contains("open-source-release-maven")) {
+                    repoCounts['OpenSourceReleaseMaven']++
+                } else if (repoUrl.contains("open-source-release-gradle")) {
+                    repoCounts['OpenSourceReleaseGradle']++
+                } else if (repoUrl.contains("repo.maven.apache.org")) {
+                    repoCounts['MavenCentral']++
+                } else {
+                    repoCounts['Other']++
+                }
+            } else {
+                repoCounts['Other']++
+            }
+        }
+
+        repoCounts.each { repo, count ->
+            println "Dependencies downloaded from ${repo}: ${count}"
+        }
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn 'build', 'resolveDependencies'
+}
+
+
+
 task countRepositoryJars {
   doLast {
     def releaseGradleCount = 0
