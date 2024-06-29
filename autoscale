@@ -38,6 +38,46 @@ task buildWithDependencyReport {
 }
 
 
+task resolveDependencies {
+    doLast {
+        def repoCounts = [
+            'OpenSourceReleaseMaven': 0,
+            'OpenSourceReleaseGradle': 0,
+            'MavenCentral': 0,
+            'Other': 0
+        ]
+
+        def repositoryNames = [
+            'example.com/open-source-release-maven': 'OpenSourceReleaseMaven',
+            'example.com/open-source-release-gradle': 'OpenSourceReleaseGradle',
+            'repo.maven.apache.org': 'MavenCentral'
+        ]
+
+        configurations.compileClasspath.incoming.resolutionResult.allDependencies.each { dependency ->
+            def selected = dependency.selected
+            if (selected != null) {
+                def repoName = 'Other'
+                def componentId = selected.id
+                repositoryNames.each { urlFragment, name ->
+                    if (componentId.toString().contains(urlFragment)) {
+                        repoName = name
+                    }
+                }
+                repoCounts[repoName]++
+            }
+        }
+
+        repoCounts.each { repo, count ->
+            println "Dependencies downloaded from ${repo}: ${count}"
+        }
+    }
+}
+
+task buildWithDependencyReport {
+    dependsOn 'build', 'resolveDependencies'
+}
+
+
 import org.gradle.api.artifacts.ResolutionListener
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.repositories.resolver.ExternalResourceRepository
