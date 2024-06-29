@@ -1,5 +1,15 @@
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        // Get the repository URL from where the dependency is resolved
+        def repository = details.requested.group + ":" + details.requested.name
+        def resolvedFrom = details.resolvedArtifactRepository != null ? details.resolvedArtifactRepository.name : "unknown repository"
+        logger.lifecycle("Resolved ${repository} from ${resolvedFrom}")
+    }
+}
+
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         def origin = details.requested
         logger.lifecycle("Resolved ${origin.group}:${origin.name}:${origin.version} from ${details.from}")
     }
