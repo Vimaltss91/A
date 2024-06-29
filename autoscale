@@ -5,6 +5,36 @@ def repo1Count = 0
 
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        // Extract the module identifier
+        def moduleIdentifier = details.requested
+
+        // Determine the repository based on module identifier group
+        if (moduleIdentifier.group == 'opensource-release-maven') {
+            mavenCount++
+        } else if (moduleIdentifier.group == 'opensource-release-gradle') {
+            gradleCount++
+        } else if (moduleIdentifier.group == 'repo1') {
+            repo1Count++
+        }
+    }
+}
+
+gradle.buildFinished {
+    // Print the counts for each repository
+    logger.lifecycle("Resolved ${mavenCount} dependencies from opensource-release-maven")
+    logger.lifecycle("Resolved ${gradleCount} dependencies from opensource-release-gradle")
+    logger.lifecycle("Resolved ${repo1Count} dependencies from repo1")
+}
+
+
+
+// Initialize counters for each repository
+def mavenCount = 0
+def gradleCount = 0
+def repo1Count = 0
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         // Extract the repository name
         def repository = details.resolvedArtifactRepository?.name ?: "unknown"
 
