@@ -1,3 +1,6 @@
+kube_pod_container_status_terminated_reason{namespace="my-namespace", reason="Evicted"}
+
+
 kube_pod_container_status_terminated_reason{namespace="my-namespace"}
 
 
