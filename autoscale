@@ -1,3 +1,20 @@
+"scripts": {
+  "preinstall": "node log-fetch.js"
+}
+
+
+const https = require('https');
+
+const originalRequest = https.request;
+https.request = function(options, callback) {
+  console.log('Fetching from:', options.hostname);
+  return originalRequest.apply(this, arguments);
+};
+
+console.log('Preinstall hook executed');
+
+
+
 kube_pod_container_status_terminated_reason{namespace="my-namespace", reason="Evicted"}
 
 
