@@ -30,6 +30,67 @@ def parse_repo_counts(file_path):
     # Prepare the table for output
     table = []
     table.append(headers)
+
+    # Initialize total counts
+    total_counts = {header: 0 for header in headers[1:]}
+
+    for nth_party in repo_counts:
+        row = [nth_party]
+        for header in headers[1:]:
+            count = repo_counts[nth_party].get(header, 0)
+            row.append(count)
+            total_counts[header] += count
+        table.append(row)
+
+    # Add the total row
+    total_row = ['Total']
+    for header in headers[1:]:
+        total_row.append(total_counts[header])
+    table.append(total_row)
+
+    return table
+
+# Usage
+file_path = 'final_list.txt'
+table = parse_repo_counts(file_path)
+
+# Print the table
+for row in table:
+    print("{:<10} {:<10} {:<10} {:<10}".format(*row))
+
+
+def parse_repo_counts(file_path):
+    # Initialize a dictionary to store the counts
+    repo_counts = {}
+
+    # Read the file line by line
+    with open(file_path, 'r') as file:
+        for line in file:
+            parts = line.strip().split()
+            if len(parts) < 3:
+                continue  # Skip lines that do not have the expected format
+            
+            nth_party = parts[-2].strip()
+            repo_name = parts[-1].strip()
+            
+            # Map specific repo names to 'opensource'
+            if repo_name in ['opensource-release-maven', 'opensource-release-gradle']:
+                repo_name = 'opensource'
+            
+            if nth_party not in repo_counts:
+                repo_counts[nth_party] = {}
+            
+            if repo_name not in repo_counts[nth_party]:
+                repo_counts[nth_party][repo_name] = 0
+            
+            repo_counts[nth_party][repo_name] += 1
+
+    # Define the headers for the table
+    headers = ['nth_party', 'opensource', 'repo1', 'occnp']
+
+    # Prepare the table for output
+    table = []
+    table.append(headers)
     
     for nth_party in repo_counts:
         row = [nth_party]
