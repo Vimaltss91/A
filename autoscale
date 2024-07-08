@@ -1,6 +1,85 @@
 def parse_repo_counts(file_path):
     # Initialize a dictionary to store the counts
     repo_counts = {}
+    repo1_urls = {'3rd_party': [], '4th_party': []}
+
+    # Read the file line by line
+    with open(file_path, 'r') as file:
+        for line in file:
+            parts = line.strip().split()
+            if len(parts) < 3:
+                continue  # Skip lines that do not have the expected format
+            
+            url = parts[0]
+            nth_party = parts[-2].strip()
+            repo_name = parts[-1].strip()
+            
+            # Map specific repo names to 'opensource'
+            if repo_name in ['opensource-release-maven', 'opensource-release-gradle']:
+                repo_name = 'opensource'
+            
+            if nth_party not in repo_counts:
+                repo_counts[nth_party] = {}
+            
+            if repo_name not in repo_counts[nth_party]:
+                repo_counts[nth_party][repo_name] = 0
+            
+            repo_counts[nth_party][repo_name] += 1
+
+            # Collect URLs for 3rd and 4th party from repo1
+            if repo_name == 'repo1' and nth_party in ['3rd_party', '4th_party']:
+                repo1_urls[nth_party].append(url)
+
+    # Define the headers for the table
+    headers = ['nth_party', 'opensource', 'repo1', 'occnp']
+
+    # Prepare the table for output
+    table = []
+    table.append(headers)
+
+    # Initialize total counts
+    total_counts = {header: 0 for header in headers[1:]}
+
+    for nth_party in repo_counts:
+        row = [nth_party]
+        for header in headers[1:]:
+            count = repo_counts[nth_party].get(header, 0)
+            row.append(count)
+            total_counts[header] += count
+        table.append(row)
+
+    # Add a separator row
+    table.append(['-' * 10] * len(headers))
+
+    # Add the total row
+    total_row = ['Total']
+    for header in headers[1:]:
+        total_row.append(total_counts[header])
+    table.append(total_row)
+
+    return table, repo1_urls
+
+# Usage
+file_path = 'final_list.txt'
+table, repo1_urls = parse_repo_counts(file_path)
+
+# Print the table
+for row in table:
+    print("{:<10} {:<10} {:<10} {:<10}".format(*row))
+
+# Print the URLs for 3rd and 4th party from repo1
+print("\nURLs for 3rd party from repo1:")
+for url in repo1_urls['3rd_party']:
+    print(url)
+
+print("\nURLs for 4th party from repo1:")
+for url in repo1_urls['4th_party']:
+    print(url)
+
+
+def parse_repo_counts(file_path):
+    # Initialize a dictionary to store the counts
+    repo_counts = {}
 
     # Read the file line by line
     with open(file_path, 'r') as file:
