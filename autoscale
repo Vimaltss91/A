@@ -68,6 +68,15 @@ for row in table:
     print("{:<10} {:<10} {:<10} {:<10}".format(*row))
 
 
+# Usage
+file_path = 'final_list.txt'
+table = parse_repo_counts(file_path)
+
+# Print the table
+for row in table:
+    print("{:<10} {:<10} {:<10} {:<10}".format(*row))
+
+
 def parse_repo_counts(file_path):
     # Initialize a dictionary to store the counts
     repo_counts = {}
