@@ -12,6 +12,56 @@ def parse_repo_counts(file_path):
             nth_party = parts[-2].strip()
             repo_name = parts[-1].strip()
             
+            # Map specific repo names to 'opensource'
+            if repo_name in ['opensource-release-maven', 'opensource-release-gradle']:
+                repo_name = 'opensource'
+            
+            if nth_party not in repo_counts:
+                repo_counts[nth_party] = {}
+            
+            if repo_name not in repo_counts[nth_party]:
+                repo_counts[nth_party][repo_name] = 0
+            
+            repo_counts[nth_party][repo_name] += 1
+
+    # Define the headers for the table
+    headers = ['nth_party', 'opensource', 'repo1', 'occnp']
+
+    # Prepare the table for output
+    table = []
+    table.append(headers)
+    
+    for nth_party in repo_counts:
+        row = [nth_party]
+        for header in headers[1:]:
+            row.append(repo_counts[nth_party].get(header, 0))
+        table.append(row)
+
+    return table
+
+# Usage
+file_path = 'final_list.txt'
+table = parse_repo_counts(file_path)
+
+# Print the table
+for row in table:
+    print("{:<10} {:<10} {:<10} {:<10}".format(*row))
+
+
+def parse_repo_counts(file_path):
+    # Initialize a dictionary to store the counts
+    repo_counts = {}
+
+    # Read the file line by line
+    with open(file_path, 'r') as file:
+        for line in file:
+            parts = line.strip().split()
+            if len(parts) < 3:
+                continue  # Skip lines that do not have the expected format
+            
+            nth_party = parts[-2].strip()
+            repo_name = parts[-1].strip()
+            
             if nth_party not in repo_counts:
                 repo_counts[nth_party] = {}
             
