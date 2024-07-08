@@ -1,38 +1,47 @@
-# Reading and processing the file
+def parse_repo_counts(file_path):
+    # Initialize a dictionary to store the counts
+    repo_counts = {}
+
+    # Read the file line by line
+    with open(file_path, 'r') as file:
+        for line in file:
+            parts = line.strip().split()
+            if len(parts) < 3:
+                continue  # Skip lines that do not have the expected format
+            
+            url, nth_party, repo_name = parts[-3], parts[-2], parts[-1]
+            
+            if nth_party not in repo_counts:
+                repo_counts[nth_party] = {}
+            
+            if repo_name not in repo_counts[nth_party]:
+                repo_counts[nth_party][repo_name] = 0
+            
+            repo_counts[nth_party][repo_name] += 1
+
+    # Define the headers for the table
+    headers = ['nth_party', 'opensource', 'repo1', 'occnp']
+
+    # Prepare the table for output
+    table = []
+    table.append(headers)
+    
+    for nth_party in repo_counts:
+        row = [nth_party]
+        for header in headers[1:]:
+            row.append(repo_counts[nth_party].get(header, 0))
+        table.append(row)
+
+    return table
+
+# Usage
 file_path = 'final_list.txt'
+table = parse_repo_counts(file_path)
 
-# Initialize a dictionary to store the counts
-repo_counts = {}
-
-# Read the file line by line
-with open(file_path, 'r') as file:
-    for line in file:
-        parts = line.strip().split()
-        if len(parts) < 3:
-            continue  # Skip lines that do not have the expected format
-        
-        url, nth_party, repo_name = parts[-3], parts[-2], parts[-1]
-        
-        if nth_party not in repo_counts:
-            repo_counts[nth_party] = {}
-        
-        if repo_name not in repo_counts[nth_party]:
-            repo_counts[nth_party][repo_name] = 0
-        
-        repo_counts[nth_party][repo_name] += 1
-
-# Define the headers for the table
-headers = ['nth_party', 'opensource', 'repo1', 'occnp']
-
-# Print the header row
-print("{:<10} {:<10} {:<10} {:<10}".format(*headers))
-
-# Print the data rows
-for nth_party in repo_counts:
-    row = [nth_party]
-    for header in headers[1:]:
-        row.append(repo_counts[nth_party].get(header, 0))
+# Print the table
+for row in table:
     print("{:<10} {:<10} {:<10} {:<10}".format(*row))
+
 
 
 
