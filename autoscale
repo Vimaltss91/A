@@ -1,4 +1,3 @@
-Currently, all our resources (1100 OCPUs) are in the PHX region, using X7 cores. We are fixed with the VM cores at 8 OCPUs and haven't encountered any issues with them. Moving cores to other regions might cause issues. We have only 50 OCPUs left to be replaced with X7, so it would be helpful to have them in the same PHX region.
 
 {
   "name": "your-project-name",
