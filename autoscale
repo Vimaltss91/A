@@ -1,3 +1,6 @@
+./gradlew dependencies --configuration compileClasspath | grep -E "^[\| ]+[\\--- ]"
+
+
 def parse_repo_counts(file_path):
     # Initialize a dictionary to store the counts
     repo_counts = {}
