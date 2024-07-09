@@ -1,3 +1,9 @@
+./gradlew dependencies --configuration compileClasspath | grep "^\|---"
+./gradlew dependencies --configuration compileClasspath | grep "^\+---\|^\---"
+./gradlew dependencies --configuration compileClasspath | grep "^\+---\|^\---" | awk '{print $2}'
+./gradlew dependencies --configuration compileClasspath | grep "^\+---\|^\---" | awk '{print $2}'
+
+
 ./gradlew dependencies --configuration compileClasspath | awk '/---/ && !seen[$2]++ {print $2}'
 
 ./gradlew dependencies --configuration compileClasspath | grep -E "^[\| ]+[\\--- ]"
