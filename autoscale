@@ -1,3 +1,21 @@
+Hi Team,
+
+We are currently validating third-party open-source packages used in our project. Here is our validation process:
+
+We use gradle build --info to capture all dependencies being downloaded.
+We use gradle dependencies to list third-party and transitive dependencies. For example:
+lua
+Copy code
++--- org.springframework.boot:spring-boot-starter-web:2.7.3 --> 3rd Party
+|    +--- org.springframework.boot:spring-boot-starter:2.7.3 --> 4th Party
++--- junit:junit:4.13.2 --> 3rd party
+We compare the dependencies downloaded (from step 1) with the expected dependencies (from step 2) to validate.
+Based on our comparisons, we've noticed that some third-party dependencies do not have the necessary Business Associate Agreement (BA). Please refer to this Confluence page for details.
+
+We've observed that more third-party dependencies are downloaded from repo1. We need to identify if there are any issues in our validation process. Can you please assist us in understanding how the security team identifies third-party dependencies?
+
+Note: The automation script for this validation was shared by Benson's team, and all NFs are using this.
+
 ./gradlew dependencies --configuration compileClasspath | grep "^\|---"
 ./gradlew dependencies --configuration compileClasspath | grep "^\+---\|^\---"
 ./gradlew dependencies --configuration compileClasspath | grep "^\+---\|^\---" | awk '{print $2}'
