@@ -1,3 +1,44 @@
+import os
+import re
+
+def filter_gradle_build(input_file, output_file):
+    input_path = os.path.join(os.getenv('CI_PROJECT_DIR'), input_file)
+    output_path = os.path.join(os.getenv('CI_PROJECT_DIR'), output_file)
+
+    with open(input_path, 'r') as infile, open(output_path, 'w') as outfile:
+        skip_task = False
+        task_pattern = re.compile(r'^> Task :(\S+)')
+        
+        for line in infile:
+            task_match = task_pattern.match(line)
+            if task_match:
+                task_name = task_match.group(1)
+                skip_task = 'test' in task_name.lower()
+                if not skip_task:
+                    # Write the task header
+                    outfile.write(line)
+                else:
+                    # Skip lines until the next task header
+                    while True:
+                        next_line = next(infile, None)
+                        if next_line is None:
+                            break
+                        next_task_match = task_pattern.match(next_line)
+                        if next_task_match:
+                            task_name = next_task_match.group(1)
+                            skip_task = 'test' in task_name.lower()
+                            if not skip_task:
+                                outfile.write(next_line)
+                                break
+                continue
+            
+            if not skip_task:
+                outfile.write(line)
+
+# Usage
+filter_gradle_build('gradle_build.txt', 'filtered_gradle_build.txt')
+
+
 
 import re
 
