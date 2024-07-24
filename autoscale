@@ -1,3 +1,75 @@
+<html lang="en" ng-app="BuildDeploymentTestApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build, Deployment, Test UI</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="app.js"></script>
+</head>
+<body ng-controller="BuildDeploymentTestController">
+
+    <div class="container">
+        <!-- Existing content -->
+
+        <!-- Login Form -->
+        <div ng-app="loginApp" ng-controller="loginController">
+            <form ng-submit="login()">
+                <label for="username">Username:</label>
+                <input type="text" id="username" ng-model="username" required>
+                
+                <label for="password">Password:</label>
+                <input type="password" id="password" ng-model="password" required>
+                
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+------
+
+var app = angular.module('BuildDeploymentTestApp', []);
+
+// Define options for Enable PP Branch
+app.controller('BuildDeploymentTestController', function($scope) {
+    // Your existing code
+});
+
+var loginApp = angular.module('loginApp', []);
+
+loginApp.controller('loginController', function($scope, $http) {
+    $scope.login = function() {
+        var data = {
+            username: $scope.username,
+            password: $scope.password
+        };
+
+        $http.post('http://localhost:3000/login', data)
+        .then(function(response) {
+            if (response.data.auth) {
+                alert('Login successful');
+                // Handle successful login here (e.g., redirect to another page)
+            } else {
+                alert('Login failed');
+            }
+        }, function(error) {
+            alert('Login failed');
+        });
+    };
+});
+
+
+
+
+
+
+-----------
+
+
 const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
