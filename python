@@ -1,61 +1,58 @@
-import importlib
-import subprocess
+const express = require('express');
+const cors = require('cors');
+const mysql = require('mysql');
+const bcrypt = require('bcryptjs');
+const bodyParser = require('body-parser');
 
-def check_and_install_module(module_name):
-    try:
-        importlib.import_module(module_name)
-        print(f"'{module_name}' is installed and can be imported.")
-    except ImportError:
-        print(f"'{module_name}' is not installed.")
-        print(f"Installing '{module_name}' now...")
-        try:
-            subprocess.check_call(['pip', 'install', module_name])
-        except subprocess.CalledProcessError as e:
-            print(f"Error installing '{module_name}': {e}")
-        else:
-            print(f"Installation of '{module_name}' complete. You can now import '{module_name}'.")
+const app = express();
+const port = 3000;
 
-# Check and install required modules
-required_modules = ['requests', 'json']
-for module in required_modules:
-    check_and_install_module(module)
+// Allow CORS from any origin
+app.use(cors());
+app.use(bodyParser.json());
 
-# Now that the required modules are installed, import them
-import requests
-import json
+// Database connection setup
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'your_mysql_user',
+    password: 'your_mysql_password',
+    database: 'your_database_name'
+});
 
-# Use the requests and json modules in your code
-response = requests.get('https://api.example.com/data')
-data = response.json()
-print(data)
+db.connect((err) => {
+    if (err) {
+        throw err;
+    }
+    console.log('Connected to MySQL Database.');
+});
 
+// Login endpoint
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
 
-import importlib
-import subprocess
+    const sql = 'SELECT * FROM users WHERE username = ?';
+    db.query(sql, [username], (err, results) => {
+        if (err) {
+            return res.status(500).send('Error fetching user');
+        }
+        if (results.length === 0) {
+            return res.status(401).send('User not found');
+        }
 
-def check_and_install_module(module_name):
-    try:
-        importlib.import_module(module_name)
-        print(f"'{module_name}' is installed and can be imported.")
-    except ImportError:
-        print(f"'{module_name}' is not installed.")
-        print(f"Installing '{module_name}' now...")
-        try:
-            subprocess.check_call(['pip', 'install', module_name])
-        except subprocess.CalledProcessError as e:
-            print(f"Error installing '{module_name}': {e}")
-        else:
-            print(f"Installation of '{module_name}' complete. You can now import '{module_name}'.")
+        const user = results[0];
+        bcrypt.compare(password, user.password, (err, isMatch) => {
+            if (err) {
+                return res.status(500).send('Error comparing passwords');
+            }
+            if (!isMatch) {
+                return res.status(401).send('Incorrect password');
+            }
+            res.send('Login successful');
+        });
+    });
+});
 
-# Example usage:
-if __name__ == "__main__":
-    modules_to_check = ['requests', 'json', 'subprocess', 'nonexistent_module']
-    for module in modules_to_check:
-        check_and_install_module(module)
-
-
-Modify the deployment script to make Persistent Volume Claims (PVC) the default configuration for Oracle Cloud Infrastructure (OCI), eliminating the need for the INCLUDE_OCC_Feature parameter.
-
-Address concerns related to volume creation across Availability Domains (ADs), as there's a potential issue when pods are recreated in different ADs, leading to potential resource unavailability. It's advisable to consolidate resources within a single AD to avoid such disruptions, a recommendation also endorsed by Benson.
-
-Given the default volume size of 50GB, reducing the size of ats volumes may not effectively address the issue. 
+// Start the server
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port}`);
+});
