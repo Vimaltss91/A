@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="BuildDeploymentTestApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build, Deployment, Test UI</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="app.js"></script>
+</head>
+<body ng-controller="BuildDeploymentTestController">
+
+    <div class="container" ng-hide="loggedIn">
+        <h2>Login</h2>
+        <form ng-submit="login()">
+            <label for="username">Username</label>
+            <input type="text" id="username" ng-model="loginData.username" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" ng-model="loginData.password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p ng-show="loginError">{{ loginError }}</p>
+    </div>
+
+    <div class="container" ng-show="loggedIn">
+        <!-- Your existing content here -->
+        ...
+    </div>
+
+    <div class="container" ng-hide="loggedIn">
+        <h2>Register</h2>
+        <form ng-submit="register()">
+            <label for="newUsername">New Username</label>
+            <input type="text" id="newUsername" ng-model="registerData.username" required>
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" ng-model="registerData.password" required>
+            <button type="submit">Register</button>
+        </form>
+        <p ng-show="registerError">{{ registerError }}</p>
+    </div>
+
+</body>
+</html>
+
+
+-----
+var app = angular.module('BuildDeploymentTestApp', []);
+
+app.controller('BuildDeploymentTestController', function($scope, $http) {
+    // Initialization
+    $scope.loggedIn = false;
+    $scope.loginData = {};
+    $scope.loginError = '';
+    $scope.registerData = {};
+    $scope.registerError = '';
+
+    // Login function
+    $scope.login = function() {
+        $http.post('/api/login', $scope.loginData)
+            .then(function(response) {
+                if (response.data.success) {
+                    $scope.loggedIn = true;
+                    $scope.loginError = '';
+                } else {
+                    $scope.loginError = 'Invalid username or password';
+                }
+            })
+            .catch(function(error) {
+                $scope.loginError = 'An error occurred';
+            });
+    };
+
+    // Register function
+    $scope.register = function() {
+        $http.post('/api/register', $scope.registerData)
+            .then(function(response) {
+                $scope.registerError = '';
+                alert('Registration successful!'); // Replace with appropriate feedback to user
+            })
+            .catch(function(error) {
+                $scope.registerError = 'Registration failed';
+            });
+    };
+
+    // Your existing controller code here
+    // ...
+});
+-------
+
+// Register endpoint
+app.post('/api/register', (req, res) => {
+    const { username, password } = req.body;
+
+    // Hash password before saving (using bcrypt or any other suitable method)
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+        if (err) {
+            return res.status(500).send('Error hashing password');
+        }
+
+        const newUser = {
+            username: username,
+            password: hashedPassword // Store hashed password in database
+        };
+
+        const sql = 'INSERT INTO users SET ?';
+        db.query(sql, newUser, (err, results) => {
+            if (err) {
+                return res.status(500).send('Error registering user');
+            }
+            res.send('Registration successful');
+        });
+    });
+});
