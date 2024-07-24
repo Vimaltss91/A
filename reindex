@@ -1,265 +1,112 @@
-variables:
-  COUNTRY:
-    predefined: true
-    options:
-      - "United States"
-      - "United Kingdom"
-      - "India"
-  STATE:
-    predefined: true
-    depends_on: COUNTRY
-    options:
-      - label: "Select State"
-        value: ""
-      - label: "California"
-        value: "California"
-        when: '$COUNTRY == "US"'
-      - label: "New York"
-        value: "New York"
-        when: '$COUNTRY == "US"'
-      - # ... Add remaining state options
-      - label: "England"
-        value: "England"
-        when: '$COUNTRY == "UK"'
-      - # ... Add remaining state options
-      - label: "Maharashtra"
-        value: "Maharashtra"
-        when: '$COUNTRY == "IN"'
-      - # ... Add remaining state options
+<!DOCTYPE html>
+<html lang="en" ng-app="BuildDeploymentTestApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build, Deployment, Test UI</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="app.js"></script>
+</head>
+<body ng-controller="BuildDeploymentTestController">
 
-#!/bin/bash
+    <div class="container" ng-hide="loggedIn">
+        <h2>Login</h2>
+        <form ng-submit="login()">
+            <label for="username">Username</label>
+            <input type="text" id="username" ng-model="loginData.username" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" ng-model="loginData.password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p ng-show="loginError">{{ loginError }}</p>
+    </div>
 
-curl -I -X HEAD -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" http://<registry>:<port>/v2/<repository>/manifests/<tag> | grep Docker-Content-Digest
+    <div class="container" ng-show="loggedIn">
+        <!-- Your existing content here -->
+        ...
+    </div>
 
-curl -X DELETE http://<registry>:<port>/v2/<repository>/manifests/<digest>
-
-# Define the URL of the file to download
-file_url="https://example.com/path/to/your/file.txt"
-
-# Define the tag or condition you want to check in the file
-desired_tag="your_tag_here"
-
-# Maximum number of retry attempts
-max_retries=5
-
-# Retry interval in seconds (2 minutes)
-retry_interval=120
-
-# Loop through the download and check process
-for ((attempt = 1; attempt <= max_retries; attempt++)); do
-    # Download the file
-    wget -O downloaded_file.txt "$file_url"
-    
-    # Check if the tag is present in the downloaded file
-    if grep -q "$desired_tag" downloaded_file.txt; then
-        echo "Tag found in the file! Exiting..."
-        exit 0
-    else
-        echo "Tag not found in attempt $attempt. Retrying in 2 minutes..."
-        sleep $retry_interval
-    fi
-done
-
-# If the tag is not found after all retries, exit with an error code
-echo "Tag not found after $max_retries attempts. Exiting..."
-exit 1
-awk '/karate/ {count++} count == 2 {flag=1; next} count == 3 {flag=0} flag && flag++ <= 5' filename
-
-awk -v pattern="karate" 'index($0, pattern) {count++} count == 2 {print; next} count == 2 && !index($0, pattern) {count = 0} count > 0 && count <= 5 {print}' filename
-
-
-if comm -23 <(sort File1) <(sort File2) | diff - File2 >/dev/null; then
-    echo "Pass"
-else
-    echo "Fail"
-fi
-
-if comm -23 <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File1 | sort) <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File2 | sort) | diff - File2 >/dev/null; then
-    echo "Pass"
-else
-    echo "Fail"
-fi
-
-#!/bin/bash
-
-if comm -23 <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File1 | sort) <(sed 's/^[[:space:]]*//;s/[[:space:]]*$/' File2 | sort) | diff - File2 >/dev/null; then
-    echo "Pass"
-else
-    echo "Fail"
-fi
-
-#!/bin/bash
-
-# Get the contents of the two files
-file1_contents=$(cat file1)
-file2_contents=$(cat file2)
-
-# Create an array of the contents of file2
-file2_array=(${file2_contents})
-
-# Iterate over the contents of file2 and check if each line is present in file1
-for line in "${file2_array[@]}"; do
-  if [[ ! $file1_contents =~ $line ]]; then
-    echo "fail"
-    exit 1
-  fi
-done
-
-# If we reach this point, then all of the lines in file2 are present in file1
-echo "pass"
-
-
-#!/bin/bash
-
-# Get the paths to the two files
-file1_path="$1"
-file2_path="$2"
-
-# Check if both files exist
-if [[ ! -f "$file1_path" ]]; then
-  echo "File $file1_path does not exist."
-  exit 1
-fi
-
-if [[ ! -f "$file2_path" ]]; then
-  echo "File $file2_path does not exist."
-  exit 1
-fi
-
-# Iterate over the lines in file2
-while read line; do
-  # Check if the line is present in file1
-  if [[ ! $(grep -Fx "$line" "$file1_path") ]]; then
-    # If the line is not present in file1, print it to the console
-    echo "$line"
-  fi
-done < "$file2_path"
-
-curl -u username:password -X GET https://your-artifactory-url/api/docker/<repository>/v2/<image>/blobs/<digest>
-
-Thank you for your prompt response. As I mentioned in my previous email, I have uploaded the final receipt of the single procedure treatment, as there was no itemized breakdown provided by the hospital.
-
-Regrettably, I do not see a notes or comments section on the portal to update this information. Since the breakdown of charges is not available, I'm sending it via email for your reference:
-
-Date of Treatment: [Insert the date of the procedure]
-Patient Name: [Insert your full name]
-Hospital Name: [Insert the name of the hospital]
-Procedure Description: [Specify the procedure]
-If there are any specific forms or documents that need to be filled out to address this issue, please guide me, and I will complete them as required. I understand the importance of accurate record-keeping and am committed to providing all necessary information to assist with the claim.
-
-Your guidance on the next steps in resolving this matter is greatly appreciated. Please do not hesitate to contact me at [Your Contact Information] for further assistance or clarifications.
-
-Thank you for your understanding and support.
-
-Warm regards,
-
-[Your Name]
-
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: my-service-account-binding
-  namespace: my-namespace
-subjects:
-  - kind: ServiceAccount
-    name: my-service-account
-    namespace: my-namespace
-roleRef:
-  kind: ClusterRole  # or Role if needed
-  name: my-custom-role  # specify the role if needed
-  apiGroup: rbac.authorization.k8s.io
+</body>
+</html>
 
 
 
-NEW
 
-kubectl get secret myregistrykey -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode
+var app = angular.module('BuildDeploymentTestApp', []);
 
+app.controller('BuildDeploymentTestController', function($scope, $http) {
+    // Initialization
+    $scope.loggedIn = false;
+    $scope.loginData = {};
+    $scope.loginError = '';
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: pod-reader
-rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]
+    // Login function
+    $scope.login = function() {
+        $http.post('/api/login', $scope.loginData)
+            .then(function(response) {
+                if (response.data.success) {
+                    $scope.loggedIn = true;
+                    $scope.loginError = '';
+                } else {
+                    $scope.loginError = 'Invalid username or password';
+                }
+            })
+            .catch(function(error) {
+                $scope.loginError = 'An error occurred';
+            });
+    };
 
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: pod-reader-binding
-subjects:
-- kind: ServiceAccount
-  name: default-sa
-roleRef:
-  kind: Role
-  name: pod-reader
-  apiGroup: rbac.authorization.k8s.io
-
-
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: default-sa
-  annotations:
-    kubernetes.io/dockerconfigjson: "your-base64-encoded-secret-data"
+    // Your existing controller code here
+    ...
+});
 
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: image-puller-role
-rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get"]
+const express = require('express');
+const mysql = require('mysql');
+const bodyParser = require('body-parser');
+const bcrypt = require('bcryptjs');
+const app = express();
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: image-puller-rolebinding
-subjects:
-- kind: ServiceAccount
-  name: my-service-account
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: image-puller-role
+app.use(bodyParser.json());
 
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-image-pull-secret
-type: docker-registry
-data:
-  .dockerconfigjson: <base64-encoded-docker-config-json>
+// MySQL connection setup
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'your_mysql_password',
+    database: 'userdb'
+});
 
+db.connect((err) => {
+    if (err) throw err;
+    console.log('Connected to MySQL database');
+});
 
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: my-service-account
-imagePullSecrets:
-- name: my-image-pull-secret
+// Login endpoint
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    const sql = 'SELECT * FROM users WHERE username = ?';
+    db.query(sql, [username], (err, results) => {
+        if (err) throw err;
+        if (results.length > 0) {
+            const user = results[0];
+            bcrypt.compare(password, user.password, (err, isMatch) => {
+                if (err) throw err;
+                if (isMatch) {
+                    res.json({ success: true });
+                } else {
+                    res.json({ success: false });
+                }
+            });
+        } else {
+            res.json({ success: false });
+        }
+    });
+});
 
-
-#!/bin/bash
-
-# Your array
-image_array=("image1" "image2" "image3")
-
-# Your file
-image_list="path/to/image_list.txt"
-
-# Iterate through the array
-for image in "${image_array[@]}"; do
-    # Check if the full string is present in the file
-    if ! grep -q "$image" "$image_list"; then
-        # If not present, echo it
-        echo "$image not found in $image_list"
-    fi
-done
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
