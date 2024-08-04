@@ -1,3 +1,18 @@
+#!/bin/bash
+
+# Prompt the user to enter credentials
+read -p "Enter PIP Username: " PIP_USERNAME
+read -sp "Enter PIP Password: " PIP_PASSWORD
+echo
+
+# URL encode the username and password
+PIP_USERNAME_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$PIP_USERNAME'''))")
+PIP_PASSWORD_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$PIP_PASSWORD'''))")
+
+# Build the Docker image with build arguments
+docker build --build-arg PIP_USERNAME=$PIP_USERNAME_ENCODED --build-arg PIP_PASSWORD=$PIP_PASSWORD_ENCODED -t my-python-app .
+
+
 <html lang="en" ng-app="BuildDeploymentTestApp">
 <head>
     <meta charset="UTF-8">
