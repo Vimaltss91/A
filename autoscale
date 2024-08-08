@@ -1,3 +1,10 @@
+
+Yesterday, the Viking team merged the Metlife project into the pre-dev branch, triggering an automatic build. However, the job failed due to a missing JAR of diam-stack. Upon investigation, I found that the last job for diam-stack ran two weeks ago (as there were no merges during this period).
+
+Additionally, note that the cne-common JAR was downloaded for the Viking pre-dev and hook-src. The diam-stack depends on cne-common, so it attempted to download the Viking JAR instead of using the fallback version. This caused the auto-build job to fail.
+
+Here is the pipeline:
+
 Consuming the JAR
 
 Issue: When the version of the common JAR reaches two digits, the last digit is being removed. The version is incorrectly formatted as 23.4.1x-SNAPSHOT instead of 23.4.x-SNAPSHOT.
