@@ -1,3 +1,16 @@
+Consuming the JAR
+
+Issue: When the version of the common JAR reaches two digits, the last digit is being removed. The version is incorrectly formatted as 23.4.1x-SNAPSHOT instead of 23.4.x-SNAPSHOT.
+Cause: This issue is caused by the following code snippet:
+Trigger Condition for Patch Branch
+
+Issue: The trigger condition for configuring the patch branch should be updated to trigger a push whenever something is merged.
+Required Update: The condition should be updated to:
+JAR Cleanup Issue
+
+Issue: If we try to build the job after two weeks, the JARs might have been cleaned up. This may require an exception for the patch branch to avoid having to rebuild the one-click JAR if it has been more than two weeks.
+Suggestion: Consider implementing an exception for the patch branch to prevent the need for frequent rebuilds.
+
 #!/bin/bash
 
 # Prompt the user to enter credentials
