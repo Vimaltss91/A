@@ -1,3 +1,5 @@
+For each job, we set a CPU request of 5 CPUs, allowing 3 pods to run on a single node. For instance, if we want to run 100 jobs in parallel, we would need to request 600 CPUs (plus any additional CPUs based on the specific CPU requests). When the E2E pipeline is triggered, and all jobs under policy/bsf/ats are running simultaneously, the maximum CPU usage is 160 CPUs.
+
 
 Yesterday, the Viking team merged the Metlife project into the pre-dev branch, triggering an automatic build. However, the job failed due to a missing JAR of diam-stack. Upon investigation, I found that the last job for diam-stack ran two weeks ago (as there were no merges during this period).
 
