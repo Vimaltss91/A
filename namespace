@@ -1,24 +1,27 @@
-For each job, we set a CPU request of 5 CPUs, allowing 3 pods to run on a single node. For instance, if we want to run 100 jobs in parallel, we would need to request 600 CPUs (plus any additional CPUs based on the specific CPU requests). When the E2E pipeline is triggered, and all jobs under policy/bsf/ats are running simultaneously, the maximum CPU usage is 160 CPUs.
+CREATE DATABASE namespace_management;
+USE namespace_management;
 
 
-Yesterday, the Viking team merged the Metlife project into the pre-dev branch, triggering an automatic build. However, the job failed due to a missing JAR of diam-stack. Upon investigation, I found that the last job for diam-stack ran two weeks ago (as there were no merges during this period).
+CREATE TABLE namespace_status (
+    s_no INT AUTO_INCREMENT PRIMARY KEY,
+    release_tag VARCHAR(255),
+    namespace VARCHAR(50),
+    status ENUM('Running', 'Blocked', 'Available') DEFAULT 'Available',
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-Additionally, note that the cne-common JAR was downloaded for the Viking pre-dev and hook-src. The diam-stack depends on cne-common, so it attempted to download the Viking JAR instead of using the fallback version. This caused the auto-build job to fail.
 
-Here is the pipeline:
+INSERT INTO namespace_status (release_tag, namespace, status) VALUES
+('24.30.-OCNGF-34343', 'devops1', 'Available'),
+('24.30.-OCNGF-34343', 'devops2', 'Available'),
+('24.30.-OCNGF-34343', 'devops3', 'Available'),
+('24.30.-OCNGF-34343', 'devops4', 'Available'),
+...
+('24.30.-OCNGF-34343', 'devops30', 'Available');
 
-Consuming the JAR
 
-Issue: When the version of the common JAR reaches two digits, the last digit is being removed. The version is incorrectly formatted as 23.4.1x-SNAPSHOT instead of 23.4.x-SNAPSHOT.
-Cause: This issue is caused by the following code snippet:
-Trigger Condition for Patch Branch
+SELECT * FROM namespace_status;
 
-Issue: The trigger condition for configuring the patch branch should be updated to trigger a push whenever something is merged.
-Required Update: The condition should be updated to:
-JAR Cleanup Issue
-
-Issue: If we try to build the job after two weeks, the JARs might have been cleaned up. This may require an exception for the patch branch to avoid having to rebuild the one-click JAR if it has been more than two weeks.
-Suggestion: Consider implementing an exception for the patch branch to prevent the need for frequent rebuilds.
 
 #!/bin/bash
 
