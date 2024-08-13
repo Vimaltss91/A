@@ -1,0 +1,140 @@
+# config.py
+
+DB_CONFIG = {
+    'host': 'your_mysql_host',
+    'user': 'your_mysql_user',
+    'password': 'your_mysql_password',
+    'database': 'your_database'
+}
+
+DEFAULT_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+DEFAULT_NAMESPACE_STATUS = 'Available'
+
+
+# database.py
+
+import mysql.connector
+from config import DB_CONFIG
+
+class Database:
+    def __init__(self, config=DB_CONFIG):
+        self.config = config
+
+    def connect(self):
+        """Establish a database connection and return the connection and cursor."""
+        connection = mysql.connector.connect(**self.config)
+        cursor = connection.cursor()
+        return connection, cursor
+
+    def execute_query(self, query, params=None):
+        """Execute a query and return the results."""
+        connection, cursor = self.connect()
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return results
+
+    def execute_update(self, query, params=None):
+        """Execute an update query and return the number of affected rows."""
+        connection, cursor = self.connect()
+        cursor.execute(query, params)
+        connection.commit()
+        affected_rows = cursor.rowcount
+        cursor.close()
+        connection.close()
+        return affected_rows
+
+
+
+# namespace_manager.py
+
+from datetime import datetime
+from config import DEFAULT_DATE_FORMAT, DEFAULT_NAMESPACE_STATUS
+from database import Database
+
+class NamespaceManager:
+    def __init__(self, db: Database):
+        self.db = db
+
+    def _reset_auto_increment_if_needed(self):
+        """Reset AUTO_INCREMENT to 1 if the maximum s_no has reached 30."""
+        query = "SELECT MAX(s_no) FROM namespace_status"
+        max_s_no = self.db.execute_query(query)[0][0]
+
+        if max_s_no and max_s_no >= 30:
+            reset_query = "ALTER TABLE namespace_status AUTO_INCREMENT = 1"
+            self.db.execute_update(reset_query)
+
+    def insert_namespace_record(self, release_tag, namespace, status=DEFAULT_NAMESPACE_STATUS):
+        """Insert a new namespace record, resetting AUTO_INCREMENT if needed."""
+        self._reset_auto_increment_if_needed()
+
+        insert_query = """
+            INSERT INTO namespace_status (release_tag, namespace, status, date)
+            VALUES (%s, %s, %s, %s)
+        """
+        current_date = datetime.now().strftime(DEFAULT_DATE_FORMAT)
+        self.db.execute_update(insert_query, (release_tag, namespace, status, current_date))
+        
+        s_no_query = "SELECT LAST_INSERT_ID()"
+        s_no = self.db.execute_query(s_no_query)[0][0]
+        print(f"Inserted record with s_no: {s_no}")
+        return s_no
+
+    def get_namespace_status(self):
+        """Retrieve all records from the namespace_status table."""
+        query = "SELECT * FROM namespace_status"
+        return self.db.execute_query(query)
+
+    def update_namespace_status(self, s_no, status):
+        """Update the status of a specific namespace based on s_no."""
+        update_query = """
+            UPDATE namespace_status
+            SET status = %s, date = %s
+            WHERE s_no = %s
+        """
+        current_date = datetime.now().strftime(DEFAULT_DATE_FORMAT)
+        affected_rows = self.db.execute_update(update_query, (status, current_date, s_no))
+        print(f"Updated record with s_no: {s_no} to status: {status}")
+        return affected_rows
+
+    def reset_all_namespaces(self):
+        """Reset the status of all namespaces to 'Available'."""
+        reset_query = """
+            UPDATE namespace_status
+            SET status = %s, date = %s
+        """
+        current_date = datetime.now().strftime(DEFAULT_DATE_FORMAT)
+        affected_rows = self.db.execute_update(reset_query, (DEFAULT_NAMESPACE_STATUS, current_date))
+        print("All namespaces have been reset to 'Available'.")
+        return affected_rows
+
+
+
+# main.py
+
+from namespace_manager import NamespaceManager
+from database import Database
+
+def main():
+    # Initialize the Database and NamespaceManager
+    db = Database()
+    manager = NamespaceManager(db)
+
+    # Example: Insert a new namespace record
+    s_no = manager.insert_namespace_record('24.30.-OCNGF-34343', 'devops1')
+
+    # Example: Retrieve all namespace records
+    all_records = manager.get_namespace_status()
+    print(all_records)
+
+    # Example: Update the status of a specific namespace
+    manager.update_namespace_status(s_no, 'Running')
+
+    # Example: Reset all namespaces to 'Available'
+    manager.reset_all_namespaces()
+
+if __name__ == "__main__":
+    main()
