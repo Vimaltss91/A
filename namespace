@@ -7,8 +7,10 @@ CREATE TABLE namespace_status (
     release_tag VARCHAR(255),
     namespace VARCHAR(50),
     status ENUM('Running', 'Blocked', 'Available') DEFAULT 'Available',
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_s_no CHECK (s_no BETWEEN 1 AND 30)
 );
+
 
 
 INSERT INTO namespace_status (release_tag, namespace, status) VALUES
