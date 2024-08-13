@@ -1,7 +1,7 @@
-import pymysql
+import mysql.connector
 
 # Database connection parameters
-connection = pymysql.connect(
+connection = mysql.connector.connect(
     host='localhost',
     user='your_username',
     password='your_password',
@@ -25,6 +25,7 @@ try:
     connection.commit()
 finally:
     connection.close()
+
 
 
 
