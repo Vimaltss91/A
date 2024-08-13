@@ -1,3 +1,33 @@
+import pymysql
+
+# Database connection parameters
+connection = pymysql.connect(
+    host='localhost',
+    user='your_username',
+    password='your_password',
+    database='your_database'
+)
+
+try:
+    with connection.cursor() as cursor:
+        # Insert data for o-devops-pol1 to o-devops-pol30
+        for i in range(1, 31):
+            cursor.execute(
+                "INSERT INTO namespace_status (namespace, status) VALUES (%s, %s)",
+                (f'o-devops-pol{i}', 'Available')
+            )
+            cursor.execute(
+                "INSERT INTO namespace_status (namespace, status) VALUES (%s, %s)",
+                (f'o-devops-bsf{i}', 'Available')
+            )
+
+    # Commit the transaction
+    connection.commit()
+finally:
+    connection.close()
+
+
+
 import mysql.connector
 from datetime import datetime
 
