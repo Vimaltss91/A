@@ -1,3 +1,53 @@
+import mysql.connector
+from datetime import datetime
+
+def reset_auto_increment_if_needed(cursor):
+    cursor.execute("SELECT MAX(s_no) FROM namespace_status")
+    max_s_no = cursor.fetchone()[0]
+
+    if max_s_no >= 30:
+        cursor.execute("ALTER TABLE namespace_status AUTO_INCREMENT = 1")
+
+def insert_namespace_record(release_tag, namespace, status):
+    connection = mysql.connector.connect(
+        host="your_mysql_host",
+        user="your_mysql_user",
+        password="your_mysql_password",
+        database="your_database"
+    )
+    cursor = connection.cursor()
+
+    # Check and reset AUTO_INCREMENT if needed
+    reset_auto_increment_if_needed(cursor)
+
+    # Insert the new record
+    insert_query = """
+        INSERT INTO namespace_status (release_tag, namespace, status, date)
+        VALUES (%s, %s, %s, %s)
+    """
+    current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute(insert_query, (release_tag, namespace, status, current_date))
+
+    # Commit the transaction
+    connection.commit()
+
+    # Fetch and print the auto-incremented s_no for the inserted record
+    cursor.execute("SELECT LAST_INSERT_ID()")
+    s_no = cursor.fetchone()[0]
+    print(f"Inserted record with s_no: {s_no}")
+
+    # Close the connection
+    cursor.close()
+    connection.close()
+
+# Example usage:
+release_tag = '24.30.-OCNGF-34343'
+namespace = 'devops1'
+status = 'Available'
+
+insert_namespace_record(release_tag, namespace, status)
+
+
 CREATE DATABASE namespace_management;
 USE namespace_management;
 
