@@ -1,0 +1,3 @@
+Currently, PyPI is set to the open-source registry without a fallback registry (phx = internet). When we add the fallback registry, all packages (pipeline with fallback) are being downloaded from the fallback registry. It seems that pip is internally resolving the registry this way.
+
+As a result, we need to ensure all packages are built from the open-source registry. If someone wants to try a new version, we can enable the fallback registry by introducing a new parameter (ENABLE_PIP_FALLBACK). When this is set to true, packages will be downloaded from the fallback registry.
