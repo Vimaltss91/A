@@ -1,1 +1,1 @@
-With the recent change to point exclusively to the opensource PyPI repository, the pyyaml 6.0.2 package has not been built or pushed yet, causing Gullierno to encounter an error. For new version upgrades, we can use a fallback version with an additional variable for development and testing purposes. Once the fallback is no longer needed, we should build the package from source and proceed with the build without relying on the fallback version.
+
