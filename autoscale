@@ -1,3 +1,74 @@
+mysql -uroot -h localhost -p
+
+
+CREATE DATABASE namespace_management;
+
+use namespace_management;
+
+CREATE TABLE namespace_status (
+    s_no INT AUTO_INCREMENT PRIMARY KEY,
+    nf_type VARCHAR(20),
+    release_tag VARCHAR(30),
+    ats_release_tag VARCHAR(30),
+    namespace VARCHAR(50),
+    is_csar ENUM('YES','NO') NOT NULL,
+    is_asm ENUM('YES','NO') NOT NULL,
+    is_tgz ENUM('YES','NO') NOT NULL,
+    is_internal_ats ENUM('YES','NO') NOT NULL,
+    is_occ ENUM('YES','NO') NOT NULL,
+    is_pcf ENUM('YES','NO') NOT NULL,
+	is_converged ENUM('YES','NO') NOT NULL,
+    upg_rollback ENUM('YES','NO') NOT NULL,
+    offical_build ENUM('YES','NO') NOT NULL,
+    priority ENUM('Critical','High','Medium','Low') NOT NULL,
+    status VARCHAR(50),
+    allocation_lock ENUM('YES','NO') NOT NULL,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO namespace_status (nf_type, release_tag,ats_release_tag, namespace, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf, is_converged, upg_rollback , offical_build, priority , status, allocation_lock) VALUES
+('policy','24.3.0-OCNGF-34343','24.3.0-OCNGF-34343', '', 'NO', 'NO', 'NO', 'YES', 'NO', 'NO', 'YES', 'NO','YES', 'High',  'YET TO ASSIGN','NO' );
+
+select * from namespace_status;
+
+select * from namespace;
+
+
+CREATE TABLE namespace (
+    namespace VARCHAR(50),
+    status VARCHAR(50),
+	allocation_lock ENUM('YES','NO') NOT NULL
+);
+
+
+drop table namespace_status;
+drop table namespace;
+
+                SELECT namespace FROM namespace 
+                WHERE status = 'Available' 
+                  AND allocation_lock = 'NO' 
+                LIMIT 1;
+				
+				
+Now I need to add a delete function based on the namespace should delete the matched row and update the status in namespace table from In-Use to available.. THis function should be called via arguments
+
+
+I need to have arg parser that should call the inserter_update fucntion, allocated namesapce and delete namespace
+
+
+python test4.py insert_or_update --nf_type policy --release_tag 24.3.0-ocngf-86773 --ats_release_tag 24.3.0 --is_csar YES --is_asm NO --is_tgz YES --is_internal_ats NO --is_occ YES --is_pcf NO --is_converged YES --upg_rollback NO --official_build NO --priority High
+
+
+python test4.py insert_or_update --nf_type policy --release_tag 24.3.0-ocngf-86775 --ats_release_tag 24.3.0 --is_csar YES --is_asm NO --is_tgz YES --is_internal_ats NO --is_occ YES --is_pcf NO --is_converged YES --upg_rollback NO --official_build YES 
+
+python test4.py allocate --nf_type policy --release_tag 24.3.0 --ats_release_tag 24.3.0 --is_csar YES --is_asm NO --is_tgz YES --is_internal_ats NO --is_occ YES --is_pcf NO --is_converged YES --upg_rollback NO
+
+python test4.py allocate --nf_type policy --release_tag 24.3.0-ocngf-86775 --ats_release_tag 24.3.0 --is_csar YES --is_asm NO --is_tgz YES --is_internal_ats NO --is_occ YES --is_pcf NO --is_converged YES --upg_rollback NO
+
+
+python test4.py delete --namespace o-devops-pol14
+
+
 mysql -u your_username -h 192.168.1.100 -e "USE my_database; CREATE TABLE my_table (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255));"
 
 ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '';
