@@ -1,2 +1,7 @@
- use_external_docker_registry = variables.get('USE_EXTERNAL_DOCKER_REGSITRY', None)
-    is_tgz = 'NO' if use_external_docker_registry is None or use_external_docker_registry.lower() != 'false' else 'YES'
+    use_external_docker_registry = variables.get('USE_EXTERNAL_DOCKER_REGSITRY', '').strip().lower()
+    if use_external_docker_registry in ['', 'true']:
+        is_tgz = 'NO'
+    elif use_external_docker_registry == 'false':
+        is_tgz = 'YES'
+    else:
+        is_tgz = 'NO'
