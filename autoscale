@@ -1,1 +1,16 @@
+    # Get the first key that comes after 'stages'
+    stages = data.get('stages', [])
+    first_section = None
+    for key in data:
+        if key != 'stages':
+            first_section = key
+            break
 
+    # Now extract variables from the first section
+    if not first_section:
+        raise ValueError("No valid section found after 'stages' in the YAML file.")
+    
+    variables = data.get(first_section, {}).get('variables', {})
+
+    # Extract the necessary parameters as before
+    build_nf = variables.get('BUILD_NF', '').lower()
