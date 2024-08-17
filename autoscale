@@ -1,19 +1,59 @@
 import os
+import yaml
 
-def extract_args_from_env(self):
-    build_nf = os.getenv('BUILD_NF', '').lower()
+def extract_args(self, source_type, yaml_file=None):
+    # Initialize variables dictionary
+    variables = {}
+
+    # Load from YAML if source_type is 'yaml'
+    if source_type == 'yaml':
+        if yaml_file is None:
+            raise ValueError("YAML file must be provided when source_type is 'yaml'")
+        
+        # Load the YAML file
+        with open(yaml_file, 'r') as file:
+            data = yaml.safe_load(file)
+
+        # Get the first key that comes after 'stages'
+        stages = data.get('stages', [])
+        first_section = None
+        for key in data:
+            if key != 'stages':
+                first_section = key
+                break
+
+        if not first_section:
+            raise ValueError("No valid section found after 'stages' in the YAML file.")
+
+        # Extract variables from the first section
+        variables = data.get(first_section, {}).get('variables', {})
+
+    # Otherwise, load from environment variables
+    elif source_type == 'env':
+        # Collect environment variables into the variables dictionary
+        variables = {key: os.getenv(key, '') for key in [
+            'BUILD_NF', 'POLICY_RELEASE_TAG', 'BSF_RELEASE_TAG', 'UPG_FEATURE_1', 'UPG_FEATURE_2',
+            'UPG_FEATURE_3', 'UPG_FEATURE_4', 'POLICY_MODE', 'ATS_RELEASE_TAG', 'REPORT',
+            'CSAR_DEPLOYMENT', 'ENABLE_ISTIO_INJECTION', 'USE_EXTERNAL_DOCKER_REGISTRY',
+            'INCLUDE_OCC_FEATURES', 'INCLUDE_INTERNAL_ATS_FEATURES'
+        ]}
+    else:
+        raise ValueError("Invalid source_type. Use 'yaml' or 'env'.")
+
+    # Process extracted variables
+    build_nf = variables.get('BUILD_NF', '').lower()
 
     if build_nf == 'policy':
-        release_tag = os.getenv('POLICY_RELEASE_TAG', '')
+        release_tag = variables.get('POLICY_RELEASE_TAG', '')
     elif build_nf == 'bsf':
-        release_tag = os.getenv('BSF_RELEASE_TAG', '')
+        release_tag = variables.get('BSF_RELEASE_TAG', '')
     else:
         release_tag = ""
 
     upg_feature_keys = ['UPG_FEATURE_1', 'UPG_FEATURE_2', 'UPG_FEATURE_3', 'UPG_FEATURE_4']
     upg_rollback = 'NO'
     for key in upg_feature_keys:
-        value = os.getenv(key, '').lower()
+        value = variables.get(key, '').lower()
         if value == 'true':
             upg_rollback = 'YES'
             break
@@ -25,19 +65,19 @@ def extract_args_from_env(self):
         is_converged = 'NO'
         is_occ = 'NO'
     else:
-        policy_mode = os.getenv('POLICY_MODE', '').lower()
+        policy_mode = variables.get('POLICY_MODE', '').lower()
         is_pcf = 'YES' if policy_mode == 'pcf' else 'NO'
         is_converged = 'YES' if policy_mode == 'occnp' else 'NO'
-        is_occ = 'YES' if os.getenv('INCLUDE_OCC_FEATURES', '').lower() == 'true' else 'NO'
+        is_occ = 'YES' if variables.get('INCLUDE_OCC_FEATURES', '').lower() == 'true' else 'NO'
 
-    ats_release_tag = os.getenv('ATS_RELEASE_TAG', 'null')
+    ats_release_tag = variables.get('ATS_RELEASE_TAG', 'null')
 
-    official_build = 'YES' if os.getenv('REPORT', 'false').lower() == 'true' else 'NO'
+    official_build = 'YES' if variables.get('REPORT', 'false').lower() == 'true' else 'NO'
 
     # Priority check function
     priority = self.priority_check(official_build, release_tag, upg_rollback)
 
-    use_external_docker_registry = os.getenv('USE_EXTERNAL_DOCKER_REGISTRY', '').strip().lower()
+    use_external_docker_registry = variables.get('USE_EXTERNAL_DOCKER_REGISTRY', '').strip().lower()
     if use_external_docker_registry in ['', 'true']:
         is_tgz = 'NO'
     elif use_external_docker_registry == 'false':
@@ -49,10 +89,10 @@ def extract_args_from_env(self):
         'nf_type': build_nf,
         'release_tag': release_tag,
         'ats_release_tag': ats_release_tag,
-        'is_csar': 'YES' if os.getenv('CSAR_DEPLOYMENT', '').lower() == 'true' else 'NO',
-        'is_asm': 'YES' if os.getenv('ENABLE_ISTIO_INJECTION', '').lower() == 'true' else 'NO',
+        'is_csar': 'YES' if variables.get('CSAR_DEPLOYMENT', '').lower() == 'true' else 'NO',
+        'is_asm': 'YES' if variables.get('ENABLE_ISTIO_INJECTION', '').lower() == 'true' else 'NO',
         'is_tgz': is_tgz,
-        'is_internal_ats': 'YES' if os.getenv('INCLUDE_INTERNAL_ATS_FEATURES', '').lower() == 'true' else 'NO',
+        'is_internal_ats': 'YES' if variables.get('INCLUDE_INTERNAL_ATS_FEATURES', '').lower() == 'true' else 'NO',
         'is_occ': is_occ,
         'is_pcf': is_pcf,
         'is_converged': is_converged,
