@@ -1,104 +1,125 @@
-import os
-import yaml
+def allocate_namespace(self, nf_type, release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats,
+                       is_occ, is_pcf, is_converged, upg_rollback):
+    try:
+        cursor = self.connection.cursor(dictionary=True)
+        print("Checking if the namespace is already allotted")
 
-def extract_args(self, source_type, yaml_file=None):
-    # Initialize variables dictionary
-    variables = {}
+        # Step 1: Check if there is already an assigned namespace for this configuration
+        cursor.execute("""
+            SELECT namespace, status FROM namespace_status 
+            WHERE release_tag = %s AND ats_release_tag = %s
+              AND is_csar = %s AND is_asm = %s 
+              AND is_tgz = %s AND is_internal_ats = %s 
+              AND is_occ = %s AND is_pcf = %s 
+              AND is_converged = %s AND upg_rollback = %s 
+              AND nf_type = %s
+        """, (
+            release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf, is_converged,
+            upg_rollback, nf_type
+        ))
+        assigned_status = cursor.fetchone()
+        print("Checking is done for already allotment. Assigned status:", assigned_status)
 
-    # Load from YAML if source_type is 'yaml'
-    if source_type == 'yaml':
-        if yaml_file is None:
-            raise ValueError("YAML file must be provided when source_type is 'yaml'")
+        if assigned_status and assigned_status['status'] == 'ASSIGNED':
+            print(f"Namespace '{assigned_status['namespace']}' is already assigned for release_tag '{release_tag}'")
+            return assigned_status['namespace']
+
+        # Define the namespace prefix based on nf_type
+        if nf_type == 'policy':
+            namespace_prefix = 'o-devops-pol'
+        elif nf_type == 'bsf':
+            namespace_prefix = 'o-devops-bsf'
+        else:
+            print("Invalid nf_type")
+            return None
+
+        print("ns type prefix ", namespace_prefix)
         
-        # Load the YAML file
-        with open(yaml_file, 'r') as file:
-            data = yaml.safe_load(file)
+        # Step 2: Find the first available namespace
+        cursor.execute(f"""
+            SELECT namespace FROM namespace
+            WHERE namespace LIKE %s
+            LIMIT 1
+        """, (f'{namespace_prefix}%',))
+        available_namespace = cursor.fetchone()
 
-        # Get the first key that comes after 'stages'
-        stages = data.get('stages', [])
-        first_section = None
-        for key in data:
-            if key != 'stages':
-                first_section = key
-                break
+        if available_namespace is None:
+            print("No available namespace")
 
-        if not first_section:
-            raise ValueError("No valid section found after 'stages' in the YAML file.")
+        if available_namespace:
+            namespace_name = available_namespace['namespace']
 
-        # Extract variables from the first section
-        variables = data.get(first_section, {}).get('variables', {})
+            # Step 3: Lock and allocate the namespace
+            cursor.execute("UPDATE namespace SET allocation_lock = 'YES' WHERE namespace = %s", (namespace_name,))
+            cursor.execute("""
+                UPDATE namespace_status
+                SET allocation_lock = 'YES'
+                WHERE release_tag = %s AND ats_release_tag = %s AND status = 'YET TO ASSIGN'
+                  AND is_csar = %s AND is_asm = %s 
+                  AND is_tgz = %s AND is_internal_ats = %s 
+                  AND is_occ = %s AND is_pcf = %s 
+                  AND is_converged = %s AND upg_rollback = %s 
+                  AND nf_type = %s
+            """, (
+                release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf, is_converged,
+                upg_rollback, nf_type
+            ))
 
-    # Otherwise, load from environment variables
-    elif source_type == 'env':
-        # Collect environment variables into the variables dictionary
-        variables = {key: os.getenv(key, '') for key in [
-            'BUILD_NF', 'POLICY_RELEASE_TAG', 'BSF_RELEASE_TAG', 'UPG_FEATURE_1', 'UPG_FEATURE_2',
-            'UPG_FEATURE_3', 'UPG_FEATURE_4', 'POLICY_MODE', 'ATS_RELEASE_TAG', 'REPORT',
-            'CSAR_DEPLOYMENT', 'ENABLE_ISTIO_INJECTION', 'USE_EXTERNAL_DOCKER_REGISTRY',
-            'INCLUDE_OCC_FEATURES', 'INCLUDE_INTERNAL_ATS_FEATURES'
-        ]}
-    else:
-        raise ValueError("Invalid source_type. Use 'yaml' or 'env'.")
+            self.connection.commit()
 
-    # Process extracted variables
-    build_nf = variables.get('BUILD_NF', '').lower()
+            cursor.execute("""
+                UPDATE namespace_status
+                SET namespace = %s, status = 'ASSIGNED', allocation_lock = 'NO'
+                WHERE release_tag = %s AND ats_release_tag = %s
+                  AND is_csar = %s AND is_asm = %s 
+                  AND is_tgz = %s AND is_internal_ats = %s 
+                  AND is_occ = %s AND is_pcf = %s 
+                  AND is_converged = %s AND upg_rollback = %s
+                  AND nf_type = %s
+            """, (
+                namespace_name, release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf,
+                is_converged, upg_rollback, nf_type
+            ))
 
-    if build_nf == 'policy':
-        release_tag = variables.get('POLICY_RELEASE_TAG', '')
-    elif build_nf == 'bsf':
-        release_tag = variables.get('BSF_RELEASE_TAG', '')
-    else:
-        release_tag = ""
+            cursor.execute("UPDATE namespace SET status = 'In-Use', allocation_lock = 'NO' WHERE namespace = %s", (namespace_name,))
+            self.connection.commit()
 
-    upg_feature_keys = ['UPG_FEATURE_1', 'UPG_FEATURE_2', 'UPG_FEATURE_3', 'UPG_FEATURE_4']
-    upg_rollback = 'NO'
-    for key in upg_feature_keys:
-        value = variables.get(key, '').lower()
-        if value == 'true':
-            upg_rollback = 'YES'
-            break
-        elif value == 'false':
-            upg_rollback = 'NO'
+            print(f"Namespace '{namespace_name}' has been allocated to release_tag '{release_tag}'")
 
-    if build_nf == 'bsf':
-        is_pcf = 'NO'
-        is_converged = 'NO'
-        is_occ = 'NO'
-    else:
-        policy_mode = variables.get('POLICY_MODE', '').lower()
-        is_pcf = 'YES' if policy_mode == 'pcf' else 'NO'
-        is_converged = 'YES' if policy_mode == 'occnp' else 'NO'
-        is_occ = 'YES' if variables.get('INCLUDE_OCC_FEATURES', '').lower() == 'true' else 'NO'
+            # Step 5: Update or add the NAMESPACE in bastion_parameters.env
+            self.update_namespace_in_env(namespace_name)
 
-    ats_release_tag = variables.get('ATS_RELEASE_TAG', 'null')
+            return namespace_name
 
-    official_build = 'YES' if variables.get('REPORT', 'false').lower() == 'true' else 'NO'
+        else:
+            print("No available namespaces or they are locked.")
+            return None
 
-    # Priority check function
-    priority = self.priority_check(official_build, release_tag, upg_rollback)
+    except Error as e:
+        print(f"Error during namespace allocation: {e}")
+    finally:
+        cursor.close()
 
-    use_external_docker_registry = variables.get('USE_EXTERNAL_DOCKER_REGISTRY', '').strip().lower()
-    if use_external_docker_registry in ['', 'true']:
-        is_tgz = 'NO'
-    elif use_external_docker_registry == 'false':
-        is_tgz = 'YES'
-    else:
-        is_tgz = 'NO'
+def update_namespace_in_env(self, namespace_name):
+    try:
+        env_file = "bastion_parameters.env"
+        found_namespace = False
 
-    args_dict = {
-        'nf_type': build_nf,
-        'release_tag': release_tag,
-        'ats_release_tag': ats_release_tag,
-        'is_csar': 'YES' if variables.get('CSAR_DEPLOYMENT', '').lower() == 'true' else 'NO',
-        'is_asm': 'YES' if variables.get('ENABLE_ISTIO_INJECTION', '').lower() == 'true' else 'NO',
-        'is_tgz': is_tgz,
-        'is_internal_ats': 'YES' if variables.get('INCLUDE_INTERNAL_ATS_FEATURES', '').lower() == 'true' else 'NO',
-        'is_occ': is_occ,
-        'is_pcf': is_pcf,
-        'is_converged': is_converged,
-        'upg_rollback': upg_rollback,
-        'official_build': official_build,
-        'priority': priority
-    }
+        with open(env_file, 'r') as file:
+            lines = file.readlines()
 
-    return args_dict
+        with open(env_file, 'w') as file:
+            for line in lines:
+                if line.startswith("NAMESPACE="):
+                    file.write(f"NAMESPACE={namespace_name}\n")
+                    found_namespace = True
+                else:
+                    file.write(line)
+
+            if not found_namespace:
+                file.write(f"\nNAMESPACE={namespace_name}\n")
+
+        print(f"NAMESPACE updated to '{namespace_name}' in {env_file}")
+    
+    except Exception as e:
+        print(f"Error updating NAMESPACE in {env_file}: {e}")
