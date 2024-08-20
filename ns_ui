@@ -1,77 +1,227 @@
-from flask import Flask, render_template
-import csv
+import subprocess
+import re
+import requests
+import mysql.connector
+from mysql.connector import Error, connect
+from requests.exceptions import RequestException, ConnectionError, HTTPError, Timeout
 
-app = Flask(__name__)
+def get_prometheus_url_from_db(db_config):
+    """
+    Retrieve the Prometheus URL from the database.
+    
+    Parameters:
+        db_config (dict): Database configuration parameters.
+        
+    Returns:
+        str or None: The Prometheus URL if found, else None.
+    """
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+        
+        query = "SELECT url FROM namespace WHERE namespace = %s LIMIT 1"
+        cursor.execute(query, ('prometheus',))
+        result = cursor.fetchone()
+        
+        if result and result.get('url'):
+            print(f"Retrieved Prometheus URL from database: {result['url']}")
+            return result['url']
+        else:
+            print("Prometheus URL not found in database.")
+            return None
+    except Error as e:
+        print(f"Database error while retrieving URL: {e}")
+        return None
+    finally:
+        if 'connection' in locals() and connection.is_connected():
+            cursor.close()
+            connection.close()
 
-def read_data():
-    # Read the content of the datasheet file and parse it as CSV
-    data = []
-    with open('datasheet.txt', 'r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            data.append(row)
-    return data
+def check_prometheus_url_reachable(prometheus_url, timeout=5):
+    """
+    Check if the Prometheus URL is reachable.
+    
+    Parameters:
+        prometheus_url (str): The Prometheus URL to check.
+        timeout (int): Timeout for the request in seconds.
+        
+    Returns:
+        bool: True if reachable, False otherwise.
+    """
+    test_endpoint = f"{prometheus_url}/-/healthy"
+    try:
+        response = requests.get(test_endpoint, timeout=timeout)
+        response.raise_for_status()
+        print(f"Prometheus URL is reachable: {prometheus_url}")
+        return True
+    except (ConnectionError, HTTPError, Timeout) as e:
+        print(f"Prometheus URL is not reachable: {e}")
+        return False
 
-@app.route('/')
-def index():
-    # Get the data from the datasheet file
-    data = read_data()
+def get_prometheus_service_port():
+    """
+    Fetch the Prometheus service port using kubectl command.
+    
+    Returns:
+        str or None: The service port if found, else None.
+    """
+    try:
+        # Execute kubectl command to get services in 'occne-infra' namespace
+        svc_output = subprocess.check_output(
+            ["kubectl", "get", "svc", "-n", "occne-infra"],
+            universal_newlines=True
+        )
+        
+        # Search for the line containing 'occne-prometheus-server'
+        for line in svc_output.splitlines():
+            if 'occne-prometheus-server' in line:
+                # Extract the port number after the colon before /TCP
+                match = re.search(r'(\d+):\d+/TCP', line)
+                if match:
+                    port = match.group(1)
+                    print(f"Discovered Prometheus service port: {port}")
+                    return port
+                else:
+                    print("Port number not found in service description.")
+                    return None
+        print("Service 'occne-prometheus-server' not found.")
+        return None
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing kubectl command for services: {e}")
+        return None
 
-    # Render the template with the list of rows
-    return render_template('index.html', data=data)
+def get_first_node_ip():
+    """
+    Fetch the IP address of the first node using kubectl command.
+    
+    Returns:
+        str or None: The node IP if found, else None.
+    """
+    try:
+        # Execute kubectl command to get nodes with detailed information
+        node_output = subprocess.check_output(
+            ["kubectl", "get", "nodes", "-o", "wide"],
+            universal_newlines=True
+        )
+        
+        # Extract the IP address from the second line (first node)
+        lines = node_output.strip().splitlines()
+        if len(lines) > 1:
+            first_node_line = lines[1]
+            columns = first_node_line.split()
+            # The INTERNAL-IP is usually in the 6th column
+            node_ip = columns[5]
+            print(f"Discovered first node IP address: {node_ip}")
+            return node_ip
+        else:
+            print("No nodes found in the cluster.")
+            return None
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing kubectl command for nodes: {e}")
+        return None
+    except IndexError as e:
+        print(f"Error parsing node IP address: {e}")
+        return None
 
-if __name__ == '__main__':
-    app.run(debug=True)
+def save_prometheus_url_to_db(prometheus_url, db_config):
+    """
+    Save the Prometheus URL to the database.
+    
+    Parameters:
+        prometheus_url (str): The Prometheus URL to save.
+        db_config (dict): Database configuration parameters.
+    """
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        
+        query = """
+            INSERT INTO namespace (namespace, url)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE url = VALUES(url)
+        """
+        cursor.execute(query, ('prometheus', prometheus_url))
+        connection.commit()
+        print(f"Prometheus URL saved to database: {prometheus_url}")
+    except Error as e:
+        print(f"Database error while saving URL: {e}")
+    finally:
+        if 'connection' in locals() and connection.is_connected():
+            cursor.close()
+            connection.close()
 
+def fetch_total_cpu_requests(prometheus_url, timeout=10):
+    """
+    Fetch the total CPU requests from Prometheus.
+    
+    Parameters:
+        prometheus_url (str): The base URL of the Prometheus server.
+        timeout (int): Timeout for the request in seconds.
+        
+    Returns:
+        float or None: The total CPU requested, else None.
+    """
+    query = 'sum(kube_pod_container_resource_request{resource="cpu",node=~".*"})'
+    params = {'query': query}
+    try:
+        response = requests.get(f"{prometheus_url}/api/v1/query", params=params, timeout=timeout)
+        response.raise_for_status()
+        data = response.json()
+        
+        if data.get('status') == 'success' and data['data']['result']:
+            total_cpu_request = float(data['data']['result'][0]['value'][1])
+            print(f"Total CPU requested: {total_cpu_request} cores")
+            return total_cpu_request
+        else:
+            print("No data returned from Prometheus for CPU request query.")
+            return None
+    except (RequestException, ValueError) as e:
+        print(f"Error fetching CPU request data from Prometheus: {e}")
+        return None
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple UI</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+def main():
+    # Database configuration
+    db_config = {
+        'host': 'your_db_host',
+        'user': 'your_db_user',
+        'password': 'your_db_password',
+        'database': 'your_db_name'
+    }
+    
+    # Step 1: Try to retrieve Prometheus URL from database
+    prometheus_url = get_prometheus_url_from_db(db_config)
+    
+    # Step 2: Check if the retrieved URL is reachable
+    if prometheus_url and check_prometheus_url_reachable(prometheus_url):
+        print("Using Prometheus URL from database.")
+    else:
+        print("Discovering Prometheus URL dynamically.")
+        # Step 3: Dynamically discover Prometheus URL
+        port = get_prometheus_service_port()
+        node_ip = get_first_node_ip()
+        
+        if port and node_ip:
+            prometheus_url = f"http://{node_ip}:{port}"
+            # Step 4: Save the discovered URL back to the database
+            save_prometheus_url_to_db(prometheus_url, db_config)
+            
+            # Verify if the newly discovered URL is reachable
+            if not check_prometheus_url_reachable(prometheus_url):
+                print("Discovered Prometheus URL is not reachable. Exiting.")
+                return
+        else:
+            print("Failed to discover Prometheus URL. Exiting.")
+            return
+    
+    # Step 5: Fetch total CPU requests from Prometheus
+    total_cpu_requests = fetch_total_cpu_requests(prometheus_url)
+    
+    if total_cpu_requests is not None:
+        # Process the CPU request data as needed
+        # For example, you can save it to the database or log it
+        print(f"Successfully fetched total CPU requests: {total_cpu_requests} cores")
+    else:
+        print("Failed to fetch total CPU requests.")
 
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #3498db;  /* Blue color for column headers */
-            color: #fff;  /* White text color for column headers */
-        }
-    </style>
-</head>
-<body>
-    <table>
-        <thead>
-            <tr>
-                <th>Namespace</th>
-                <th>Active</th>
-                <th>CreationDate</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in data %}
-                <tr>
-                    <td>{{ row['Namespace'] }}</td>
-                    <td>{{ row['Active'] }}</td>
-                    <td>{{ row['CreationDate'] }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
-
-
-Namespace,Active,CreationDate
-Namespace-1,Active,23_04_1991
-Namespace-2,InActive,01_01_01
-Namespace-3,Active,02_09_09
+if __name__ == "__main__":
+    main()
