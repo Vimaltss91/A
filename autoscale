@@ -1,125 +1,53 @@
-def allocate_namespace(self, nf_type, release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats,
-                       is_occ, is_pcf, is_converged, upg_rollback):
+import requests
+import json
+
+def fetch_cpu_requests(prometheus_url):
+    """
+    Fetches CPU requests data from Prometheus.
+
+    Parameters:
+    prometheus_url (str): The URL of the Prometheus server.
+
+    Returns:
+    dict: The JSON response from Prometheus containing the query results.
+    """
+
+    # Prometheus query for CPU requests
+    query = 'sum(kube_pod_container_resource_requests_cpu_cores) by (namespace, pod, container)'
+
+    # Define the URL for the query API
+    api_url = f"{prometheus_url}/api/v1/query"
+
+    # Parameters to be sent to the API
+    params = {
+        'query': query
+    }
+
     try:
-        cursor = self.connection.cursor(dictionary=True)
-        print("Checking if the namespace is already allotted")
+        # Send the HTTP GET request
+        response = requests.get(api_url, params=params)
 
-        # Step 1: Check if there is already an assigned namespace for this configuration
-        cursor.execute("""
-            SELECT namespace, status FROM namespace_status 
-            WHERE release_tag = %s AND ats_release_tag = %s
-              AND is_csar = %s AND is_asm = %s 
-              AND is_tgz = %s AND is_internal_ats = %s 
-              AND is_occ = %s AND is_pcf = %s 
-              AND is_converged = %s AND upg_rollback = %s 
-              AND nf_type = %s
-        """, (
-            release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf, is_converged,
-            upg_rollback, nf_type
-        ))
-        assigned_status = cursor.fetchone()
-        print("Checking is done for already allotment. Assigned status:", assigned_status)
+        # Raise an exception for HTTP errors
+        response.raise_for_status()
 
-        if assigned_status and assigned_status['status'] == 'ASSIGNED':
-            print(f"Namespace '{assigned_status['namespace']}' is already assigned for release_tag '{release_tag}'")
-            return assigned_status['namespace']
+        # Parse the JSON response
+        data = response.json()
 
-        # Define the namespace prefix based on nf_type
-        if nf_type == 'policy':
-            namespace_prefix = 'o-devops-pol'
-        elif nf_type == 'bsf':
-            namespace_prefix = 'o-devops-bsf'
-        else:
-            print("Invalid nf_type")
+        # Check for Prometheus API errors
+        if data.get('status') != 'success':
+            print("Error in Prometheus query:", data.get('error'))
             return None
 
-        print("ns type prefix ", namespace_prefix)
-        
-        # Step 2: Find the first available namespace
-        cursor.execute(f"""
-            SELECT namespace FROM namespace
-            WHERE namespace LIKE %s
-            LIMIT 1
-        """, (f'{namespace_prefix}%',))
-        available_namespace = cursor.fetchone()
+        # Return the data part of the response
+        return data['data']['result']
 
-        if available_namespace is None:
-            print("No available namespace")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from Prometheus: {e}")
+        return None
 
-        if available_namespace:
-            namespace_name = available_namespace['namespace']
+# Example usage
+prometheus_url = 'http://localhost:9090'
+cpu_requests_data = fetch_cpu_requests(prometheus_url)
 
-            # Step 3: Lock and allocate the namespace
-            cursor.execute("UPDATE namespace SET allocation_lock = 'YES' WHERE namespace = %s", (namespace_name,))
-            cursor.execute("""
-                UPDATE namespace_status
-                SET allocation_lock = 'YES'
-                WHERE release_tag = %s AND ats_release_tag = %s AND status = 'YET TO ASSIGN'
-                  AND is_csar = %s AND is_asm = %s 
-                  AND is_tgz = %s AND is_internal_ats = %s 
-                  AND is_occ = %s AND is_pcf = %s 
-                  AND is_converged = %s AND upg_rollback = %s 
-                  AND nf_type = %s
-            """, (
-                release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf, is_converged,
-                upg_rollback, nf_type
-            ))
-
-            self.connection.commit()
-
-            cursor.execute("""
-                UPDATE namespace_status
-                SET namespace = %s, status = 'ASSIGNED', allocation_lock = 'NO'
-                WHERE release_tag = %s AND ats_release_tag = %s
-                  AND is_csar = %s AND is_asm = %s 
-                  AND is_tgz = %s AND is_internal_ats = %s 
-                  AND is_occ = %s AND is_pcf = %s 
-                  AND is_converged = %s AND upg_rollback = %s
-                  AND nf_type = %s
-            """, (
-                namespace_name, release_tag, ats_release_tag, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf,
-                is_converged, upg_rollback, nf_type
-            ))
-
-            cursor.execute("UPDATE namespace SET status = 'In-Use', allocation_lock = 'NO' WHERE namespace = %s", (namespace_name,))
-            self.connection.commit()
-
-            print(f"Namespace '{namespace_name}' has been allocated to release_tag '{release_tag}'")
-
-            # Step 5: Update or add the NAMESPACE in bastion_parameters.env
-            self.update_namespace_in_env(namespace_name)
-
-            return namespace_name
-
-        else:
-            print("No available namespaces or they are locked.")
-            return None
-
-    except Error as e:
-        print(f"Error during namespace allocation: {e}")
-    finally:
-        cursor.close()
-
-def update_namespace_in_env(self, namespace_name):
-    try:
-        env_file = "bastion_parameters.env"
-        found_namespace = False
-
-        with open(env_file, 'r') as file:
-            lines = file.readlines()
-
-        with open(env_file, 'w') as file:
-            for line in lines:
-                if line.startswith("NAMESPACE="):
-                    file.write(f"NAMESPACE={namespace_name}\n")
-                    found_namespace = True
-                else:
-                    file.write(line)
-
-            if not found_namespace:
-                file.write(f"\nNAMESPACE={namespace_name}\n")
-
-        print(f"NAMESPACE updated to '{namespace_name}' in {env_file}")
-    
-    except Exception as e:
-        print(f"Error updating NAMESPACE in {env_file}: {e}")
+if cpu_requests_data:
+    print(json.dumps(cpu_requests_data, indent=4))
