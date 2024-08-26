@@ -1,3 +1,17 @@
+#!/bin/bash
+
+# Variables
+namespace="your_namespace_value"  # Replace with your namespace value
+ATS_link="your_ATS_link_value"    # Replace with your ATS link value
+
+# MySQL command to update the ats_status and ats_link
+mysql -u your_username -p'your_password' -h your_host -D your_database -e "
+UPDATE namespace_status 
+SET ats_status = 'Running', ats_link = '${ATS_link}'
+WHERE namespace = '${namespace}';
+"
+
+
 New Tables
 -----------------
 
