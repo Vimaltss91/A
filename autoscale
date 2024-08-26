@@ -1,3 +1,92 @@
+New Tables
+-----------------
+
+CREATE TABLE namespace_status (
+    s_no INT AUTO_INCREMENT PRIMARY KEY,
+    nf_type VARCHAR(20),
+    release_tag VARCHAR(30),
+    ats_release_tag VARCHAR(30),
+    namespace VARCHAR(50),
+    is_csar ENUM('YES','NO') NOT NULL,
+    is_asm ENUM('YES','NO') NOT NULL,
+    is_tgz ENUM('YES','NO') NOT NULL,
+    is_internal_ats ENUM('YES','NO') NOT NULL,
+    is_occ ENUM('YES','NO') NOT NULL,
+    is_pcf ENUM('YES','NO') NOT NULL,
+	is_converged ENUM('YES','NO') NOT NULL,
+    upg_rollback ENUM('YES','NO') NOT NULL,
+    official_build ENUM('YES','NO') NOT NULL,
+    priority ENUM('Critical','High','Medium','Low') NOT NULL,
+    status VARCHAR(50),
+    ats_status VARCHAR(50),
+    ats_link VARCHAR(100),
+    owner VARCHAR(50),
+    pipeline VARCHAR(100),
+    cpu_estimate VARCHAR(20),
+    allocation_lock ENUM('YES','NO') NOT NULL,
+    custom_message VARCHAR(200),
+    deployment_Date TIMESTAMP,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+);
+
+
+INSERT INTO namespace_status (nf_type, release_tag,ats_release_tag, namespace, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf, is_converged, upg_rollback , official_build, priority , status, ats_status, ats_link, owner, pipeline, cpu_estimate, allocation_lock) VALUES
+('policy','24.3.0-OCNGF-34343','24.3.0-OCNGF-34343', '', 'NO', 'NO', 'NO', 'YES', 'NO', 'NO', 'YES', 'NO','YES', 'High','YET TO ASSIGN','','','vimal','','60'  ,'NO','@vsanthar @edugar fyi for the debug message','' );
+
+INSERT INTO namespace_status (
+    nf_type,
+    release_tag,
+    ats_release_tag,
+    namespace,
+    is_csar,
+    is_asm,
+    is_tgz,
+    is_internal_ats,
+    is_occ,
+    is_pcf,
+    is_converged,
+    upg_rollback,
+    official_build,
+    priority,
+    status,
+    ats_status,
+    ats_link,
+    owner,
+    pipeline,
+    cpu_estimate,
+    allocation_lock,
+    custom_message,
+    deployment_Date
+) VALUES
+(
+    'bsf',
+    '23.4.0-ocngf-4342',
+    '23.4.0-ocngf-4342',
+    '',
+    'YES',
+    'NO',
+    'YES',
+    'NO',
+    'YES',
+    'NO',
+    'YES',
+    'NO',
+    'YES',
+    'High',
+    '',
+    '',
+    '',
+    'Alice',
+    '',
+    '2',
+    'NO',
+    '@vsanthar @edugar fyi for the debug message',
+    NULL
+);
+
+
+
+
 import requests
 import json
 
