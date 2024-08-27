@@ -1,1 +1,4 @@
+kubectl get nodes --no-headers -o=jsonpath='{.items[*].metadata.creationTimestamp}' | \
+  xargs -n1 -I{} sh -c 'date -d {} +%s' | \
+  awk -v now=$(date +%s) '{ if ((now - $1) / 86400 > 10) count++ } END { print count }'
 
