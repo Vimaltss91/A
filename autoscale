@@ -1,3 +1,6 @@
+In Python, some packages are dependent on specific versions of the interpreter. For example, if a package is built for Python 3.9 or 3.11, it might not be compatible with Python 3.12 without being rebuilt. This is the case with the bcrypt package, which is available on PyPI for Python 3.9 and 3.11. Since you're using Python 3.12, the package is attempting to build at runtime, but it seems to be failing due to missing dependencies.
+
+
 #!/bin/bash
 
 # Variables
