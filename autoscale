@@ -1,3 +1,70 @@
+Dynamic Namespace Allocation Approach
+
+Current Challenges:
+
+Inefficient Resource Utilization:
+
+Pre-dev and NB namespaces are reserved even when they are not in use, leading to underutilization of resources. The pre-dev team might not run their pipeline daily, yet the resources remain locked for them. Similarly, after the NB run, the resources are not effectively utilized as they are completely allocated.
+Overprovisioning and Lack of Resource Monitoring:
+
+We have increased our DevOps namespace resources, but in reality, we don’t have sufficient resources to support both the DevOps and pre-dev namespaces simultaneously. If all pipelines are triggered at once, there is no mechanism to check if the resource capacity has been maxed out, potentially impacting ongoing ATS runs.
+Difficulty in Resource Tracking:
+
+For DevOps, we are not regularly updating the equipment-sharing page, making it difficult to track resource allocation and availability.
+Proposed Solution: Automated Namespace Allocation:
+
+Overview: The proposed approach introduces an automated namespace allocation system using a namespace_pool. When a pipeline is triggered, it will check the namespace_pool for available namespaces and allocate one if available. If no namespaces are available, the system will wait until a namespace becomes free.
+
+Detailed Implementation:
+
+The backend utilizes a MySQL database hosted on an OCI bastion to store and manage all relevant information. This database serves as a central repository for all build information when pipelines are triggered.
+
+Database Structure:
+
+Table 1 - namespace_status: Stores pipeline environment variables.
+
+Table 2 - namespace_pool: Manages the namespace pool with the following columns:
+
+namespace_status Table Columns:
+
+nf_type, release_tag, ats_release_tag, namespace, is_csar, is_asm, is_tgz, is_internal_ats, is_occ, is_pcf, is_converged, upg_rollback, official_build, priority, status, ats_status, ats_link, owner, pipeline, cpu_estimate, allocation_lock, custom_message, deployment_Date, date
+Key Columns:
+
+official_build: Indicates when the report is true.
+priority: Specifies the build priority (Critical, High, Medium, Low) based on the release tag (e.g., Critical for GA builds, High for NB/RC/Beta builds, Medium for pre-dev builds, Low for feature branch builds).
+status: Indicates whether the namespace is "YET TO BE ASSIGNED" or "ASSIGNED".
+ats_status: Shows whether ATS is "Running" or "Scale Down".
+ats_link: Provides the ATS Jenkins link.
+cpu_estimate: Used to estimate the CPU requirements (e.g., policy at 80 CPUs, BSF at 50 CPUs).
+allocation_lock: Prevents collisions when running parallel pipelines.
+namespace_pool Table Columns:
+
+namespace: Name of the namespace.
+status: Indicates whether the namespace is "Available" or "In-Use".
+Pipeline Execution Process:
+
+When a pipeline is triggered for build and deployment, the downstream pipeline (export_downstream_test_{nf}_variable) will first fetch and insert relevant data into the namespace_status table. If the same data already exists, it won’t be added again.
+
+In the initial stage of the build, the namespace column is blank, and the status is marked as "YET TO BE ASSIGNED". The build job will continue with the usual processes (e.g., jar, common-svc, cnpolicy, bsf, ats).
+
+During the load_bastion job, the system will query the data based on specific parameters (e.g., nf_type, release_tag, ats_release_tag, etc.) and check the following three conditions:
+
+CPU Availability:
+
+It will retrieve the CPU requests from Prometheus and verify if the total CPU usage is below the CPU limit (defined as CPU_LIMIT_HIGH = Max_Total_CPU - 200).
+Parallel Deployment Consideration:
+
+When multiple deployments run in parallel, the estimate_cpu value becomes crucial as Prometheus may not account for those CPU counts. The system ensures that the sum of total_cpu_request and estimate_cpu_request remains below the CPU_LIMIT_HIGH.
+Priority Management:
+
+The system checks for any high-priority jobs in the database within the last 1 to 1.5 hours. If such jobs exist and their estimate_cpu does not exceed CPU_LIMIT_HIGH, the system proceeds with the deployment. If the estimate surpasses the limit, the system waits for the high-priority job to complete before allocating resources.
+If these conditions are not met, the system will wait for 10 minutes and recheck. Once sufficient resources are available, the namespace will be assigned to the current job, and the namespace_pool will mark it as "In-Use".
+
+Post-ATS Process: Once the ATS process is complete, the results are posted in Slack. During namespace deletion, the specific namespace is deleted, making it available in the pool again. If the ATS is scaled down, the ats_status in the database will be updated from "Running" to "Scale Down". Note that manual intervention is required to delete the namespace post-debugging, ensuring it is available for other jobs.
+
+Enhanced Visibility: To address visibility issues, a frontend UI has been created using Python (Django) as the backend, connecting to the database. This UI provides interactive options for better management and visibility of resources and namespaces.
+
+
 In Python, some packages are dependent on specific versions of the interpreter. For example, if a package is built for Python 3.9 or 3.11, it might not be compatible with Python 3.12 without being rebuilt. This is the case with the bcrypt package, which is available on PyPI for Python 3.9 and 3.11. Since you're using Python 3.12, the package is attempting to build at runtime, but it seems to be failing due to missing dependencies.
 
 
