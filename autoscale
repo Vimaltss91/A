@@ -1,5 +1,2 @@
-The oscs-oci-oracledist repository serves as the primary repository for all open-source built artifacts, not limited to those from CNC. This includes artifacts built from open-source projects, such as Maven, Gradle, and Ant packages, which are pushed to this central repository.
 
-As recommended by the Benson team, we need to prioritize this repository for all artifacts. When we build artifacts from open-source projects, the final product should be pushed to the respective build repository—e.g., Maven artifacts go to the Maven repository, and Gradle artifacts go to the Gradle repository.
-
-Thus, when referring to the "product repository," it is essential to include all relevant repositories.
+I've reviewed the script for the install, upgrade, and rollback phases, and it seems to work as intended. During the install phase, the script will query the data and assign the appropriate namespace. In the upgrade phase, when the script queries the data again, it will fetch the same data, recognizing that the namespace has already been assigned. Therefore, it will continue using the existing namespace.
