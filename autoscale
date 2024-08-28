@@ -1,2 +1,4 @@
 
+We also benefit from keeping the script within the one-click integration, as our team sometimes uses this integration to trigger the pipeline. By maintaining this setup, it will monitor and track resource utilization before proceeding with deployments
+
 I've reviewed the script for the install, upgrade, and rollback phases, and it seems to work as intended. During the install phase, the script will query the data and assign the appropriate namespace. In the upgrade phase, when the script queries the data again, it will fetch the same data, recognizing that the namespace has already been assigned. Therefore, it will continue using the existing namespace.
