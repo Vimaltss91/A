@@ -1,3 +1,8 @@
+            <td>{{ item.ats_status }}</td>
+            <td><a href="{{ item.ats_link }}" target="_blank">ATS_LINK</a></td>
+            <td>{{ item.owner }}</td>
+            <td><a href="{{ item.pipeline }}" target="_blank">PIPELINE</a></td>
+
 import subprocess
 import re
 import mysql.connector
