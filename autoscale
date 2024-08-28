@@ -1,4 +1,10 @@
-kubectl get nodes --no-headers -o=jsonpath='{.items[*].metadata.creationTimestamp}' | \
-  xargs -n1 -I{} sh -c 'date -d {} +%s' | \
-  awk -v now=$(date +%s) '{ if ((now - $1) / 86400 > 10) count++ } END { print count }'
-
+            <td>
+                <a ng-if="item.ats_link" href="{{ item.ats_link }}" target="_blank">ATS_LINK</a>
+                <span ng-if="!item.ats_link">N/A</span>
+            </td>
+            <td>{{ item.owner }}</td>
+            <td>
+                <a ng-if="item.pipeline" href="{{ item.pipeline }}" target="_blank">PIPELINE</a>
+                <span ng-if="!item.pipeline">N/A</span>
+            </td>
+            <td>
