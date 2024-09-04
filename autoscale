@@ -1,4 +1,29 @@
-
-We also benefit from keeping the script within the one-click integration, as our team sometimes uses this integration to trigger the pipeline. By maintaining this setup, it will monitor and track resource utilization before proceeding with deployments
-
-I've reviewed the script for the install, upgrade, and rollback phases, and it seems to work as intended. During the install phase, the script will query the data and assign the appropriate namespace. In the upgrade phase, when the script queries the data again, it will fetch the same data, recognizing that the namespace has already been assigned. Therefore, it will continue using the existing namespace.
+CREATE TABLE namespace_status (
+    s_no INT AUTO_INCREMENT PRIMARY KEY,
+    nf_type VARCHAR(20),
+    release_tag VARCHAR(30),
+    ats_release_tag VARCHAR(30),
+    namespace VARCHAR(50),
+    is_csar ENUM('YES','NO') NOT NULL,
+    is_asm ENUM('YES','NO') NOT NULL,
+    is_tgz ENUM('YES','NO') NOT NULL,
+    is_internal_ats ENUM('YES','NO') NOT NULL,
+    is_occ ENUM('YES','NO') NOT NULL,
+    is_pcf ENUM('YES','NO') NOT NULL,
+	is_converged ENUM('YES','NO') NOT NULL,
+    is_pcrf ENUM('YES','NO') NOT NULL,
+    tls_version VARCHAR(20),
+    upg_rollback ENUM('YES','NO') NOT NULL,
+    official_build ENUM('YES','NO') NOT NULL,
+    priority ENUM('Critical','High','Medium','Low') NOT NULL,
+    status VARCHAR(50),
+    ats_status VARCHAR(50),
+    ats_link VARCHAR(100),
+    owner VARCHAR(50),
+    pipeline VARCHAR(100),
+    cpu_estimate VARCHAR(20),
+    allocation_lock ENUM('YES','NO') NOT NULL,
+    custom_message VARCHAR(200),
+    deployment_Date TIMESTAMP,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+);
