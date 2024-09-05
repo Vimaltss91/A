@@ -1,29 +1,41 @@
-CREATE TABLE namespace_status (
-    s_no INT AUTO_INCREMENT PRIMARY KEY,
-    nf_type VARCHAR(20),
-    release_tag VARCHAR(30),
-    ats_release_tag VARCHAR(30),
-    namespace VARCHAR(50),
-    is_csar ENUM('YES','NO') NOT NULL,
-    is_asm ENUM('YES','NO') NOT NULL,
-    is_tgz ENUM('YES','NO') NOT NULL,
-    is_internal_ats ENUM('YES','NO') NOT NULL,
-    is_occ ENUM('YES','NO') NOT NULL,
-    is_pcf ENUM('YES','NO') NOT NULL,
-	is_converged ENUM('YES','NO') NOT NULL,
-    is_pcrf ENUM('YES','NO') NOT NULL,
-    tls_version VARCHAR(20),
-    upg_rollback ENUM('YES','NO') NOT NULL,
-    official_build ENUM('YES','NO') NOT NULL,
-    priority ENUM('Critical','High','Medium','Low') NOT NULL,
-    status VARCHAR(50),
-    ats_status VARCHAR(50),
-    ats_link VARCHAR(100),
-    owner VARCHAR(50),
-    pipeline VARCHAR(100),
-    cpu_estimate VARCHAR(20),
-    allocation_lock ENUM('YES','NO') NOT NULL,
-    custom_message VARCHAR(200),
-    deployment_Date TIMESTAMP,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
-);
+import requests
+import logging
+
+def fetch_total_cpu_requests_from_prometheus(prometheus_url, timeout=10):
+    """Fetches the total CPU requests from Prometheus."""
+    # Extract the IP from the URL
+    ip_address = prometheus_url.split("//")[1].split(":")[0]
+
+    # Configure no_proxy directly in the request
+    proxies = {
+        "http": None,
+        "https": None,
+        "no_proxy": ip_address  # Add IP to bypass proxy for this specific request
+    }
+
+    query = 'sum(kube_pod_container_resource_requests{resource="cpu",node=~".*"})'
+    api_url = f"{prometheus_url}/api/v1/query"
+    params = {'query': query}
+
+    try:
+        response = requests.get(api_url, params=params, timeout=timeout, proxies=proxies)
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get('status') != 'success':
+            logging.error(f"Error in Prometheus query: {data.get('error')}")
+            return None
+
+        result = data['data']['result']
+
+        if result:
+            total_cpu_request = float(result[0]['value'][1])
+            logging.info(f"Fetched total CPU requests: {total_cpu_request} cores.")
+            return total_cpu_request
+        else:
+            logging.warning("No data returned by Prometheus query.")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching data from Prometheus: {e}")
+        return None
