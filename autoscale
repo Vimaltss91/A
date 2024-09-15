@@ -1,3 +1,11 @@
+    match = re.search(r"NAMESPACE update to '(\S+)'", content)
+
+    # If a match is found, return the value; otherwise, return None
+    if match:
+        return match.group(1)
+    else:
+        return None
+
 CREATE TABLE namespace_status (
     s_no INT AUTO_INCREMENT PRIMARY KEY,
     nf_type VARCHAR(20),
