@@ -1,4 +1,43 @@
-    match = re.search(r"NAMESPACE update to '(\S+)'", content)
+def find_and_lock_available_namespace(cursor, nf_type: str) -> Optional[str]:
+    """
+    Tries to find and lock an available namespace for allocation, with retries and waiting.
+    """
+    namespace_prefix = get_namespace_prefix(nf_type)
+    if not namespace_prefix:
+        return None
+
+    while True:
+        query = """
+            SELECT namespace FROM namespace 
+            WHERE status = 'Available' AND allocation_lock = 'NO' 
+              AND namespace LIKE %s 
+            LIMIT 1
+        """
+        params = (f'{namespace_prefix}%',)
+        
+        # Re-execute the query and check if a namespace is available
+        try:
+            cursor.execute(query, params)
+            available_namespace = cursor.fetchone()
+        except Exception as e:
+            logging.error(f"Error executing query: {e}")
+            return None
+
+        if available_namespace:
+            namespace_name = available_namespace[0]
+            try:
+                lock_namespace(cursor, namespace_name)  # Lock the namespace if found
+                return namespace_name
+            except Exception as e:
+                logging.error(f"Error locking namespace {namespace_name}: {e}")
+        else:
+            logging.info(f"No available namespaces. Retrying in {config.SLEEP_DURATION} minutes...")
+            time.sleep(config.SLEEP_DURATION)
+            # Optionally, reset cursor if required by your DB backend
+            # cursor.reset() # Uncomment if needed for certain DBs
+
+
+match = re.search(r"NAMESPACE update to '(\S+)'", content)
 
     # If a match is found, return the value; otherwise, return None
     if match:
