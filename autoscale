@@ -7,6 +7,60 @@ def find_and_lock_available_namespace(cursor, nf_type: str) -> Optional[str]:
         return None
 
     while True:
+        try:
+            cursor.execute("START TRANSACTION;")  # Start transaction
+
+            query = """
+                SELECT namespace FROM namespace
+                WHERE status = 'Available' AND allocation_lock = 'NO'
+                  AND namespace LIKE %s
+                LIMIT 1
+            """
+            params = (f'{namespace_prefix}%',)
+            execute_query(cursor, query, params)
+            available_namespace = cursor.fetchone()
+
+            if available_namespace:
+                namespace_name = available_namespace[0]
+
+                # Lock the namespace
+                lock_query = """
+                    UPDATE namespace
+                    SET allocation_lock = 'YES'
+                    WHERE namespace = %s
+                      AND allocation_lock = 'NO'
+                """
+                lock_params = (namespace_name,)
+                cursor.execute(lock_query, lock_params)
+
+                if cursor.rowcount == 1:  # Lock was successful
+                    cursor.execute("COMMIT;")  # Commit the transaction
+                    return namespace_name
+                else:
+                    # Lock failed, meaning it was locked by another process
+                    cursor.execute("ROLLBACK;")  # Rollback the transaction
+                    continue  # Retry
+
+            else:
+                cursor.execute("ROLLBACK;")  # Rollback the transaction
+                logging.info(f"No available namespaces. Retrying in {config.SLEEP_DURATION} minutes...")
+                time.sleep(config.SLEEP_DURATION)
+
+        except Exception as e:
+            cursor.execute("ROLLBACK;")  # Rollback on error
+            logging.error(f"Error while finding and locking namespace: {e}")
+            time.sleep(config.SLEEP_DURATION)  # Sleep before retrying
+
+
+def find_and_lock_available_namespace(cursor, nf_type: str) -> Optional[str]:
+    """
+    Tries to find and lock an available namespace for allocation, with retries and waiting.
+    """
+    namespace_prefix = get_namespace_prefix(nf_type)
+    if not namespace_prefix:
+        return None
+
+    while True:
         query = """
             SELECT namespace FROM namespace 
             WHERE status = 'Available' AND allocation_lock = 'NO' 
