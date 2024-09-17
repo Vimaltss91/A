@@ -1,1 +1,43 @@
+import logging
+import requests
+
+def get_prometheus_url_from_db(cursor):
+    # Implementation of fetching Prometheus URL from the database
+    pass
+
+def check_prometheus_url_reachable(url):
+    # Implementation of checking if the Prometheus URL is reachable
+    pass
+
+def dynamic_url():
+    try:
+        response = requests.get('http://100.10.10.10:3000/api/myapp/prometheus-url')
+        if response.status_code == 200:
+            data = response.json()
+            prometheus_url = data.get("prometheus_url")
+            if prometheus_url:
+                return prometheus_url
+            else:
+                logging.error("Prometheus URL not found in the JSON response.")
+        else:
+            logging.error(f"Failed to retrieve URL. HTTP Status Code: {response.status_code}")
+    except requests.RequestException as e:
+        logging.error(f"Error while calling dynamic URL: {e}")
+    return None
+
+def get_prometheus_url(cursor):
+    prometheus_url = get_prometheus_url_from_db(cursor)
+
+    if not prometheus_url or not check_prometheus_url_reachable(prometheus_url):
+        logging.warning("Prometheus URL from DB is not reachable. Attempting to fetch dynamically.")
+        prometheus_url = dynamic_url()
+
+        if prometheus_url and check_prometheus_url_reachable(prometheus_url):
+            logging.info("Successfully retrieved and verified dynamic Prometheus URL.")
+            # Optionally, save the new Prometheus URL back to the database here
+            # save_prometheus_url_to_db(cursor, prometheus_url)
+        else:
+            logging.error("Failed to retrieve or reach Prometheus URL.")
+            return None
+    return prometheus_url
 
