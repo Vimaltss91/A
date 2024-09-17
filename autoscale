@@ -1,43 +1,55 @@
-import logging
-import requests
+#!/bin/bash
 
-def get_prometheus_url_from_db(cursor):
-    # Implementation of fetching Prometheus URL from the database
-    pass
+# Define the individual functions
+update_scaleDownDatabase() {
+    local NAMESPACE=$1
+    echo "Scaling down database for namespace: $NAMESPACE"
+    # Add your implementation here
+}
 
-def check_prometheus_url_reachable(url):
-    # Implementation of checking if the Prometheus URL is reachable
-    pass
+delete_namespace_from_db() {
+    local NAMESPACE=$1
+    echo "Deleting namespace from DB: $NAMESPACE"
+    # Add your implementation here
+}
 
-def dynamic_url():
-    try:
-        response = requests.get('http://100.10.10.10:3000/api/myapp/prometheus-url')
-        if response.status_code == 200:
-            data = response.json()
-            prometheus_url = data.get("prometheus_url")
-            if prometheus_url:
-                return prometheus_url
-            else:
-                logging.error("Prometheus URL not found in the JSON response.")
-        else:
-            logging.error(f"Failed to retrieve URL. HTTP Status Code: {response.status_code}")
-    except requests.RequestException as e:
-        logging.error(f"Error while calling dynamic URL: {e}")
-    return None
+update_scaleUpDatabase() {
+    local NAMESPACE=$1
+    echo "Scaling up database for namespace: $NAMESPACE"
+    # Add your implementation here
+}
 
-def get_prometheus_url(cursor):
-    prometheus_url = get_prometheus_url_from_db(cursor)
+# Define the main function
+main() {
+    local ACTION=$1
+    local NAMESPACE=$2
+    local BASTION_IP=$3
+    local OCI_BASTION_HOST=$4
 
-    if not prometheus_url or not check_prometheus_url_reachable(prometheus_url):
-        logging.warning("Prometheus URL from DB is not reachable. Attempting to fetch dynamically.")
-        prometheus_url = dynamic_url()
+    # Check if BASTION_IP and OCI_BASTION_HOST are the same
+    if [[ "$BASTION_IP" != "$OCI_BASTION_HOST" ]]; then
+        echo "BASTION_IP and OCI_BASTION_HOST do not match. Action will be ignored."
+        return 0  # Exit with success status
+    fi
 
-        if prometheus_url and check_prometheus_url_reachable(prometheus_url):
-            logging.info("Successfully retrieved and verified dynamic Prometheus URL.")
-            # Optionally, save the new Prometheus URL back to the database here
-            # save_prometheus_url_to_db(cursor, prometheus_url)
-        else:
-            logging.error("Failed to retrieve or reach Prometheus URL.")
-            return None
-    return prometheus_url
+    # Call the appropriate function based on the ACTION
+    case $ACTION in
+        scaleDown)
+            update_scaleDownDatabase "$NAMESPACE"
+            ;;
+        delete)
+            delete_namespace_from_db "$NAMESPACE"
+            ;;
+        scaleUp)
+            update_scaleUpDatabase "$NAMESPACE"
+            ;;
+        *)
+            echo "Unknown action: $ACTION. Use 'scaleDown', 'delete', or 'scaleUp'."
+            return 0  # Exit with success status
+            ;;
+    esac
+}
 
+# Example usage
+# Pass the ACTION (e.g., scaleDown, delete, scaleUp), NAMESPACE, BASTION_IP, and OCI_BASTION_HOST as arguments
+main "$1" "$2" "$3" "$4"
