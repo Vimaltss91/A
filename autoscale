@@ -1,4 +1,2 @@
-Pre-condition: Namespace values should be passed as "auto" for all deployments.
-Expected Behavior:
-(i) The "auto" parameter will be detected as OCI, and the bastion details will be simplified.
-(ii) When the "auto" value is passed, data will be fed to the database in the export_down_test job. In the load_bastion parameter, data will be retrieved and conditions will be checked to assign the namespace.
+Pre-condition: The Slack notification dashboard should receive the auto namespace (not as "auto").
+Expected Behavior: The load_bastion parameter job will assign the namespace. From the job log, the traced namespace value will be retrieved and updated in Slack.
