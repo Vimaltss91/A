@@ -1,15 +1,31 @@
-import sys
-import os
+# slack_helper.py
+import requests
+import json
+import logging
 
-# Add the path to the third-party-dependencies directory
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'third-party-dependencies', 'ci_handler', 'modules', 'utility'))
+def slack_notification(message):
+    """
+    Sends a notification message to a Slack channel.
+    
+    Parameters:
+        message (str): The message to be sent to the Slack channel.
+    """
+    try:
+        slack_webhook_url = "https://hooks.slack.com/services/your/webhook/url"  # Replace with your actual Slack webhook URL
+        slack_data = {
+            "text": message
+        }
 
-# Now you can import the slack_notification module
-from slack_notification import slack_post_notification
+        response = requests.post(
+            slack_webhook_url, 
+            data=json.dumps(slack_data), 
+            headers={'Content-Type': 'application/json'}
+        )
 
-def main():
-    message = "Hello, this is a test notification!"
-    slack_post_notification(message)
+        if response.status_code != 200:
+            logging.error(f"Failed to send Slack notification. Status code: {response.status_code}, Response: {response.text}")
+        else:
+            logging.info(f"Slack notification sent successfully: {message}")
 
-if __name__ == "__main__":
-    main()
+    except Exception as e:
+        logging.error(f"Error while sending Slack notification: {e}")
