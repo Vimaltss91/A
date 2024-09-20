@@ -1,2 +1,73 @@
-Pre-condition: The Slack notification dashboard should receive the auto namespace (not as "auto").
-Expected Behavior: The load_bastion parameter job will assign the namespace. From the job log, the traced namespace value will be retrieved and updated in Slack.
+def slack_notification(message):
+    logging.warning(message)
+
+def fetch_total_cpu_requests_with_validation(cursor, current_build_priority):
+    """
+    Fetches total CPU requests from Prometheus and validates it against certain thresholds.
+    Sends Slack notifications when specific limits are exceeded, ensuring messages are sent only once per loop iteration.
+    Returns the total CPU requests if it passes validation, otherwise None.
+    """
+    def wait_and_retry(message):
+        """Logs a warning, rolls back the transaction, and sleeps before retrying."""
+        logging.warning(message)
+        cursor.execute("ROLLBACK;")
+        time.sleep(config.SLEEP_DURATION)
+
+    # Flags to ensure Slack notifications are sent only once per condition
+    high_priority_notified = False
+    oci_limit_notified = False
+
+    while True:
+        try:
+            # Fetch total CPU requests from the user (or from Prometheus if necessary)
+            total_cpu_requests = get_total_cpu_requests_from_user()
+            if total_cpu_requests is None:
+                logging.error("Failed to fetch total CPU requests. Exiting validation loop.")
+                return None
+
+            # Fetch sum of estimated CPU and calculate combined CPU usage
+            sum_estimate_cpu = fetch_sum_estimate_cpu(cursor)
+            combined_cpu = total_cpu_requests + sum_estimate_cpu
+
+            # High CPU limit check: Notify once if exceeded
+            if total_cpu_requests > config.CPU_LIMIT_HIGH or combined_cpu > config.CPU_LIMIT_HIGH:
+                if not high_priority_notified:
+                    slack_notification("Deployment is queued. If it is a higher priority job, please contact devops.")
+                    high_priority_notified = True  # Prevent further notifications in this loop
+                wait_and_retry(f"Total or combined CPU requests ({combined_cpu}) exceed high limit ({config.CPU_LIMIT_HIGH}). "
+                               f"Retrying in {config.SLEEP_DURATION / 60} minutes...")
+                continue
+
+            # Start a transaction to ensure data consistency
+            cursor.execute("START TRANSACTION;")
+
+            # Medium CPU limit check: Notify once if exceeded
+            if total_cpu_requests > config.CPU_LIMIT_MEDIUM or combined_cpu > config.CPU_LIMIT_MEDIUM:
+                if not oci_limit_notified:
+                    slack_notification("Deployment is queued. No space in OCI for this deployment.")
+                    oci_limit_notified = True  # Prevent further notifications in this loop
+                if current_build_priority.lower() not in ['high', 'critical']:
+                    wait_and_retry(f"Total or combined CPU requests ({combined_cpu}) exceed medium limit ({config.CPU_LIMIT_MEDIUM}). "
+                                   f"Only 'High' and 'Critical' priority jobs are allowed. Retrying...")
+                    continue
+
+            # Check priority conditions and higher priority jobs
+            priority_condition_check = check_priority_condition(cursor, current_build_priority)
+            if priority_condition_check:
+                priority_job_estimate_cpu = fetch_priority_job_estimate_cpu(cursor, get_priorities_to_check(current_build_priority))
+                if combined_cpu + priority_job_estimate_cpu > config.CPU_LIMIT_HIGH:
+                    if not high_priority_notified:
+                        slack_notification("Deployment is queued. If it is a higher priority job, please contact devops.")
+                        high_priority_notified = True
+                    wait_and_retry(f"Combined CPU requests exceed {config.CPU_LIMIT_HIGH} cores with higher priority jobs. Retrying...")
+                    continue
+
+            # Commit the transaction and return total CPU requests if all checks pass
+            cursor.execute("COMMIT;")
+            logging.info("CPU requests are within limits. Proceeding with allocation.")
+            return total_cpu_requests
+
+        except Exception as e:
+            cursor.execute("ROLLBACK;")
+            logging.error(f"Error while validating total CPU requests: {e}")
+            time.sleep(config.SLEEP_DURATION)
