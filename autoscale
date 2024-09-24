@@ -1,37 +1,47 @@
+sample.json
+
+{
+    "name": "example",
+    "version": "1.0.0",
+    "description": "This is a sample JSON file for testing.",
+    "author": "Your Name",
+    "dependencies": {
+        "requests": "^2.25.1",
+        "numpy": "^1.21.0"
+    }
+}
+
+
+
 import requests
 import json
-import logging
 
-def slack_notification(message, channel_id):
-    """
-    Sends a notification message to a Slack channel using Slack API and channel ID.
+def upload_json_to_jfrog(file_path, artifactory_url, repo, username, password):
+    # Open the JSON file
+    with open(file_path, 'rb') as json_file:
+        # Set the URL for the upload
+        # The file name is extracted from the file path
+        file_name = file_path.split('/')[-1]
+        upload_url = f"{artifactory_url}/{repo}/{file_name}"
 
-    Parameters:
-        message (str): The message to be sent to the Slack channel.
-        channel_id (str): The Slack channel ID where the message will be sent.
-    """
-    try:
-        slack_token = "xoxb-your-slack-bot-token"  # Replace with your actual Slack Bot User OAuth Token
-        slack_api_url = "https://slack.com/api/chat.postMessage"
-        slack_data = {
-            "channel": channel_id,
-            "text": message
-        }
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {slack_token}"
-        }
+        # Send a PUT request to upload the JSON file
+        response = requests.put(upload_url, 
+                                data=json_file, 
+                                auth=(username, password),
+                                headers={"Content-Type": "application/json"})
 
-        response = requests.post(
-            slack_api_url, 
-            data=json.dumps(slack_data), 
-            headers=headers
-        )
-
-        if response.status_code != 200:
-            logging.error(f"Failed to send Slack notification. Status code: {response.status_code}, Response: {response.text}")
+        # Check the response
+        if response.status_code in (200, 201):
+            print(f"Successfully uploaded {file_name} to {upload_url}")
         else:
-            logging.info(f"Slack notification sent successfully to channel {channel_id}: {message}")
+            print(f"Failed to upload {file_name}. Status code: {response.status_code}, Response: {response.text}")
 
-    except Exception as e:
-        logging.error(f"Error while sending Slack notification: {e}")
+# Example usage
+if __name__ == "__main__":
+    artifactory_url = "https://your-jfrog-instance/artifactory"
+    repo = "your-repo-name"
+    username = "your-username"
+    password = "your-password"
+    file_path = "path/to/your/file.json"
+
+    upload_json_to_jfrog(file_path, artifactory_url, repo, username, password)
