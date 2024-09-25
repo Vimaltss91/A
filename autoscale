@@ -1,21 +1,37 @@
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
+import subprocess
+import json
 
-def post_slack_message(channel, message, client):
+def post_slack_message_via_curl(token, channel, message):
+    url = "https://slack.com/api/chat.postMessage"
+    headers = [
+        f"Authorization: Bearer {token}",
+        "Content-Type: application/json"
+    ]
+    
+    data = {
+        "channel": channel,
+        "text": message
+    }
+
+    # Construct the curl command
+    curl_command = [
+        "curl", "-X", "POST", url,
+        "-H", headers[0],
+        "-H", headers[1],
+        "-d", json.dumps(data)
+    ]
+
+    # Execute the curl command
     try:
-        response = client.chat_postMessage(channel=channel, text=message)
-        print("Message posted successfully:", response["ts"])
-    except SlackApiError as e:
-        print(f"Failed to post message: {e.response['error']}")
+        result = subprocess.run(curl_command, check=True, text=True, capture_output=True)
+        print("Curl command executed successfully.")
+        print("Response:", result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred: {e.stderr}")
 
-# Usage
 if __name__ == "__main__":
     slack_token = "xoxb-your-slack-bearer-token"  # Your Slack bot token
     channel_id = "#your-channel"  # Use the channel name with '#' or the channel ID
-    message = "Hello, Slack! This is a test message."
+    message = "Hello, @vts, @chand! Please review this."  # Your message
 
-    # Initialize the Slack client
-    client = WebClient(token=slack_token)
-
-    # Post the message
-    post_slack_message(channel_id, message, client)
+    post_slack_message_via_curl(slack_token, channel_id, message)
