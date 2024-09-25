@@ -1,47 +1,21 @@
-sample.json
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
-{
-    "name": "example",
-    "version": "1.0.0",
-    "description": "This is a sample JSON file for testing.",
-    "author": "Your Name",
-    "dependencies": {
-        "requests": "^2.25.1",
-        "numpy": "^1.21.0"
-    }
-}
+def post_slack_message(channel, message, client):
+    try:
+        response = client.chat_postMessage(channel=channel, text=message)
+        print("Message posted successfully:", response["ts"])
+    except SlackApiError as e:
+        print(f"Failed to post message: {e.response['error']}")
 
-
-
-import requests
-import json
-
-def upload_json_to_jfrog(file_path, artifactory_url, repo, username, password):
-    # Open the JSON file
-    with open(file_path, 'rb') as json_file:
-        # Set the URL for the upload
-        # The file name is extracted from the file path
-        file_name = file_path.split('/')[-1]
-        upload_url = f"{artifactory_url}/{repo}/{file_name}"
-
-        # Send a PUT request to upload the JSON file
-        response = requests.put(upload_url, 
-                                data=json_file, 
-                                auth=(username, password),
-                                headers={"Content-Type": "application/json"})
-
-        # Check the response
-        if response.status_code in (200, 201):
-            print(f"Successfully uploaded {file_name} to {upload_url}")
-        else:
-            print(f"Failed to upload {file_name}. Status code: {response.status_code}, Response: {response.text}")
-
-# Example usage
+# Usage
 if __name__ == "__main__":
-    artifactory_url = "https://your-jfrog-instance/artifactory"
-    repo = "your-repo-name"
-    username = "your-username"
-    password = "your-password"
-    file_path = "path/to/your/file.json"
+    slack_token = "xoxb-your-slack-bearer-token"  # Your Slack bot token
+    channel_id = "#your-channel"  # Use the channel name with '#' or the channel ID
+    message = "Hello, Slack! This is a test message."
 
-    upload_json_to_jfrog(file_path, artifactory_url, repo, username, password)
+    # Initialize the Slack client
+    client = WebClient(token=slack_token)
+
+    # Post the message
+    post_slack_message(channel_id, message, client)
