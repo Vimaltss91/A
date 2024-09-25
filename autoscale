@@ -1,30 +1,13 @@
 import subprocess
-import json
 
-def post_slack_message_via_curl(token, channel, message):
-    url = "https://slack.com/api/chat.postMessage"
-    headers = [
-        f"Authorization: Bearer {token}",
-        "Content-Type: application/json"
-    ]
-    
-    data = {
-        "channel": channel,
-        "text": message
-    }
+def post_slack_message_via_bash(token, channel, message):
+    # Construct the command to run the bash script
+    command = ["./post_slack_message.sh", token, channel, message]
 
-    # Construct the curl command
-    curl_command = [
-        "curl", "-X", "POST", url,
-        "-H", headers[0],
-        "-H", headers[1],
-        "-d", json.dumps(data)
-    ]
-
-    # Execute the curl command
+    # Execute the bash script
     try:
-        result = subprocess.run(curl_command, check=True, text=True, capture_output=True)
-        print("Curl command executed successfully.")
+        result = subprocess.run(command, check=True, text=True, capture_output=True)
+        print("Bash script executed successfully.")
         print("Response:", result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred: {e.stderr}")
@@ -34,4 +17,20 @@ if __name__ == "__main__":
     channel_id = "#your-channel"  # Use the channel name with '#' or the channel ID
     message = "Hello, @vts, @chand! Please review this."  # Your message
 
-    post_slack_message_via_curl(slack_token, channel_id, message)
+    post_slack_message_via_bash(slack_token, channel_id, message)
+
+
+
+#!/bin/bash
+
+TOKEN="$1"
+CHANNEL="$2"
+MESSAGE="$3"
+
+curl -X POST https://slack.com/api/chat.postMessage \
+-H "Authorization: Bearer $TOKEN" \
+-H "Content-Type: application/json" \
+-d '{
+    "channel": "'"$CHANNEL"'",
+    "text": "'"$MESSAGE"'"
+}'
