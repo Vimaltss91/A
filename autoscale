@@ -1,3 +1,51 @@
+import requests
+import re
+
+def format_message(message):
+    # Regular expression to find mentions that start with @
+    def replace_mention(match):
+        username = match.group(1)
+        return f"<@{username}>"
+
+    # Replace all instances of @username with <@username>
+    formatted_message = re.sub(r'@(\w+)', replace_mention, message)
+    return formatted_message
+
+def post_slack_notification(bearer_token, channel_id, message):
+    url = "https://slack.com/api/chat.postMessage"
+    
+    headers = {
+        "Authorization": f"Bearer {bearer_token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "channel": channel_id,
+        "text": message
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        print("Message posted successfully!")
+    else:
+        print(f"Failed to post message: {response.status_code}, {response.text}")
+
+if __name__ == "__main__":
+    SLACK_BEARER_TOKEN = "your_bearer_token_here"
+    CHANNEL_ID = "your_channel_id_here"
+    
+    # Example message with mentions
+    MESSAGE = "@gill @miguel testing for devops or testing @chand @ping"
+
+    # Format the message to use Slack's mention format
+    formatted_message = format_message(MESSAGE)
+    
+    # Post the notification to Slack
+    post_slack_notification(SLACK_BEARER_TOKEN, CHANNEL_ID, formatted_message)
+
+
+
 import subprocess
 
 def post_slack_message_via_bash(token, channel, message):
