@@ -1,3 +1,6 @@
+GRANT ALL PRIVILEGES ON *.* TO 'username'@'remote_ip' IDENTIFIED BY 'password' WITH GRANT OPTION;
+
+
 import requests
 import re
 
