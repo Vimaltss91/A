@@ -1,4 +1,5 @@
 GRANT ALL PRIVILEGES ON *.* TO 'username'@'remote_ip' IDENTIFIED BY 'password' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 
 
 import requests
