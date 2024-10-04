@@ -1,3 +1,15 @@
+Hi Team,
+
+We are currently experiencing multiple deployment failures:
+
+Pre-dev Failure: The ATS deployment is failing during the fetch and package untar process. Sumera, could you please help analyze this issue?
+
+23.4.x Patch Deployment: The deployment is failing due to an issue with nfstub. I am currently investigating this.
+
+Upgrade Issue: Dhaval, are you able to check on this issue?
+
+Thank you for your assistance.
+
 GRANT ALL PRIVILEGES ON *.* TO 'username'@'remote_ip' IDENTIFIED BY 'password' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 
