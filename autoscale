@@ -1,14 +1,15 @@
-Hi Team,
+def get_priorities_to_check(current_build_priority):
+    """Returns a tuple of priorities to check based on the current build priority."""
+    priority_mapping = {
+        "VeryHigh": ("CRITICAL",),
+        "High": ("CRITICAL", "VERYHIGH"),
+        "Medium": ("CRITICAL", "VERYHIGH", "HIGH"),
+        "Low": ("CRITICAL", "VERYHIGH", "HIGH", "MEDIUM")
+    }
+    priorities = priority_mapping.get(current_build_priority.upper(), ())
+    logging.info(f"Priorities to check for current build ({current_build_priority}): {priorities}")
+    return priorities
 
-We are currently experiencing multiple deployment failures:
-
-Pre-dev Failure: The ATS deployment is failing during the fetch and package untar process. Sumera, could you please help analyze this issue?
-
-23.4.x Patch Deployment: The deployment is failing due to an issue with nfstub. I am currently investigating this.
-
-Upgrade Issue: Dhaval, are you able to check on this issue?
-
-Thank you for your assistance.
 
 GRANT ALL PRIVILEGES ON *.* TO 'username'@'remote_ip' IDENTIFIED BY 'password' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
