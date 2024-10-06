@@ -1,101 +1,29 @@
-def get_priorities_to_check(current_build_priority):
-    """Returns a tuple of priorities to check based on the current build priority."""
-    priority_mapping = {
-        "VeryHigh": ("CRITICAL",),
-        "High": ("CRITICAL", "VERYHIGH"),
-        "Medium": ("CRITICAL", "VERYHIGH", "HIGH"),
-        "Low": ("CRITICAL", "VERYHIGH", "HIGH", "MEDIUM")
+<td>
+    <select ng-model="item.newPriority" ng-change="overwritePriority(item.namespace, item.newPriority)" class="overwrite-priority-dropdown">
+        <option value="Critical">Critical</option>
+        <option value="VeryHigh">VeryHigh</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+    </select>
+</td>
+
+
+// Function to overwrite priority
+$scope.overwritePriority = function(namespace, newPriority) {
+    if (confirm("Are you sure you want to overwrite the priority for the namespace: " + namespace + " to " + newPriority + "?")) {
+        // Show a loading indicator or disable the dropdown during the update (optional)
+        $scope.namespaceStatuses.find(ns => ns.namespace === namespace).updating = true;
+
+        $http.post('http://localhost:3000/myapp/api/overwrite-priority/', { namespace: namespace, priority: newPriority })
+            .then(function(response) {
+                alert(response.data.message); // Show alert with backend response
+
+                $scope.getNamespaceStatuses(); // Refresh the namespace statuses after priority overwrite
+            }, function(error) {
+                alert("Error overwriting priority for namespace: " + namespace);
+                // Revert any UI changes if there's an error
+                $scope.namespaceStatuses.find(ns => ns.namespace === namespace).updating = false;
+            });
     }
-    priorities = priority_mapping.get(current_build_priority.upper(), ())
-    logging.info(f"Priorities to check for current build ({current_build_priority}): {priorities}")
-    return priorities
-
-
-GRANT ALL PRIVILEGES ON *.* TO 'username'@'remote_ip' IDENTIFIED BY 'password' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-
-
-import requests
-import re
-
-def format_message(message):
-    # Regular expression to find mentions that start with @
-    def replace_mention(match):
-        username = match.group(1)
-        return f"<@{username}>"
-
-    # Replace all instances of @username with <@username>
-    formatted_message = re.sub(r'@(\w+)', replace_mention, message)
-    return formatted_message
-
-def post_slack_notification(bearer_token, channel_id, message):
-    url = "https://slack.com/api/chat.postMessage"
-    
-    headers = {
-        "Authorization": f"Bearer {bearer_token}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "channel": channel_id,
-        "text": message
-    }
-
-    response = requests.post(url, headers=headers, json=payload)
-
-    if response.status_code == 200:
-        print("Message posted successfully!")
-    else:
-        print(f"Failed to post message: {response.status_code}, {response.text}")
-
-if __name__ == "__main__":
-    SLACK_BEARER_TOKEN = "your_bearer_token_here"
-    CHANNEL_ID = "your_channel_id_here"
-    
-    # Example message with mentions
-    MESSAGE = "@gill @miguel testing for devops or testing @chand @ping"
-
-    # Format the message to use Slack's mention format
-    formatted_message = format_message(MESSAGE)
-    
-    # Post the notification to Slack
-    post_slack_notification(SLACK_BEARER_TOKEN, CHANNEL_ID, formatted_message)
-
-
-
-import subprocess
-
-def post_slack_message_via_bash(token, channel, message):
-    # Construct the command to run the bash script
-    command = ["./post_slack_message.sh", token, channel, message]
-
-    # Execute the bash script
-    try:
-        result = subprocess.run(command, check=True, text=True, capture_output=True)
-        print("Bash script executed successfully.")
-        print("Response:", result.stdout)
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred: {e.stderr}")
-
-if __name__ == "__main__":
-    slack_token = "xoxb-your-slack-bearer-token"  # Your Slack bot token
-    channel_id = "#your-channel"  # Use the channel name with '#' or the channel ID
-    message = "Hello, @vts, @chand! Please review this."  # Your message
-
-    post_slack_message_via_bash(slack_token, channel_id, message)
-
-
-
-#!/bin/bash
-
-TOKEN="$1"
-CHANNEL="$2"
-MESSAGE="$3"
-
-curl -X POST https://slack.com/api/chat.postMessage \
--H "Authorization: Bearer $TOKEN" \
--H "Content-Type: application/json" \
--d '{
-    "channel": "'"$CHANNEL"'",
-    "text": "'"$MESSAGE"'"
-}'
+};
