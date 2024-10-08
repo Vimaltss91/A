@@ -1,3 +1,6 @@
+curl --header "Private-Token: <your_private_token>" "https://gitlab.com/api/v4/projects/<namespace%2Fproject_name>/repository/commits"
+
+
 import requests
 
 # Define constants
