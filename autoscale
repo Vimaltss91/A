@@ -1,3 +1,9 @@
+There are more than 5 jobs in 'QUEUED' status! Currently, there are {queued_count} queued jobs. Please review the jobs, and if any have a higher priority, kindly update the priority accordingly.
+
+0 */2 * * * /usr/bin/python3 /path/to/your/script.py
+
+
+
 import mysql.connector
 from mysql.connector import Error
 import requests
