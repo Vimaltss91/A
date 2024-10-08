@@ -1,18 +1,1 @@
-import logging
-
-def check_db_connection(db_connection) -> bool:
-    """
-    Check if the MySQL database connection is successful.
-    
-    :param db_connection: An instance of the DatabaseConnection class.
-    :return: True if connected, False otherwise.
-    """
-    try:
-        # Attempt to establish a connection
-        with db_connection.get_cursor() as cursor:
-            cursor.execute("SELECT 1")  # Simple query to check connection
-        logging.info("Database connection successful.")
-        return True
-    except Exception as e:
-        logging.error(f"Failed to connect to the database: {e}")
-        return False
+Viek team is making changes to the dbtier custom values. They have updated the custom values, and now they are updating the packages for CSAR and pushing the custom values to VMs/JFrog, which makes it more related to DevOps changes. Will the Viek team continue this task?
