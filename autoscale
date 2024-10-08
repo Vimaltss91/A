@@ -4,11 +4,16 @@ import requests
 import os
 
 # Slack settings (replace with your Slack bot token and channel ID)
-SLACK_TOKEN = os.getenv('SLACK_TOKEN')  # Environment variable for better security
+SLACK_TOKEN = os.getenv('SLACK_TOKEN')
 SLACK_CHANNEL = "your-channel-id"
 SLACK_URL = "https://slack.com/api/chat.postMessage"
+MYSQL_HOST = "localhost"  # Replace with your MySQL host
+TROUBLESHOOT_LINK = "http://your-troubleshooting-link.com"  # Add your troubleshooting link
 
-def send_slack_notification(message):
+def send_slack_notification():
+    message = (f"MySQL host '{MYSQL_HOST}' is currently down. Immediate action is required. "
+               f"Please refer to the configuration page for troubleshooting: {TROUBLESHOOT_LINK}")
+
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {SLACK_TOKEN}'
@@ -25,7 +30,7 @@ def check_mysql_connection():
     try:
         # Trying to connect to MySQL
         connection = mysql.connector.connect(
-            host='localhost',
+            host=MYSQL_HOST,
             user='root'
         )
         if connection.is_connected():
@@ -33,7 +38,7 @@ def check_mysql_connection():
             connection.close()
     except Error as e:
         print(f"MySQL is not reachable: {e}")
-        send_slack_notification("MySQL server is down. Please check the server immediately.")
+        send_slack_notification()
 
 if __name__ == "__main__":
     check_mysql_connection()
