@@ -1,51 +1,18 @@
-import mysql.connector
-from mysql.connector import Error
+import logging
 
-# Database configuration
-DB_HOST = "localhost"
-DB_NAME = "namespace_management"
-DB_USER = "root"
-DB_PASSWORD = ""
-
-# Insert into the namespace table
-def insert_namespaces():
+def check_db_connection(db_connection) -> bool:
+    """
+    Check if the MySQL database connection is successful.
+    
+    :param db_connection: An instance of the DatabaseConnection class.
+    :return: True if connected, False otherwise.
+    """
     try:
-        # Establish the MySQL connection
-        connection = mysql.connector.connect(
-            host=DB_HOST,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD
-        )
-
-        if connection.is_connected():
-            cursor = connection.cursor()
-
-            # Prepare the SQL insert query
-            insert_query = """INSERT INTO namespace (namespace, status, allocation_lock)
-                              VALUES (%s, %s, %s)"""
-            
-            # Generate namespace values and insert them
-            namespaces = []
-            # For o-devops-bsf1 to o-devops-bsf50
-            for i in range(1, 51):
-                namespaces.append((f'o-devops-bsf{i}', 'Available', 'NO'))
-            # For o-devops-pol1 to o-devops-pol50
-            for i in range(1, 51):
-                namespaces.append((f'o-devops-pol{i}', 'Available', 'NO'))
-
-            # Execute the insert query for all generated values
-            cursor.executemany(insert_query, namespaces)
-            connection.commit()
-
-            print(f"Successfully inserted {cursor.rowcount} records into the namespace table.")
-            
-            cursor.close()
-            connection.close()
-
-    except Error as e:
-        print(f"Error occurred: {e}")
-
-if __name__ == "__main__":
-    insert_namespaces()
-
+        # Attempt to establish a connection
+        with db_connection.get_cursor() as cursor:
+            cursor.execute("SELECT 1")  # Simple query to check connection
+        logging.info("Database connection successful.")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to connect to the database: {e}")
+        return False
