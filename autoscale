@@ -1,37 +1,39 @@
-<td>
-    <select ng-model="item.newPriority" ng-change="onPriorityChange(item.namespace, item.s_no, item.newPriority)" class="overwrite-priority-dropdown">
-        <option value="Critical">Critical</option>
-        <option value="VeryHigh">VeryHigh</option>
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
-    </select>
-</td>
+import mysql.connector
+from mysql.connector import Error
+import requests
+import os
 
+# Slack settings (replace with your Slack bot token and channel ID)
+SLACK_TOKEN = os.getenv('SLACK_TOKEN')  # Environment variable for better security
+SLACK_CHANNEL = "your-channel-id"
+SLACK_URL = "https://slack.com/api/chat.postMessage"
 
-// Function to overwrite priority
-$scope.overwritePriority = function(namespace, s_no, newPriority) {
-    // Determine whether to use namespace or s_no
-    var identifier = namespace && namespace.trim() !== '' ? namespace : s_no;
-
-    if (confirm("Are you sure you want to overwrite the priority for the identifier: " + identifier + " to " + newPriority + "?")) {
-        // Show a loading indicator or disable the dropdown during the update (optional)
-        var namespaceStatus = $scope.namespaceStatuses.find(ns => ns.namespace === namespace || ns.s_no === s_no);
-        if (namespaceStatus) {
-            namespaceStatus.updating = true;
-        }
-
-        $http.post('http://localhost:3000/myapp/api/overwrite-priority/', { namespace: identifier, priority: newPriority })
-            .then(function(response) {
-                alert(response.data.message); // Show alert with backend response
-
-                $scope.getNamespaceStatuses(); // Refresh the namespace statuses after priority overwrite
-            }, function(error) {
-                alert("Error overwriting priority for identifier: " + identifier);
-                // Revert any UI changes if there's an error
-                if (namespaceStatus) {
-                    namespaceStatus.updating = false;
-                }
-            });
+def send_slack_notification(message):
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {SLACK_TOKEN}'
     }
-};
+    data = {
+        'channel': SLACK_CHANNEL,
+        'text': message
+    }
+    response = requests.post(SLACK_URL, headers=headers, json=data)
+    if response.status_code != 200:
+        print(f"Failed to send Slack message. Status code: {response.status_code}, Response: {response.text}")
+
+def check_mysql_connection():
+    try:
+        # Trying to connect to MySQL
+        connection = mysql.connector.connect(
+            host='localhost',
+            user='root'
+        )
+        if connection.is_connected():
+            print("MySQL is up and running")
+            connection.close()
+    except Error as e:
+        print(f"MySQL is not reachable: {e}")
+        send_slack_notification("MySQL server is down. Please check the server immediately.")
+
+if __name__ == "__main__":
+    check_mysql_connection()
