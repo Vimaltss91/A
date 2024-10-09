@@ -1,1 +1,1 @@
-The above suspect was incorrect; it was not due to the open source. I compared the 24.1.x patch and the dev binding service, which took 5 minutes for the 24.1.x and around 20 minutes for the dev or 24.2.x. Now, it takes more time on the unit tests, so I'm guessing that the increased number of unit test cases is causing the longer duration
+npm config set registry https://registry.npmjs.org/
