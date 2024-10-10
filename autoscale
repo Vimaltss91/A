@@ -1,1 +1,1 @@
-npm config set registry https://registry.npmjs.org/
+kubectl patch serviceaccount <service-account-name> -n <your-namespace> -p '{"imagePullSecrets": [{"name": "aspen-mesh-pill-secret"}]}'
