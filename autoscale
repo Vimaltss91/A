@@ -1,1 +1,1 @@
-kubectl patch serviceaccount <service-account-name> -n <your-namespace> -p '{"imagePullSecrets": [{"name": "aspen-mesh-pill-secret"}]}'
+kubectl get namespaces --no-headers | awk '{print $1}' | xargs -I {} kubectl get pods -n {} --no-headers | awk '$3 != "Running" {exit 1} END {print NR ? "{}" : ""}' | grep -v '^$'
