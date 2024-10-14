@@ -1,1 +1,1 @@
-Some VMs are used to run contract tests, so when the tests are running, they utilize all resources. However, the tests do not run all the time; they can run multiple times a day. Additionally, as the test cases take longer in the future, they will consume more resources.
+
