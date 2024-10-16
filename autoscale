@@ -1,1 +1,23 @@
+import os
+import logging
+
+def update_queue_status(cursor, s_no: int, status: str) -> None:
+    """Updates the status of an existing namespace record."""
+    play_pipeline_id = os.getenv('CI_PIPELINE_ID', '') if os.getenv('CI_PROJECT_TITLE') == 'one-click-play' else None
+
+    # Start constructing the query
+    query = "UPDATE namespace_status SET status = %s, allocation_lock = 'NO', queue_date = CURRENT_TIMESTAMP"
+    params = [status]
+
+    # If play_pipeline_id is not empty, update it in the query
+    if play_pipeline_id:
+        query += ", play_pipeline_id = %s"
+        params.append(play_pipeline_id)
+
+    query += " WHERE s_no = %s"
+    params.append(s_no)
+
+    # Execute the query
+    execute_query(cursor, query, params)
+    logging.info(f"Updated row with s_no {s_no} to '{status}' and unlocked. Play pipeline ID: {play_pipeline_id}")
 
