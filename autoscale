@@ -1,5 +1,7 @@
-Hi Team,
+Hi Tukaram,
 
-We recently received additional CPU resources in the E5 shape. However, we are currently utilizing the X7 shape in our compartment, primarily for our OKE cluster. Unfortunately, our executions are not performing as expected with the new E5 shape, which may be attributed to differences in processor architecture or frequency rates.
+As expected, we have only built the bulwark, notifier, and nwdaf services from the policy, which is why the job fails with the message that the image doesn't exist.
 
-We would like to request a replacement of the E5 shape with the X7 shape to ensure optimal performance.
+The one-click contract test triggers the pipeline based on the policy_release_tag, meaning it attempts to build all services with the same tag (e.g., 24.2.2) without much intelligence.
+
+You’ll notice that the query server, app-info, and config-server are common services, which we are still using from the previous version.
