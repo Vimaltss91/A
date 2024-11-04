@@ -1,7 +1,11 @@
-Hi Tukaram,
+Subject: Urgent Support Needed: Multiple Pipeline Jobs Failing Due to JVM Crashes
+Hi Team,
 
-As expected, we have only built the bulwark, notifier, and nwdaf services from the policy, which is why the job fails with the message that the image doesn't exist.
+We are experiencing issues with multiple pipeline jobs failing due to JVM crashes. Below is a list of the affected pipelines:
 
-The one-click contract test triggers the pipeline based on the policy_release_tag, meaning it attempts to build all services with the same tag (e.g., 24.2.2) without much intelligence.
+Pipeline1
+Pipeline2
+Pipeline3
+I have attached the relevant Java logs and JVM crash logs for your review.
 
-You’ll notice that the query server, app-info, and config-server are common services, which we are still using from the previous version.
+Your prompt assistance in resolving this matter would be greatly appreciated.
