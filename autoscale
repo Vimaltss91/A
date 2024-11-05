@@ -1,3 +1,9 @@
+job_name:
+  script:
+    - export GRADLE_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+    - gradle build
+
+
 gradle --no-daemon clean --info --debug --stacktrace -Dorg.gradle.internal.http.debug=true -Dorg.gradle.internal.http.wire=true
 
 script:
