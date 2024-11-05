@@ -1,11 +1,12 @@
-Subject: Urgent Support Needed: Multiple Pipeline Jobs Failing Due to JVM Crashes
-Hi Team,
+gradle --no-daemon clean --info --debug --stacktrace -Dorg.gradle.internal.http.debug=true -Dorg.gradle.internal.http.wire=true
 
-We are experiencing issues with multiple pipeline jobs failing due to JVM crashes. Below is a list of the affected pipelines:
+script:
+  - while true; do curl -I https://repo.maven.apache.org && sleep 5; done &
+  - gradle --no-daemon clean build --info --debug --stacktrace
 
-Pipeline1
-Pipeline2
-Pipeline3
-I have attached the relevant Java logs and JVM crash logs for your review.
 
-Your prompt assistance in resolving this matter would be greatly appreciated.
+gradle --no-daemon clean build --info --debug --stacktrace \
+    -Dorg.gradle.internal.http.connectionTimeout=60000 \
+    -Dorg.gradle.internal.http.socketTimeout=60000
+script:
+  - for i in {1..3}; do gradle --no-daemon clean build --info --debug --stacktrace && break || sleep 10; done
