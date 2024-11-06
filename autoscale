@@ -20,3 +20,6 @@ gradle --no-daemon clean build --info --debug --stacktrace \
     -Dorg.gradle.internal.http.socketTimeout=60000
 script:
   - for i in {1..3}; do gradle --no-daemon clean build --info --debug --stacktrace && break || sleep 10; done
+
+
+The line db_connection = DatabaseConnection() in main.py does not actually open the database connection. It just creates an instance of the DatabaseConnection class. The connection itself is only opened when you explicitly call db_connection.connect() or implicitly when get_cursor() calls self.connect() if the connection isn’t already open.
