@@ -1,3 +1,19 @@
+def handle_job_status_change(cursor, job_name, job_id, previous_status, current_status):
+    """Handle transitions between job statuses and trigger external scripts."""
+    # Determine if an update is necessary (status change to canceled/failed or resumed from them)
+    if current_status in ["canceled", "failed"] or (previous_status in ["canceled", "failed"] and current_status in ["running", "pending"]):
+        action = "transitioned to" if current_status in ["canceled", "failed"] else "resumed from"
+        logging.info(f"{job_name} - {job_id} {action} {previous_status} to {current_status}. Calling DB to update the status...")
+        
+        # Start transaction and update build status
+        cursor.execute("START TRANSACTION;")
+        sql_query = generate_sql_params(CURRENT_PIPELINE_ID, job_name)
+        logging.info(f"SQL Query condition is {sql_query} and current status is {current_status}")
+        update_build_status(cursor, current_status, sql_query)
+        cursor.execute("COMMIT;")
+
+
+
 GRADLE_OPTS="-Xmx4096m -XX:NativeMemoryTracking=summary"
 GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m"
 
