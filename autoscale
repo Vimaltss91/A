@@ -1,3 +1,46 @@
+import requests
+
+# GitLab API credentials and project details
+GITLAB_API_TOKEN = "your_gitlab_api_token"
+PROJECT_ID = "your_project_id"
+GITLAB_URL = "https://gitlab.com"
+SPECIFIC_SCHEDULE_ID = "your_schedule_id"  # Replace with the ID of the specific schedule
+
+# Headers for GitLab API requests
+headers = {
+    "Private-Token": GITLAB_API_TOKEN
+}
+
+def get_specific_schedule():
+    url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/pipeline_schedules/{SPECIFIC_SCHEDULE_ID}"
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
+
+def generate_curl_command(schedule):
+    ref = schedule['ref']
+    variables = {var['key']: var['value'] for var in schedule.get('variables', [])}
+
+    # Base curl command
+    curl_command = f"curl -X POST {GITLAB_URL}/api/v4/projects/{PROJECT_ID}/trigger/pipeline "
+    curl_command += f"-F token={GITLAB_API_TOKEN} -F ref={ref}"
+
+    # Add each variable as a parameter in the curl command
+    for key, value in variables.items():
+        curl_command += f" -F {key}={value}"
+
+    print("Generated curl command:")
+    print(curl_command)
+
+def main():
+    schedule = get_specific_schedule()
+    generate_curl_command(schedule)
+
+if __name__ == "__main__":
+    main()
+
+
+
 def handle_job_status_change(cursor, job_name, job_id, previous_status, current_status):
     """Handle transitions between job statuses and trigger external scripts."""
     # Determine if an update is necessary (status change to canceled/failed or resumed from them)
