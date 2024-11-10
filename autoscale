@@ -1,3 +1,23 @@
+def scp_package_to_vm(file_path, vm_ip, vm_path, username, password):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(vm_ip, username=username, password=password)
+
+    # Create the target directory and set permissions
+    stdin, stdout, stderr = ssh.exec_command(f"mkdir -p {vm_path} && chmod 777 {vm_path}")
+    stdout.channel.recv_exit_status()
+    
+    # SCP the file
+    with paramiko.Transport((vm_ip, 22)) as transport:
+        transport.connect(username=username, password=password)
+        sftp = transport.open_sftp()  # Corrected from open_file to open_sftp
+        sftp.put(file_path, os.path.join(vm_path, os.path.basename(file_path)))
+        sftp.close()
+    print(f"Package sent to {vm_ip}:{vm_path}")
+
+
+
+
 import os
 import requests
 import paramiko
