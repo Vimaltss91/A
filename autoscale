@@ -4,6 +4,29 @@ import paramiko
 import subprocess
 from zipfile import ZipFile
 
+# Base URLs
+SOURCE_BASE_URL = "https://artifactoryhub.com/artifactory/db"
+TARGET_BASE_URL = "https://artifactoryhub.com/artifactory/dbtier"
+
+# Get environment variables
+DB_TIER_TAG = os.getenv("DB_TIER_TAG")
+VM1_USER = os.getenv("LOCALVM1_USER", "root")
+VM1_PASS = os.getenv("LOCALVM1_PASS", "root")
+VM1_IP = os.getenv("LOCALVM1_IP")
+VM2_USER = os.getenv("LOCALVM2_USER", "root")
+VM2_PASS = os.getenv("LOCALVM2_PASS", "root")
+VM2_IP = os.getenv("LOCALVM2_IP")
+
+# Generate package name and URLs
+version_parts = DB_TIER_TAG.split('-')  # Split into version and tag parts if present
+version_base = version_parts[0].replace('.', '_')  # Convert '24.3.0' to '24_3_0'
+suffix = f"-{version_parts[1]}" if len(version_parts) > 1 else ""  # Add suffix if it exists
+
+package_name = f"dbtier_{version_base}_0_0_0{suffix}.zip"
+download_url = f"{SOURCE_BASE_URL}/{DB_TIER_TAG}/{package_name}"
+upload_url = f"{TARGET_BASE_URL}/{DB_TIER_TAG}/{package_name}"
+local_path = f"/home/{package_name}"
+
 # Step 1: Download the DB package
 def download_package(url, download_path):
     response = requests.get(url, stream=True)
@@ -25,7 +48,7 @@ def upload_package_to_artifactory(file_path, upload_url, username, api_key):
             print("Failed to upload package to Artifactory.")
 
 # Step 2(ii) & 2(iii): SCP the package to VMs
-def scp_package_to_vm(file_path, vm_ip, vm_path, username='root', password='root'):
+def scp_package_to_vm(file_path, vm_ip, vm_path, username, password):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(vm_ip, username=username, password=password)
@@ -66,23 +89,20 @@ def tag_and_push_images():
 
 # Define main function
 def main():
-    package_url = "https://artifactoryhub.com/artifactory/db/24.3.0/24.3.0.zip"
-    local_path = "/home/24.3.0.zip"
-    artifactory_url = "https://artifactoryhub.com/artifactory/dbtier/24.3.0/24.3.0.zip"
     artifactory_user = "mail@APIKEY"
     artifactory_api_key = "YOUR_API_KEY"
 
     # Step 1
-    download_package(package_url, local_path)
+    download_package(download_url, local_path)
 
     # Step 2
-    upload_package_to_artifactory(local_path, artifactory_url, artifactory_user, artifactory_api_key)
+    upload_package_to_artifactory(local_path, upload_url, artifactory_user, artifactory_api_key)
     
     # SCP to VMs
-    vm1_path = "/var/www/html/builds/DBtier/24.3.0"
-    vm2_path = "/var/www/html/builds/DBtier/24.3.0"
-    scp_package_to_vm(local_path, '10.10.10.10', vm1_path)
-    scp_package_to_vm(local_path, '10.10.10.11', vm2_path)
+    vm1_path = f"/var/www/html/builds/DBtier/{DB_TIER_TAG}"
+    vm2_path = f"/var/www/html/builds/DBtier/{DB_TIER_TAG}"
+    scp_package_to_vm(local_path, VM1_IP, vm1_path, VM1_USER, VM1_PASS)
+    scp_package_to_vm(local_path, VM2_IP, vm2_path, VM2_USER, VM2_PASS)
 
     # Step 3
     load_docker_images(local_path)
