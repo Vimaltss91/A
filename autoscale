@@ -1,4 +1,14 @@
-    # Generate SHA-256 checksum file on the remote VM
+    # Generate SHA-256 checksum file with only the filename in the checksum output
+    filename = os.path.basename(file_path)
+    sha256_file_path = f"{remote_path}.sha256"
+    stdin, stdout, stderr = ssh.exec_command(
+        f"cd {vm_path} && sha256sum {filename} > {filename}.sha256"
+    )
+    stdout.channel.recv_exit_status()
+    print(f"SHA-256 checksum file created at {vm_path}/{filename}.sha256 on {vm_ip}")
+
+
+# Generate SHA-256 checksum file on the remote VM
     sha256_file_path = f"{remote_path}.sha256"
     stdin, stdout, stderr = ssh.exec_command(f"sha256sum {remote_path} > {sha256_file_path}")
     stdout.channel.recv_exit_status()
