@@ -1,3 +1,10 @@
+    # Generate SHA-256 checksum file on the remote VM
+    sha256_file_path = f"{remote_path}.sha256"
+    stdin, stdout, stderr = ssh.exec_command(f"sha256sum {remote_path} > {sha256_file_path}")
+    stdout.channel.recv_exit_status()
+    print(f"SHA-256 checksum file created at {sha256_file_path} on {vm_ip}")
+
+
 def scp_package_to_vm(file_path, vm_ip, vm_path, username, password):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
