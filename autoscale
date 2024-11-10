@@ -1,144 +1,92 @@
+import os
 import requests
+import paramiko
+import subprocess
+from zipfile import ZipFile
 
-# GitLab API credentials and project details
-GITLAB_API_TOKEN = "your_gitlab_api_token"
-PROJECT_ID = "your_project_id"
-GITLAB_URL = "https://gitlab.com"
-SPECIFIC_SCHEDULE_ID = "your_schedule_id"  # Replace with the ID of the specific schedule
+# Step 1: Download the DB package
+def download_package(url, download_path):
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with open(download_path, 'wb') as file:
+            for chunk in response.iter_content(1024):
+                file.write(chunk)
+        print(f"Downloaded {download_path}")
+    else:
+        print("Failed to download package.")
 
-# Headers for GitLab API requests
-headers = {
-    "Private-Token": GITLAB_API_TOKEN
-}
+# Step 2(i): Push the package to a different location in Artifactory
+def upload_package_to_artifactory(file_path, upload_url, username, api_key):
+    with open(file_path, 'rb') as file:
+        response = requests.put(upload_url, auth=(username, api_key), data=file)
+        if response.status_code == 201:
+            print("Uploaded package to Artifactory successfully.")
+        else:
+            print("Failed to upload package to Artifactory.")
 
-def get_specific_schedule():
-    url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/pipeline_schedules/{SPECIFIC_SCHEDULE_ID}"
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()
+# Step 2(ii) & 2(iii): SCP the package to VMs
+def scp_package_to_vm(file_path, vm_ip, vm_path, username='root', password='root'):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(vm_ip, username=username, password=password)
 
-def generate_curl_command(schedule):
-    ref = schedule['ref']
-    variables = {var['key']: var['value'] for var in schedule.get('variables', [])}
-
-    # Base curl command
-    curl_command = f"curl --request POST \\\n"
-    curl_command += f"  --form \"token={GITLAB_API_TOKEN}\" \\\n"
-    curl_command += f"  --form \"ref={ref}\" \\\n"
+    # Create the target directory and set permissions
+    stdin, stdout, stderr = ssh.exec_command(f"mkdir -p {vm_path} && chmod 777 {vm_path}")
+    stdout.channel.recv_exit_status()
     
-    # Add each variable in the format of `variables[key]=value`
-    for key, value in variables.items():
-        curl_command += f"  --form \"variables[{key}]={value}\" \\\n"
+    # SCP the file
+    with paramiko.Transport((vm_ip, 22)) as transport:
+        transport.connect(username=username, password=password)
+        sftp = transport.open_sftp()
+        sftp.put(file_path, os.path.join(vm_path, os.path.basename(file_path)))
+        sftp.close()
+    print(f"Package sent to {vm_ip}:{vm_path}")
+
+# Step 3(i): Unzip and load Docker images
+def load_docker_images(zip_path):
+    with ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall('/tmp/db_package')
+    image_path = '/tmp/db_package/Artifacts/Images'
+    for image_file in os.listdir(image_path):
+        if image_file.endswith('.tar'):
+            file_path = os.path.join(image_path, image_file)
+            subprocess.run(['docker', 'load', '-i', file_path])
+
+# Step 3(ii): Tag and push Docker images
+def tag_and_push_images():
+    # List all loaded images
+    result = subprocess.run(['docker', 'images', '--format', '{{.Repository}}:{{.Tag}}'], capture_output=True, text=True)
+    images = result.stdout.splitlines()
     
-    # Add the GitLab API endpoint
-    curl_command += f"  {GITLAB_URL}/api/v4/projects/{PROJECT_ID}/trigger/pipeline"
+    for image in images:
+        new_tag = f"cgbu-docker-dev/db/{image.split('/')[-1]}"
+        subprocess.run(['docker', 'tag', image, new_tag])
+        subprocess.run(['docker', 'push', new_tag])
+        print(f"Tagged and pushed {new_tag}")
 
-    print("Generated curl command:")
-    print(curl_command)
-
+# Define main function
 def main():
-    schedule = get_specific_schedule()
-    generate_curl_command(schedule)
+    package_url = "https://artifactoryhub.com/artifactory/db/24.3.0/24.3.0.zip"
+    local_path = "/home/24.3.0.zip"
+    artifactory_url = "https://artifactoryhub.com/artifactory/dbtier/24.3.0/24.3.0.zip"
+    artifactory_user = "mail@APIKEY"
+    artifactory_api_key = "YOUR_API_KEY"
+
+    # Step 1
+    download_package(package_url, local_path)
+
+    # Step 2
+    upload_package_to_artifactory(local_path, artifactory_url, artifactory_user, artifactory_api_key)
+    
+    # SCP to VMs
+    vm1_path = "/var/www/html/builds/DBtier/24.3.0"
+    vm2_path = "/var/www/html/builds/DBtier/24.3.0"
+    scp_package_to_vm(local_path, '10.10.10.10', vm1_path)
+    scp_package_to_vm(local_path, '10.10.10.11', vm2_path)
+
+    # Step 3
+    load_docker_images(local_path)
+    tag_and_push_images()
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import requests
-
-# GitLab API credentials and project details
-GITLAB_API_TOKEN = "your_gitlab_api_token"
-PROJECT_ID = "your_project_id"
-GITLAB_URL = "https://gitlab.com"
-SPECIFIC_SCHEDULE_ID = "your_schedule_id"  # Replace with the ID of the specific schedule
-
-# Headers for GitLab API requests
-headers = {
-    "Private-Token": GITLAB_API_TOKEN
-}
-
-def get_specific_schedule():
-    url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/pipeline_schedules/{SPECIFIC_SCHEDULE_ID}"
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()
-
-def generate_curl_command(schedule):
-    ref = schedule['ref']
-    variables = {var['key']: var['value'] for var in schedule.get('variables', [])}
-
-    # Base curl command
-    curl_command = f"curl -X POST {GITLAB_URL}/api/v4/projects/{PROJECT_ID}/trigger/pipeline "
-    curl_command += f"-F token={GITLAB_API_TOKEN} -F ref={ref}"
-
-    # Add each variable as a parameter in the curl command
-    for key, value in variables.items():
-        curl_command += f" -F {key}={value}"
-
-    print("Generated curl command:")
-    print(curl_command)
-
-def main():
-    schedule = get_specific_schedule()
-    generate_curl_command(schedule)
-
-if __name__ == "__main__":
-    main()
-
-
-
-def handle_job_status_change(cursor, job_name, job_id, previous_status, current_status):
-    """Handle transitions between job statuses and trigger external scripts."""
-    # Determine if an update is necessary (status change to canceled/failed or resumed from them)
-    if current_status in ["canceled", "failed"] or (previous_status in ["canceled", "failed"] and current_status in ["running", "pending"]):
-        action = "transitioned to" if current_status in ["canceled", "failed"] else "resumed from"
-        logging.info(f"{job_name} - {job_id} {action} {previous_status} to {current_status}. Calling DB to update the status...")
-        
-        # Start transaction and update build status
-        cursor.execute("START TRANSACTION;")
-        sql_query = generate_sql_params(CURRENT_PIPELINE_ID, job_name)
-        logging.info(f"SQL Query condition is {sql_query} and current status is {current_status}")
-        update_build_status(cursor, current_status, sql_query)
-        cursor.execute("COMMIT;")
-
-
-
-GRADLE_OPTS="-Xmx4096m -XX:NativeMemoryTracking=summary"
-GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m"
-
-
-job_name:
-  script:
-    - export GRADLE_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
-    - gradle build
-
-
-gradle --no-daemon clean --info --debug --stacktrace -Dorg.gradle.internal.http.debug=true -Dorg.gradle.internal.http.wire=true
-
-script:
-  - while true; do curl -I https://repo.maven.apache.org && sleep 5; done &
-  - gradle --no-daemon clean build --info --debug --stacktrace
-
-
-gradle --no-daemon clean build --info --debug --stacktrace \
-    -Dorg.gradle.internal.http.connectionTimeout=60000 \
-    -Dorg.gradle.internal.http.socketTimeout=60000
-script:
-  - for i in {1..3}; do gradle --no-daemon clean build --info --debug --stacktrace && break || sleep 10; done
-
-
-The line db_connection = DatabaseConnection() in main.py does not actually open the database connection. It just creates an instance of the DatabaseConnection class. The connection itself is only opened when you explicitly call db_connection.connect() or implicitly when get_cursor() calls self.connect() if the connection isn’t already open.
