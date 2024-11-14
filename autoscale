@@ -1,3 +1,5 @@
+Currently, we are using only the open-source repository for all dependencies. Our current workaround, ENABLE_PIP_FALLBACK, downloads all dependencies from repo1. However, this approach cannot be used in the dev or pre-dev branches.
+
 In Python, pip dependency resolution doesn't work the same way as in Java. When specifying both an open-source repository (primary) and a secondary repository (e.g., repo1), pip defaults to using the secondary repository (repo1) if it contains all required dependencies. As a result, all dependencies are retrieved from repo1 instead of the primary open-source repository.
 
 # Generate SHA-256 checksum file with only the filename in the checksum output
