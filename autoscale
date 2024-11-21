@@ -1,3 +1,21 @@
+
+Hello Team,
+
+We are planning to set up a virtual PyPI repository and would like to understand how it handles package downloads across linked repositories.
+
+Our intended setup is as follows:
+
+Primary Repository: comsvc-pypi
+Fallback Repository: pypi/simple
+We would like to confirm if the following behavior is correct:
+
+If a package exists in the comsvc-pypi repository, it will be downloaded from there.
+If a package is not found in comsvc-pypi, it will fall back to the pypi/simple repository and download the package from there.
+Could you please confirm if this is how the virtual repository will function?
+
+Thank you!
+
+
 Only one build for version 25.1.0 is running at any given time. However, other unique builds are also experiencing this issue, even though they are unrelated.
 
 org.gradle.internal.http.connectionTimeout=4000
