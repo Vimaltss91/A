@@ -1,3 +1,5 @@
+Only one build for version 25.1.0 is running at any given time. However, other unique builds are also experiencing this issue, even though they are unrelated.
+
 org.gradle.internal.http.connectionTimeout=4000
 org.gradle.internal.http.socketTimeout=4000
 
