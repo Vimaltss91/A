@@ -1,3 +1,6 @@
+We have configured a virtual Python registry and successfully enabled package downloads. However, we need to ensure that all third-party packages are built from source.
+
+
 
 Hello Team,
 
