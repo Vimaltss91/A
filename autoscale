@@ -1,3 +1,14 @@
+After analyzing the Python packages using the trace, we found that some packages, even though they exist in our open-source repository, are being fetched from the public repository.
+
+This issue is particularly noticeable with packages in the manylinux format. For example:
+
+Public Repository: pandas-2.0.2-cp11-cp11-many-linux_2_17_x86_64
+Open-Source Repository: pandas-2.0.2-cp11-cp11_2_17_x86_64
+It appears that the virtual repository is prioritizing the manylinux format from the public repository over the package available in the open-source repository.
+
+Could you confirm if this is the expected behavior or suggest how we can ensure our repository is prioritized?
+
+
 import requests
 
 # Credentials
