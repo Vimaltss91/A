@@ -1,6 +1,1 @@
-import os
-
-db_config = {
-    'host': os.environ['DB_HOST'],  # Raises KeyError if not set
-    'user': os.environ['DB_USER']   # Raises KeyError if not set
-}
+Chris, I'm unsure if we can create an inclusion/exclusion list for opensource-release-gradle. Since some of the open-source projects are Gradle-based, they will ultimately be pushed to the Gradle open-source repository.
