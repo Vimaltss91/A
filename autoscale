@@ -1,1 +1,7 @@
+Hi Team,
+
+As we move to automated namespace allocation, the pipeline will enter a queued state once CPU threshold limits are reached. Notifications will be sent to the respective channel when this happens. The NS status in the UI will display as QUEUED, so please keep an eye on it, especially for priority deployments. Once resources become available, the namespace will be allocated, and the deployment will start automatically.
+
+Please remember to clean up the entry from the UI using the Delete button after the deployment is completed.
+
 I had a discussion with Benson today regarding the Python virtual repository. To build the Python package with manylinux, further research is needed, and it will take some time. Meanwhile, Benson suggested we check if we can pull the three required packages by defining the open-source repository on our side.
