@@ -1,3 +1,62 @@
+def get_merge_requests(from_date, to_date, valid_commit_ids, exclusion_keywords, valid_target_branches):
+    """
+    Fetch merge requests merged between the given dates.
+    Include only MRs:
+      - With merge commits in the `valid_commit_ids` set.
+      - Targeting branches in `valid_target_branches`.
+      - Not matching exclusion keywords.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/merge_requests"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {
+        "state": "merged",
+        "updated_after": from_date,
+        "updated_before": to_date,
+    }
+
+    mrs = []
+    while url:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            for mr in data:
+                # Debugging: Log MR details
+                print(f"DEBUG: MR#{mr['iid']} - Target Branch: {mr['target_branch']}, Merge Commit: {mr['merge_commit_sha']}, Title: {mr['title']}")
+
+                # Check if the MR's merge commit is in the valid commits list
+                if mr["merge_commit_sha"] not in valid_commit_ids:
+                    continue
+
+                # Check if the target branch is valid
+                if mr["target_branch"] not in valid_target_branches:
+                    continue
+
+                # Exclude MRs with specific keywords in the title
+                if any(keyword in mr["title"] for keyword in exclusion_keywords):
+                    continue
+
+                mrs.append(mr)
+
+            url = response.links.get("next", {}).get("url")
+            params = None  # Parameters are only needed for the first request
+        else:
+            raise Exception(f"Failed to fetch merge requests: {response.text}")
+
+    return mrs
+
+# Define valid target branches
+valid_target_branches = ["dev", "23.4.x-patch"]
+
+print("Fetching merge requests...")
+merge_requests = get_merge_requests(
+    from_date=commit_date1,
+    to_date=commit_date2,
+    valid_commit_ids=patch_branch_commits,
+    exclusion_keywords=exclusion_keywords,
+    valid_target_branches=valid_target_branches,
+)
+
+
 import requests
 
 # GitLab configurations
