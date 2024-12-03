@@ -1,3 +1,15 @@
+def format_version(version_string):
+    # Split by "-" and take the second part (after the hyphen)
+    version = version_string.split('-')[1]
+    
+    # Split the version number by "." and form the output
+    return f"{version.split('.')[0]}.{version.split('.')[1]}.x-patch"
+
+# Example usage
+print(format_version("ocbsf-23.4.5"))  # Output: 23.4.x-patch
+print(format_version("occnp-23.1.5"))  # Output: 23.1.x-patch
+
+
 def get_merge_requests(from_date, to_date, valid_commit_ids, exclusion_keywords, valid_target_branches):
     """
     Fetch merge requests merged between the given dates.
