@@ -1,3 +1,5 @@
+ print(f"DEBUG: MR#{mr['iid']} - Target Branch: {mr['target_branch']}, Title: {mr['title']}")
+
 import requests
 
 # GitLab configurations
