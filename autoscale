@@ -1,4 +1,10 @@
- print(f"DEBUG: MR#{mr['iid']} - Target Branch: {mr['target_branch']}, Title: {mr['title']}")
+                # Filter by target branches
+                if mr["target_branch"] not in valid_target_branches:
+                    continue
+
+valid_target_branches = ["dev", f"{tag2.split('.')[0]}.x-patch"]  # Adjust branch naming convention here
+
+print(f"DEBUG: MR#{mr['iid']} - Target Branch: {mr['target_branch']}, Title: {mr['title']}")
 
 import requests
 
