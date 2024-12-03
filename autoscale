@@ -23,9 +23,10 @@ def get_commit_info(tag_name):
         raise Exception(f"Failed to fetch tag info for {tag_name}: {response.text}")
 
 
-def get_merge_requests(from_date, to_date):
+def get_merge_requests(from_date, to_date, target_branch, exclusion_keywords):
     """
     Fetch merge requests merged between the given dates.
+    Filter by target branch and exclude specific keywords in the title.
     """
     url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/merge_requests"
     headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
@@ -40,7 +41,17 @@ def get_merge_requests(from_date, to_date):
         response = requests.get(url, headers=headers, params=params)
         if response.status_code == 200:
             data = response.json()
-            mrs.extend(data)
+            for mr in data:
+                # Filter by target branch
+                if mr["target_branch"] != target_branch:
+                    continue
+
+                # Exclude MRs with specific keywords in the title
+                if any(keyword in mr["title"] for keyword in exclusion_keywords):
+                    continue
+
+                mrs.append(mr)
+
             url = response.links.get("next", {}).get("url")
             params = None  # Parameters are only needed for the first request
         else:
@@ -54,6 +65,9 @@ def main():
     tag1 = input("Enter the first tag (e.g., 23.2.5): ").strip()
     tag2 = input("Enter the second tag (e.g., 23.4.5): ").strip()
 
+    # Exclusion criteria for MRs
+    exclusion_keywords = ["NoJira: merge changes from dev"]
+
     # Get commit info for both tags
     print(f"Fetching commit info for tag {tag1}...")
     commit_id1, commit_date1 = get_commit_info(tag1)
@@ -64,9 +78,11 @@ def main():
     print(f"Commit ID for {tag1}: {commit_id1}, Date: {commit_date1}")
     print(f"Commit ID for {tag2}: {commit_id2}, Date: {commit_date2}")
 
-    # Fetch MRs merged between the two commit dates
+    # Fetch MRs merged between the two commit dates and matching target branch
     print("Fetching merge requests between the two tags...")
-    merge_requests = get_merge_requests(commit_date1, commit_date2)
+    merge_requests = get_merge_requests(
+        commit_date1, commit_date2, target_branch=tag2, exclusion_keywords=exclusion_keywords
+    )
 
     # Display results
     print(f"\nMerge Requests merged between {tag1} and {tag2}:")
@@ -76,28 +92,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-In OCI, namespaces are deleted if there are no final failures. Even in the case of a final failure, the namespace is retained for a maximum of three days.
-
-We should either set the delete_namespace option to false or use an automation script to capture the timing information and share it in the thread for official builds.
-
-We are currently using Oracle Kubernetes Engine (OKE) and have encountered an issue as part of our cleanup process. Specifically, during the cleanup of all events, pods, and Persistent Volume Claims (PVCs) for a namespace, we observe that some PVCs get stuck in the termination state indefinitely.
-
-This issue does not occur consistently but has been happening with increasing frequency. From the logs, it appears that both the PVCs and the associated pods are deleted as expected. However, despite this, certain PVCs remain in a termination state and fail to fully complete the deletion process.
-
-We have attached the relevant logs for further reference to help analyze this issue.
-
-
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'YourPassword';
-FLUSH PRIVILEGES;
-
-
-
-Hi Team,
-
-As we move to automated namespace allocation, the pipeline will enter a queued state once CPU threshold limits are reached. Notifications will be sent to the respective channel when this happens. The NS status in the UI will display as QUEUED, so please keep an eye on it, especially for priority deployments. Once resources become available, the namespace will be allocated, and the deployment will start automatically.
-
-Please remember to clean up the entry from the UI using the Delete button after the deployment is completed.
-
-I had a discussion with Benson today regarding the Python virtual repository. To build the Python package with manylinux, further research is needed, and it will take some time. Meanwhile, Benson suggested we check if we can pull the three required packages by defining the open-source repository on our side.
