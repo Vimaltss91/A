@@ -1,3 +1,55 @@
+import os
+
+# Example project configurations (replace with your actual project data)
+projects = [
+    {"name": "ProjectA", "id": "12345"},
+    {"name": "ProjectB", "id": "67890"},
+]
+
+# Fetch tags from environment variables
+tag1 = os.getenv("TAG1")
+tag2 = os.getenv("TAG2")
+
+if not tag1 or not tag2:
+    raise ValueError("Both TAG1 and TAG2 environment variables must be set.")
+
+# Loop through each project
+for project in projects:
+    project_name = project["name"]
+    project_id = project["id"]
+    print(f"\nProcessing project: {project_name} (ID: {project_id})")
+
+    try:
+        # Fetch commit dates for tags
+        commit_date1, commit_date2 = get_commit_dates(tag1, tag2, project_id)
+
+        # Fetch branch commits
+        patch_branch_commits = get_branch_commits("23.4.x-patch", max_commits=1000)
+
+        # Fetch merge requests
+        merge_requests = get_merge_requests(
+            from_date=commit_date1,
+            to_date=commit_date2,
+            valid_commit_ids=patch_branch_commits,
+            exclusion_keywords=exclusion_keywords,
+            valid_target_branches=["dev", "23.4.x-patch"],
+        )
+
+        # Display results for the current project
+        print(f"\nMerge Requests for {project_name} between {tag1} and {tag2}:")
+        for mr in merge_requests:
+            print(
+                f"- MR#{mr['iid']}: {mr['title']} "
+                f"(Author: {mr['author']['name']}, Target Branch: {mr['target_branch']})"
+            )
+
+    except Exception as e:
+        print(f"Error processing project {project_name}: {e}")
+
+
+-------------------------
+
+
 def format_version(version_string):
     # Split by "-" and take the second part (after the hyphen)
     version = version_string.split('-')[1]
