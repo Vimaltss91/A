@@ -1,3 +1,83 @@
+import requests
+
+# GitLab configurations
+GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
+PRIVATE_TOKEN = "<your_private_token>"  # Replace with your personal access token
+PROJECT_ID = "<your_project_id>"  # Replace with your project ID or encoded path
+
+
+def get_commit_info(tag_name):
+    """
+    Fetch the commit ID and date for a given tag.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/repository/tags/{tag_name}"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        commit_id = data["commit"]["id"]
+        commit_date = data["commit"]["committed_date"]
+        return commit_id, commit_date
+    else:
+        raise Exception(f"Failed to fetch tag info for {tag_name}: {response.text}")
+
+
+def get_merge_requests(from_date, to_date):
+    """
+    Fetch merge requests merged between the given dates.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/merge_requests"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {
+        "state": "merged",
+        "updated_after": from_date,
+        "updated_before": to_date,
+    }
+
+    mrs = []
+    while url:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            mrs.extend(data)
+            url = response.links.get("next", {}).get("url")
+            params = None  # Parameters are only needed for the first request
+        else:
+            raise Exception(f"Failed to fetch merge requests: {response.text}")
+
+    return mrs
+
+
+def main():
+    # Input tags
+    tag1 = input("Enter the first tag (e.g., 23.2.5): ").strip()
+    tag2 = input("Enter the second tag (e.g., 23.4.5): ").strip()
+
+    # Get commit info for both tags
+    print(f"Fetching commit info for tag {tag1}...")
+    commit_id1, commit_date1 = get_commit_info(tag1)
+
+    print(f"Fetching commit info for tag {tag2}...")
+    commit_id2, commit_date2 = get_commit_info(tag2)
+
+    print(f"Commit ID for {tag1}: {commit_id1}, Date: {commit_date1}")
+    print(f"Commit ID for {tag2}: {commit_id2}, Date: {commit_date2}")
+
+    # Fetch MRs merged between the two commit dates
+    print("Fetching merge requests between the two tags...")
+    merge_requests = get_merge_requests(commit_date1, commit_date2)
+
+    # Display results
+    print(f"\nMerge Requests merged between {tag1} and {tag2}:")
+    for mr in merge_requests:
+        print(f"- MR#{mr['iid']}: {mr['title']} (Author: {mr['author']['name']})")
+
+
+if __name__ == "__main__":
+    main()
+
+
 In OCI, namespaces are deleted if there are no final failures. Even in the case of a final failure, the namespace is retained for a maximum of three days.
 
 We should either set the delete_namespace option to false or use an automation script to capture the timing information and share it in the thread for official builds.
