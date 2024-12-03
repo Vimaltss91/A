@@ -21,6 +21,194 @@ def get_commit_info(tag_name, project_id):
         commit_date = data["commit"]["committed_date"]
         return commit_id, commit_date
     else:
+        print(f"NO TAG FOUND for {tag_name} in project {project_id}")
+        return None, None
+
+
+def print_commit_info(commit_id, commit_date, project_name):
+    """
+    Prints the commit ID and project name in a structured format.
+    """
+    if commit_id and commit_date:
+        print(f"\n{'-' * 40}")
+        print(f"Project: {project_name}")
+        print(f"Commit ID: {commit_id}")
+        print(f"Commit Date: {commit_date}")
+        print(f"{'-' * 40}")
+
+
+def get_branch_commits(branch_name, project_id):
+    """
+    Fetch all commit IDs for a given branch in a specific project.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/commits"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {"ref_name": branch_name}
+
+    commit_ids = []
+    while url:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            commit_ids.extend(commit["id"] for commit in data)
+            url = response.links.get("next", {}).get("url")
+            params = None  # Parameters are only needed for the first request
+        else:
+            print(f"NO TAG FOUND for branch {branch_name} in project {project_id}")
+            return set()
+
+    return set(commit_ids)
+
+
+def get_merge_requests(from_date, to_date, valid_commit_ids, exclusion_keywords, project_id):
+    """
+    Fetch merge requests merged between the given dates.
+    Include only MRs whose merge commit is in the valid_commit_ids set.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{project_id}/merge_requests"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {
+        "state": "merged",
+        "updated_after": from_date,
+        "updated_before": to_date,
+    }
+
+    mrs = []
+    while url:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            for mr in data:
+                # Debugging: Log MR details
+                print(f"DEBUG: MR#{mr['iid']} - Merge Commit: {mr['merge_commit_sha']}, Title: {mr['title']}")
+
+                # Include only MRs with merge commits in the valid_commit_ids set
+                if mr["merge_commit_sha"] not in valid_commit_ids:
+                    continue
+
+                # Exclude MRs with specific keywords in the title
+                if any(keyword in mr["title"] for keyword in exclusion_keywords):
+                    continue
+
+                mrs.append(mr)
+
+            url = response.links.get("next", {}).get("url")
+            params = None  # Parameters are only needed for the first request
+        else:
+            print(f"Error fetching merge requests for project {project_id}: {response.text}")
+            return []
+
+    return mrs
+
+
+def main():
+    # Fetch tags from environment variables
+    tag1 = os.getenv("TAG1")
+    tag2 = os.getenv("TAG2")
+
+    if not tag1 or not tag2:
+        raise ValueError("Both TAG1 and TAG2 environment variables must be set.")
+
+    # Exclusion criteria for MRs
+    exclusion_keywords = ["NoJira: merge changes from dev"]
+
+    # Loop through each project
+    for project in projects:
+        project_name = project["name"]
+        project_id = project["id"]
+        print(f"\nProcessing project: {project_name} (ID: {project_id})")
+
+        try:
+            # Get commit info for both tags
+            print(f"Fetching commit info for tag {tag1}...")
+            commit_id1, commit_date1 = get_commit_info(tag1, project_id)
+            if not commit_id1 or not commit_date1:
+                continue  # Skip the project if no commit info for tag1
+
+            print(f"Fetching commit info for tag {tag2}...")
+            commit_id2, commit_date2 = get_commit_info(tag2, project_id)
+            if not commit_id2 or not commit_date2:
+                continue  # Skip the project if no commit info for tag2
+
+            # Print commit info in structured format
+            print_commit_info(commit_id1, commit_date1, project_name)
+            print_commit_info(commit_id2, commit_date2, project_name)
+
+            # Get all commits in the patch branch
+            patch_branch = f"{tag2.split('.')[0]}.x-patch"
+            print(f"Fetching commits for branch {patch_branch}...")
+            patch_branch_commits = get_branch_commits(patch_branch, project_id)
+            if not patch_branch_commits:
+                continue  # Skip if no commits found for the branch
+
+            # Fetch MRs merged between the two commit dates and present in the patch branch
+            print("Fetching merge requests...")
+            merge_requests = get_merge_requests(
+                from_date=commit_date1,
+                to_date=commit_date2,
+                valid_commit_ids=patch_branch_commits,
+                exclusion_keywords=exclusion_keywords,
+                project_id=project_id,
+            )
+
+            # Display results
+            print(f"\nMerge Requests contributing to {patch_branch} between {tag1} and {tag2} for {project_name}:")
+            for mr in merge_requests:
+                print(f"- MR#{mr['iid']}: {mr['title']} (Author: {mr['author']['name']})")
+
+        except Exception as e:
+            print(f"Error processing project {project_name}: {e}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+====================================================================================
+------------------------------------------------------------------------------------
+import os
+import requests
+from config import projects  # Import the projects list from config.py
+
+# GitLab configurations
+GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
+PRIVATE_TOKEN = "<your_private_token>"  # Replace with your personal access token
+
+
+def get_commit_info(tag_name, project_id):
+    """
+    Fetch the commit ID and date for a given tag in a specific project.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/tags/{tag_name}"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        commit_id = data["commit"]["id"]
+        commit_date = data["commit"]["committed_date"]
+        return commit_id, commit_date
+    else:
         raise Exception(f"Failed to fetch tag info for {tag_name}: {response.text}")
 
 
