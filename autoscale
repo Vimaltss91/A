@@ -1,3 +1,7 @@
+In OCI, namespaces are deleted if there are no final failures. Even in the case of a final failure, the namespace is retained for a maximum of three days.
+
+We should either set the delete_namespace option to false or use an automation script to capture the timing information and share it in the thread for official builds.
+
 We are currently using Oracle Kubernetes Engine (OKE) and have encountered an issue as part of our cleanup process. Specifically, during the cleanup of all events, pods, and Persistent Volume Claims (PVCs) for a namespace, we observe that some PVCs get stuck in the termination state indefinitely.
 
 This issue does not occur consistently but has been happening with increasing frequency. From the logs, it appears that both the PVCs and the associated pods are deleted as expected. However, despite this, certain PVCs remain in a termination state and fail to fully complete the deletion process.
