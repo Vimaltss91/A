@@ -23,10 +23,32 @@ def get_commit_info(tag_name):
         raise Exception(f"Failed to fetch tag info for {tag_name}: {response.text}")
 
 
-def get_merge_requests(from_date, to_date, valid_target_branches, exclusion_keywords):
+def get_branch_commits(branch_name):
+    """
+    Fetch all commit IDs for a given branch.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/repository/commits"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {"ref_name": branch_name}
+
+    commit_ids = []
+    while url:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            commit_ids.extend(commit["id"] for commit in data)
+            url = response.links.get("next", {}).get("url")
+            params = None  # Parameters are only needed for the first request
+        else:
+            raise Exception(f"Failed to fetch commits for branch {branch_name}: {response.text}")
+
+    return set(commit_ids)
+
+
+def get_merge_requests(from_date, to_date, valid_commit_ids, exclusion_keywords):
     """
     Fetch merge requests merged between the given dates.
-    Filter by target branch and exclude specific keywords in the title.
+    Include only MRs whose merge commit is in the valid_commit_ids set.
     """
     url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/merge_requests"
     headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
@@ -42,11 +64,11 @@ def get_merge_requests(from_date, to_date, valid_target_branches, exclusion_keyw
         if response.status_code == 200:
             data = response.json()
             for mr in data:
-                # Debugging: Log each MR to check attributes
-                print(f"DEBUG: MR#{mr['iid']} - Target Branch: {mr['target_branch']}, Title: {mr['title']}")
+                # Debugging: Log MR details
+                print(f"DEBUG: MR#{mr['iid']} - Merge Commit: {mr['merge_commit_sha']}, Title: {mr['title']}")
 
-                # Filter by target branches
-                if mr["target_branch"] not in valid_target_branches:
+                # Include only MRs with merge commits in the valid_commit_ids set
+                if mr["merge_commit_sha"] not in valid_commit_ids:
                     continue
 
                 # Exclude MRs with specific keywords in the title
@@ -71,8 +93,8 @@ def main():
     # Exclusion criteria for MRs
     exclusion_keywords = ["NoJira: merge changes from dev"]
 
-    # Target branches to include
-    valid_target_branches = ["dev", f"{tag2.split('.')[0]}.x-patch"]  # Adjust branch naming convention here
+    # Define the branch for commits comparison
+    patch_branch = f"{tag2.split('.')[0]}.x-patch"
 
     # Get commit info for both tags
     print(f"Fetching commit info for tag {tag1}...")
@@ -84,17 +106,21 @@ def main():
     print(f"Commit ID for {tag1}: {commit_id1}, Date: {commit_date1}")
     print(f"Commit ID for {tag2}: {commit_id2}, Date: {commit_date2}")
 
-    # Fetch MRs merged between the two commit dates and matching target branch
-    print("Fetching merge requests between the two tags...")
+    # Get all commits in the patch branch
+    print(f"Fetching commits for branch {patch_branch}...")
+    patch_branch_commits = get_branch_commits(patch_branch)
+
+    # Fetch MRs merged between the two commit dates and present in the patch branch
+    print("Fetching merge requests...")
     merge_requests = get_merge_requests(
-        commit_date1,
-        commit_date2,
-        valid_target_branches=valid_target_branches,
+        from_date=commit_date1,
+        to_date=commit_date2,
+        valid_commit_ids=patch_branch_commits,
         exclusion_keywords=exclusion_keywords,
     )
 
     # Display results
-    print(f"\nMerge Requests merged between {tag1} and {tag2}:")
+    print(f"\nMerge Requests contributing to {patch_branch} between {tag1} and {tag2}:")
     for mr in merge_requests:
         print(f"- MR#{mr['iid']}: {mr['title']} (Author: {mr['author']['name']})")
 
