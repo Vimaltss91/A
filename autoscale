@@ -1,3 +1,107 @@
+import os
+import requests
+import subprocess
+
+# GitLab configurations
+GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
+PRIVATE_TOKEN = "<your_private_token>"  # Replace with your personal access token
+
+def get_commits_between_tags(tag1, tag2):
+    """
+    Use `git diff` to get a list of commit hashes between two tags.
+    """
+    try:
+        result = subprocess.check_output(
+            ["git", "log", f"{tag1}..{tag2}", "--pretty=format:%H"],
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        commits = result.strip().split("\n")
+        return commits
+    except subprocess.CalledProcessError as e:
+        print(f"Error fetching commits between {tag1} and {tag2}: {e.output}")
+        return []
+
+def get_mrs_from_commits(commits, project_id):
+    """
+    Fetch Merge Request details for commits linked to MRs in GitLab.
+    """
+    mrs = []
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+
+    for commit in commits:
+        url = f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/commits/{commit}/merge_requests"
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            for mr in data:
+                if mr not in mrs:
+                    mrs.append(mr)
+        else:
+            print(f"Failed to fetch MR for commit {commit}: {response.text}")
+
+    return mrs
+
+def main():
+    # Fetch tags from environment variables
+    tag1 = os.getenv("TAG1")
+    tag2 = os.getenv("TAG2")
+    project_id = os.getenv("PROJECT_ID")  # Set your project ID here
+
+    if not tag1 or not tag2 or not project_id:
+        raise ValueError("Both TAG1, TAG2, and PROJECT_ID environment variables must be set.")
+
+    # Get commits between tags
+    print(f"Fetching commits between tags {tag1} and {tag2}...")
+    commits = get_commits_between_tags(tag1, tag2)
+
+    if not commits:
+        print(f"No commits found between {tag1} and {tag2}.")
+        return
+
+    print(f"Found {len(commits)} commits between {tag1} and {tag2}.")
+
+    # Fetch MRs from commits
+    print("Fetching Merge Requests linked to these commits...")
+    mrs = get_mrs_from_commits(commits, project_id)
+
+    # Display results
+    if mrs:
+        print(f"\nMerge Requests between {tag1} and {tag2}:")
+        for mr in mrs:
+            mr_url = f"{GITLAB_URL}/{project_id}/-/merge_requests/{mr['iid']}"
+            print(f"- MR#{mr['iid']}: {mr['title']} (Author: {mr['author']['name']}) [View MR]({mr_url})")
+    else:
+        print(f"No Merge Requests found between {tag1} and {tag2}.")
+
+if __name__ == "__main__":
+    main()
+
+--------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 DevOps automation primarily relies on Python and Bash scripting as essential skills. Alongside these, a good understanding of CI tools like GitLab or Jenkins, as well as containerization and orchestration technologies such as Docker and Kubernetes, forms a strong foundation for getting started.
 
 While many courses on platforms like Udemy can help you learn these skills, other educational resources are also worth exploring, though I haven't personally reviewed them yet.
