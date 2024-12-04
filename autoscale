@@ -1,3 +1,8 @@
+DevOps automation primarily relies on Python and Bash scripting as essential skills. Alongside these, a good understanding of CI tools like GitLab or Jenkins, as well as containerization and orchestration technologies such as Docker and Kubernetes, forms a strong foundation for getting started.
+
+While many courses on platforms like Udemy can help you learn these skills, other educational resources are also worth exploring, though I haven't personally reviewed them yet.
+
+
 import os
 import requests
 from config import projects  # Import the projects list from config.py
