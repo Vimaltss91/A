@@ -1,3 +1,6 @@
+"I believe these two approaches can't be combined directly. Augusto's method relies solely on Git tools to retrieve merge requests, whereas my approach uses the GitLab API to get merge requests between two different branches (e.g., 23.4.x-patch and 24.3.x-patch) based on specific dates. Without using the GitLab API, I haven’t been able to achieve the same result using only Git tools, though this might require further research
+
+
 import os
 import git
 import tempfile
