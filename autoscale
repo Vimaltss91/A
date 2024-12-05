@@ -1,1 +1,93 @@
+import os
+import git
+import tempfile
+
+def clone_or_get_repo(repo_url, local_path=None):
+    """
+    Clone the repository if it doesn't exist locally or return the local repo.
+    
+    :param repo_url: URL of the GitLab repository
+    :param local_path: Optional local path for the repository
+    :return: git.Repo object
+    """
+    if local_path is None:
+        # Use a temporary directory if no local path is provided
+        local_path = tempfile.mkdtemp()
+    
+    if not os.path.exists(local_path):
+        print(f"Cloning repository from {repo_url} to {local_path}...")
+        repo = git.Repo.clone_from(repo_url, local_path)
+    else:
+        print(f"Using existing repository at {local_path}...")
+        repo = git.Repo(local_path)
+    
+    return repo
+
+def get_merge_requests_between_tags(repo, branch1, tag1, branch2, tag2):
+    """
+    Fetch the list of merge requests between two tags from different branches.
+
+    :param repo: git.Repo object
+    :param branch1: The branch where tag1 is located
+    :param tag1: The starting tag
+    :param branch2: The branch where tag2 is located
+    :param tag2: The ending tag
+    :return: List of merge request messages
+    """
+    try:
+        # Ensure we're on the correct branches
+        repo.git.checkout(branch1)
+        start_commit = repo.commit(tag1)
+
+        repo.git.checkout(branch2)
+        end_commit = repo.commit(tag2)
+
+        # Fetch commits between the two tags
+        commits = list(repo.iter_commits(f"{start_commit.hexsha}..{end_commit.hexsha}"))
+
+        merge_requests = []
+        for commit in commits:
+            # Check if the commit is a merge commit
+            if len(commit.parents) > 1:
+                merge_requests.append({
+                    "hash": commit.hexsha,
+                    "message": commit.message.strip(),
+                    "author": commit.author.name,
+                    "date": commit.committed_datetime,
+                })
+
+        return merge_requests
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+
+if __name__ == "__main__":
+    # GitLab repository URL
+    REPO_URL = "https://gitlab.com/your-namespace/your-project.git"  # Replace with your GitLab repo URL
+
+    # Specify the branches and tags
+    BRANCH1 = "23.4.x-patch"  # Replace with the branch of tag1
+    TAG1 = "23.4.0"  # Replace with your starting tag
+    BRANCH2 = "23.5.x-patch"  # Replace with the branch of tag2
+    TAG2 = "23.5.0"  # Replace with your ending tag
+
+    # Optional: Specify a local path for the repository
+    LOCAL_PATH = "/path/to/local/clone"  # Change if you want to use a specific local directory or leave as None
+
+    # Clone the repo or use an existing one
+    repo = clone_or_get_repo(REPO_URL, local_path=LOCAL_PATH)
+
+    # Fetch merge requests between the tags
+    merge_requests = get_merge_requests_between_tags(repo, BRANCH1, TAG1, BRANCH2, TAG2)
+
+    if merge_requests:
+        print(f"Merge Requests between {TAG1} on {BRANCH1} and {TAG2} on {BRANCH2}:")
+        for mr in merge_requests:
+            print(f"- {mr['message']} (by {mr['author']} on {mr['date']})")
+    else:
+        print(f"No merge requests found between {TAG1} on {BRANCH1} and {TAG2} on {BRANCH2}.")
+
+
+
 The exact reason for the issue is unclear. We forcibly deleted the pod and PVC, and I will gather the information as outlined below. Since this is an intermittent issue, I will monitor it closely and provide an update in a few days.
