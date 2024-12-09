@@ -1,96 +1,144 @@
-"I believe these two approaches can't be combined directly. Augusto's method relies solely on Git tools to retrieve merge requests, whereas my approach uses the GitLab API to get merge requests between two different branches (e.g., 23.4.x-patch and 24.3.x-patch) based on specific dates. Without using the GitLab API, I haven’t been able to achieve the same result using only Git tools, though this might require further research
-
-
 import os
-import git
-import tempfile
+import logging
+import requests
+from config import projects  # Import the projects list from config.py
 
-def clone_or_get_repo(repo_url, local_path=None):
+# GitLab configurations
+GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
+PRIVATE_TOKEN = "<your_private_token>"  # Replace with your personal access token
+
+# Configure logging
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger(__name__)
+
+def get_commit_info(tag_name, project_id):
     """
-    Clone the repository if it doesn't exist locally or return the local repo.
-    
-    :param repo_url: URL of the GitLab repository
-    :param local_path: Optional local path for the repository
-    :return: git.Repo object
+    Fetch the commit ID and date for a given tag in a specific project.
     """
-    if local_path is None:
-        # Use a temporary directory if no local path is provided
-        local_path = tempfile.mkdtemp()
-    
-    if not os.path.exists(local_path):
-        print(f"Cloning repository from {repo_url} to {local_path}...")
-        repo = git.Repo.clone_from(repo_url, local_path)
+    url = f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/tags/{tag_name}"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        commit_id = data["commit"]["id"]
+        commit_date = data["commit"]["committed_date"]
+        return commit_id, commit_date
     else:
-        print(f"Using existing repository at {local_path}...")
-        repo = git.Repo(local_path)
-    
-    return repo
+        logger.error(f"Failed to fetch tag info for {tag_name}: {response.text}")
+        raise Exception(f"Failed to fetch tag info for {tag_name}")
 
-def get_merge_requests_between_tags(repo, branch1, tag1, branch2, tag2):
+def log_commit_info(commit_id, commit_date, project_name):
     """
-    Fetch the list of merge requests between two tags from different branches.
-
-    :param repo: git.Repo object
-    :param branch1: The branch where tag1 is located
-    :param tag1: The starting tag
-    :param branch2: The branch where tag2 is located
-    :param tag2: The ending tag
-    :return: List of merge request messages
+    Log the commit ID and project name in a structured format.
     """
-    try:
-        # Ensure we're on the correct branches
-        repo.git.checkout(branch1)
-        start_commit = repo.commit(tag1)
+    logger.info("\n%s", "-" * 40)
+    logger.info("Project: %s", project_name)
+    logger.info("Commit ID: %s", commit_id)
+    logger.info("Commit Date: %s", commit_date)
+    logger.info("%s", "-" * 40)
 
-        repo.git.checkout(branch2)
-        end_commit = repo.commit(tag2)
+def get_branch_commits(branch_name, project_id):
+    """
+    Fetch all commit IDs for a given branch in a specific project.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{project_id}/repository/commits"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {"ref_name": branch_name}
+    commit_ids = set()
 
-        # Fetch commits between the two tags
-        commits = list(repo.iter_commits(f"{start_commit.hexsha}..{end_commit.hexsha}"))
+    while url:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            commit_ids.update(commit["id"] for commit in data)
+            url = response.links.get("next", {}).get("url")
+            params = None  # Parameters are only needed for the first request
+        else:
+            logger.error(f"Failed to fetch commits for branch {branch_name}: {response.text}")
+            raise Exception(f"Failed to fetch commits for branch {branch_name}")
 
-        merge_requests = []
-        for commit in commits:
-            # Check if the commit is a merge commit
-            if len(commit.parents) > 1:
-                merge_requests.append({
-                    "hash": commit.hexsha,
-                    "message": commit.message.strip(),
-                    "author": commit.author.name,
-                    "date": commit.committed_datetime,
-                })
+    return commit_ids
 
-        return merge_requests
+def get_merge_requests(from_date, to_date, valid_commit_ids, exclusion_keywords, project_id):
+    """
+    Fetch merge requests merged between the given dates.
+    Include only MRs whose merge commit is in the valid_commit_ids set.
+    """
+    url = f"{GITLAB_URL}/api/v4/projects/{project_id}/merge_requests"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {
+        "state": "merged",
+        "updated_after": from_date,
+        "updated_before": to_date,
+    }
+    mrs = []
 
-    except Exception as e:
-        print(f"Error: {e}")
-        return []
+    while url:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            for mr in data:
+                logger.debug("MR#%s - Merge Commit: %s, Title: %s", mr["iid"], mr["merge_commit_sha"], mr["title"])
+                if mr["merge_commit_sha"] not in valid_commit_ids:
+                    continue
+                if any(keyword in mr["title"] for keyword in exclusion_keywords):
+                    continue
+                mrs.append(mr)
+            url = response.links.get("next", {}).get("url")
+            params = None  # Parameters are only needed for the first request
+        else:
+            logger.error(f"Failed to fetch merge requests: {response.text}")
+            raise Exception(f"Failed to fetch merge requests")
+
+    return mrs
+
+def main():
+    tag1 = os.getenv("TAG1")
+    tag2 = os.getenv("TAG2")
+    if not tag1 or not tag2:
+        logger.error("Both TAG1 and TAG2 environment variables must be set.")
+        raise ValueError("Both TAG1 and TAG2 environment variables must be set.")
+
+    exclusion_keywords = ["NoJira: merge changes from dev"]
+
+    for project in projects:
+        project_name = project["name"]
+        project_id = project["id"]
+        logger.info("Processing project: %s (ID: %d)", project_name, project_id)
+
+        try:
+            logger.info("Fetching commit info for tag %s...", tag1)
+            commit_id1, commit_date1 = get_commit_info(tag1, project_id)
+            logger.info("Fetching commit info for tag %s...", tag2)
+            commit_id2, commit_date2 = get_commit_info(tag2, project_id)
+
+            log_commit_info(commit_id1, commit_date1, project_name)
+            log_commit_info(commit_id2, commit_date2, project_name)
+
+            patch_branch = f"{tag2.split('.')[0]}.x-patch"
+            logger.info("Fetching commits for branch %s...", patch_branch)
+            patch_branch_commits = get_branch_commits(patch_branch, project_id)
+
+            logger.info("Fetching merge requests...")
+            merge_requests = get_merge_requests(
+                from_date=commit_date1,
+                to_date=commit_date2,
+                valid_commit_ids=patch_branch_commits,
+                exclusion_keywords=exclusion_keywords,
+                project_id=project_id,
+            )
+
+            logger.info("Merge Requests contributing to %s between %s and %s for %s:", 
+                        patch_branch, tag1, tag2, project_name)
+            for mr in merge_requests:
+                logger.info("- MR#%d: %s (Author: %s)", mr["iid"], mr["title"], mr["author"]["name"])
+
+        except Exception as e:
+            logger.error("Error processing project %s: %s", project_name, e)
 
 if __name__ == "__main__":
-    # GitLab repository URL
-    REPO_URL = "https://gitlab.com/your-namespace/your-project.git"  # Replace with your GitLab repo URL
-
-    # Specify the branches and tags
-    BRANCH1 = "23.4.x-patch"  # Replace with the branch of tag1
-    TAG1 = "23.4.0"  # Replace with your starting tag
-    BRANCH2 = "23.5.x-patch"  # Replace with the branch of tag2
-    TAG2 = "23.5.0"  # Replace with your ending tag
-
-    # Optional: Specify a local path for the repository
-    LOCAL_PATH = "/path/to/local/clone"  # Change if you want to use a specific local directory or leave as None
-
-    # Clone the repo or use an existing one
-    repo = clone_or_get_repo(REPO_URL, local_path=LOCAL_PATH)
-
-    # Fetch merge requests between the tags
-    merge_requests = get_merge_requests_between_tags(repo, BRANCH1, TAG1, BRANCH2, TAG2)
-
-    if merge_requests:
-        print(f"Merge Requests between {TAG1} on {BRANCH1} and {TAG2} on {BRANCH2}:")
-        for mr in merge_requests:
-            print(f"- {mr['message']} (by {mr['author']} on {mr['date']})")
-    else:
-        print(f"No merge requests found between {TAG1} on {BRANCH1} and {TAG2} on {BRANCH2}.")
-
-
-
-The exact reason for the issue is unclear. We forcibly deleted the pod and PVC, and I will gather the information as outlined below. Since this is an intermittent issue, I will monitor it closely and provide an update in a few days.
+    main()
