@@ -1,1 +1,2 @@
-My comments above pertain to a different issue related to TPD changes for notifications. However, for the one-click support, my understanding is that there’s no need to create a patch branch. All existing patch branches (e.g., 23.4.x-patch) are already pointing to the dev branch. Even if we introduce a new variable, it will appear as empty in the ATS.
+The first issue is that the system always checks for patch branch commits. In the case of a hotfix, it fails to perform validation.
+The second issue pertains to the notifier for version 24.2.2. While hotfix commits are considered, it does not include the latest merge request (MR).
