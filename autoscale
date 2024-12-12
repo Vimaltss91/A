@@ -1,2 +1,37 @@
-The first issue is that the system always checks for patch branch commits. In the case of a hotfix, it fails to perform validation.
-The second issue pertains to the notifier for version 24.2.2. While hotfix commits are considered, it does not include the latest merge request (MR).
+import requests
+
+# Replace with your GitLab details
+GITLAB_URL = "https://gitlab.example.com/api/v4"
+PROJECT_ID = "your_project_id"  # Replace with your project ID
+PRIVATE_TOKEN = "your_private_token"
+
+def fetch_merge_requests():
+    url = f"{GITLAB_URL}/projects/{PROJECT_ID}/merge_requests"
+    headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
+    params = {"state": "opened", "per_page": 100}
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+    return response.json()
+
+def filter_merge_requests(mrs):
+    filtered_mrs = [
+        mr for mr in mrs
+        if mr["target_branch"] == "dev" or
+           mr["target_branch"].endswith("-patch") or
+           mr["target_branch"].startswith("HotFix-")
+    ]
+    return filtered_mrs
+
+def main():
+    try:
+        mrs = fetch_merge_requests()
+        filtered_mrs = filter_merge_requests(mrs)
+        
+        # Display filtered MRs
+        for mr in filtered_mrs:
+            print(f"MR ID: {mr['id']}, Title: {mr['title']}, Target Branch: {mr['target_branch']}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching MRs: {e}")
+
+if __name__ == "__main__":
+    main()
