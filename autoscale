@@ -1,37 +1,53 @@
 import requests
 
 # Replace with your GitLab details
-GITLAB_URL = "https://gitlab.example.com/api/v4"
+GITLAB_URL = "https://gitlab.com/api/v4"
 PROJECT_ID = "your_project_id"  # Replace with your project ID
 PRIVATE_TOKEN = "your_private_token"
 
-def fetch_merge_requests():
-    url = f"{GITLAB_URL}/projects/{PROJECT_ID}/merge_requests"
+def get_merge_request(mr_id):
+    """Fetch details of a specific merge request by ID."""
+    url = f"{GITLAB_URL}/projects/{PROJECT_ID}/merge_requests/{mr_id}"
     headers = {"PRIVATE-TOKEN": PRIVATE_TOKEN}
-    params = {"state": "opened", "per_page": 100}
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()
 
-def filter_merge_requests(mrs):
-    filtered_mrs = [
-        mr for mr in mrs
-        if mr["target_branch"] == "dev" or
-           mr["target_branch"].endswith("-patch") or
-           mr["target_branch"].startswith("HotFix-")
-    ]
-    return filtered_mrs
+def is_valid_target_branch(target_branch):
+    """Check if the target branch matches the criteria."""
+    return (
+        target_branch == "dev" or
+        target_branch.endswith("-patch") or
+        target_branch.startswith("HotFix-")
+    )
+
+def process_merge_requests(mr_ids):
+    """Fetch and filter merge requests by target branch criteria."""
+    valid_mrs = []
+    for mr_id in mr_ids:
+        try:
+            mr = get_merge_request(mr_id)
+            if is_valid_target_branch(mr["target_branch"]):
+                valid_mrs.append({
+                    "id": mr["id"],
+                    "url": mr["web_url"],
+                    "title": mr["title"],
+                    "target_branch": mr["target_branch"]
+                })
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching MR {mr_id}: {e}")
+    
+    return valid_mrs
 
 def main():
-    try:
-        mrs = fetch_merge_requests()
-        filtered_mrs = filter_merge_requests(mrs)
-        
-        # Display filtered MRs
-        for mr in filtered_mrs:
-            print(f"MR ID: {mr['id']}, Title: {mr['title']}, Target Branch: {mr['target_branch']}")
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching MRs: {e}")
+    # List of merge request IDs to process
+    mr_ids = [1, 2, 3, 4, 5]  # Replace with your list of MR IDs
+    
+    valid_mrs = process_merge_requests(mr_ids)
+    
+    # Print filtered merge requests
+    for mr in valid_mrs:
+        print(f"MR URL: {mr['url']}, Title: {mr['title']}, Target Branch: {mr['target_branch']}")
 
 if __name__ == "__main__":
     main()
