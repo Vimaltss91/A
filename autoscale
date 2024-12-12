@@ -1,3 +1,1 @@
-I reviewed the project, and all MRs are being captured as expected. However, I noticed that the MR list includes the pre-dev branch as well. We should filter that out.
-
-I have a Docker appointment later today, so I’ll be signing off for now.
+I will be signing off now for a Docker appointment and will likely be leaving tomorrow
