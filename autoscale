@@ -1,4 +1,63 @@
 import requests
+import re
+
+def is_valid_target_branch(gitlab_url, private_token, project_id, mr_id):
+    """
+    Check if a GitLab Merge Request targets a valid branch.
+
+    A valid branch is one of the following:
+      - 'dev'
+      - Starts with 'HotFix-'
+      - Ends with '-patch'
+
+    :param gitlab_url: The base URL of the GitLab instance (e.g., "https://gitlab.example.com")
+    :param private_token: Your GitLab personal access token with 'read_api' scope
+    :param project_id: The ID of the GitLab project
+    :param mr_id: The ID of the merge request
+    :return: True if the target branch is valid, False otherwise
+    """
+    # API endpoint to fetch MR details
+    api_url = f"{gitlab_url}/api/v4/projects/{project_id}/merge_requests/{mr_id}"
+
+    # Headers with the access token
+    headers = {"PRIVATE-TOKEN": private_token}
+
+    try:
+        # Send a GET request to the GitLab API
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        # Parse the response JSON
+        mr_data = response.json()
+
+        # Extract the target branch
+        target_branch = mr_data.get("target_branch")
+
+        # Define valid branch conditions
+        if target_branch == "dev" or target_branch.startswith("HotFix-") or target_branch.endswith("-patch"):
+            print(f"MR #{mr_id} targets a valid branch: '{target_branch}'.")
+            return True
+        else:
+            print(f"MR #{mr_id} does not target a valid branch. It targets '{target_branch}'.")
+            return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        return False
+
+# Example Usage
+if __name__ == "__main__":
+    # Replace these variables with actual values
+    GITLAB_URL = "https://gitlab.example.com"
+    PRIVATE_TOKEN = "your_access_token_here"
+    PROJECT_ID = "your_project_id_here"  # e.g., 1234
+    MR_ID = "your_merge_request_id_here"  # e.g., 56
+
+    is_valid_target_branch(GITLAB_URL, PRIVATE_TOKEN, PROJECT_ID, MR_ID)
+
+
+
+import requests
 
 def is_target_branch_dev(gitlab_url, private_token, project_id, mr_id):
     """
