@@ -1,1 +1,21 @@
-I will be signing off now for a Docker appointment and will likely be leaving tomorrow
+#!/bin/bash
+
+# Variables
+GITLAB_URL="https://gitlab.example.com"
+GITLAB_ACCESS_TOKEN="your_access_token_here"
+PROJECT_ID="your_project_id_here"
+MR_ID="your_merge_request_id_here"
+
+# Get MR details using GitLab API
+response=$(curl --silent --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
+    "$GITLAB_URL/api/v4/projects/$PROJECT_ID/merge_requests/$MR_ID")
+
+# Extract the target branch
+target_branch=$(echo "$response" | jq -r '.target_branch')
+
+# Check if the target branch is 'dev'
+if [ "$target_branch" == "dev" ]; then
+    echo "The target branch of MR #$MR_ID is 'dev'."
+else
+    echo "The target branch of MR #$MR_ID is not 'dev' (it's '$target_branch')."
+fi
