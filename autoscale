@@ -1,2 +1,8 @@
 
-If the Viking team has updated the SB version, we need to refer to the vikingcatalog tag. By removing the hardcoded catalog tag from the schedule, the build will default to using the catalog from the dev branch. However, as we release new common versions, the catalog parameter is also updated and needs to be reflected in the schedule. The schedule must always point to the corresponding catalog version, whether it’s a full build or an individual build, especially when there are changes due to catalog updates.
+Chris mentioned that for the app information, we are currently building the image from Dockeru-sut and using it for the contract test runs, which is not the correct approach.
+
+We attempted to resolve this by using the image built from the Dockerfile (the one we ship). However, when starting the container, we encountered an error stating: no such file: appinfo.yaml.
+
+The Dockeru-sut file includes the line: ADD appinfo.yaml /etc/appinfo.yaml, which is missing in the actual Dockerfile, leading to the error during container startup. After adding this line to the Dockerfile, the container started successfully, and the correct image was used.
+
+We want to confirm with experts: Is it acceptable to include the appinfo.yaml file in the Dockerfile, or should this be handled dynamically during the contract test execution at runtime?
