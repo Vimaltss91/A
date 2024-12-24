@@ -13,21 +13,26 @@ def download_sha256(url):
         print(f"Error downloading .sha256 file: {e}")
         return None
 
-def use_sha256(sha256_value):
+def validate_sha256(downloaded_sha256, expected_sha256):
     """
-    Example function to demonstrate using the .sha256 value.
+    Compares the downloaded SHA256 with the expected SHA256.
     """
-    if sha256_value:
-        print(f"Using SHA256 value: {sha256_value}")
-        # Perform actions with the SHA256 value
+    if downloaded_sha256 == expected_sha256:
+        print("✅ SHA256 values match. Validation successful.")
+        return True
     else:
-        print("No SHA256 value provided.")
+        print("❌ SHA256 values do not match. Validation failed.")
+        return False
 
 # URL to the .sha256 file
 sha256_url = "https://example.com/path/to/file.sha256"
 
-# Download and store the SHA256 value
-sha256_value = download_sha256(sha256_url)
+# The expected SHA256 value for comparison
+expected_sha256 = "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2"
 
-# Use the SHA256 value in another function
-use_sha256(sha256_value)
+# Step 1: Download the SHA256 value from the URL
+downloaded_sha256 = download_sha256(sha256_url)
+
+# Step 2: Compare the downloaded SHA256 with the expected value
+if downloaded_sha256:
+    validate_sha256(downloaded_sha256, expected_sha256)
