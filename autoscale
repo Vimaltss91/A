@@ -51,4 +51,6 @@ downloaded_sha256 = download_sha256(sha256_url)
 # Step 2: Read the expected SHA256 value from the temp.sha256 file
 expected_sha256 = read_expected_sha256(expected_sha256_file)
 
-# Step 3: Compare the downloaded SHA256 with the expected val
+# Step 3: Compare the downloaded SHA256 with the expected value
+if downloaded_sha256 and expected_sha256:
+    validate_sha256(downloaded_sha256, expected_sha256)
