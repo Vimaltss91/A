@@ -1,8 +1,33 @@
+import requests
 
-Chris mentioned that for the app information, we are currently building the image from Dockeru-sut and using it for the contract test runs, which is not the correct approach.
+def download_sha256(url):
+    """
+    Downloads the .sha256 file from the provided URL and returns its content.
+    """
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for HTTP issues
+        sha256_content = response.text.strip()  # Remove any leading/trailing whitespace
+        return sha256_content
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading .sha256 file: {e}")
+        return None
 
-We attempted to resolve this by using the image built from the Dockerfile (the one we ship). However, when starting the container, we encountered an error stating: no such file: appinfo.yaml.
+def use_sha256(sha256_value):
+    """
+    Example function to demonstrate using the .sha256 value.
+    """
+    if sha256_value:
+        print(f"Using SHA256 value: {sha256_value}")
+        # Perform actions with the SHA256 value
+    else:
+        print("No SHA256 value provided.")
 
-The Dockeru-sut file includes the line: ADD appinfo.yaml /etc/appinfo.yaml, which is missing in the actual Dockerfile, leading to the error during container startup. After adding this line to the Dockerfile, the container started successfully, and the correct image was used.
+# URL to the .sha256 file
+sha256_url = "https://example.com/path/to/file.sha256"
 
-We want to confirm with experts: Is it acceptable to include the appinfo.yaml file in the Dockerfile, or should this be handled dynamically during the contract test execution at runtime?
+# Download and store the SHA256 value
+sha256_value = download_sha256(sha256_url)
+
+# Use the SHA256 value in another function
+use_sha256(sha256_value)
