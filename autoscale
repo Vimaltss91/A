@@ -13,6 +13,21 @@ def download_sha256(url):
         print(f"Error downloading .sha256 file: {e}")
         return None
 
+def read_expected_sha256(file_path):
+    """
+    Reads the SHA256 value and filename from a file and returns the SHA256 value.
+    """
+    try:
+        with open(file_path, 'r') as f:
+            line = f.readline().strip()  # Read the first line and remove whitespace
+            sha256_value, _ = line.split(maxsplit=1)  # Split into SHA256 and filename
+            return sha256_value
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+    except ValueError:
+        print(f"Unexpected format in file: {file_path}")
+    return None
+
 def validate_sha256(downloaded_sha256, expected_sha256):
     """
     Compares the downloaded SHA256 with the expected SHA256.
@@ -27,12 +42,13 @@ def validate_sha256(downloaded_sha256, expected_sha256):
 # URL to the .sha256 file
 sha256_url = "https://example.com/path/to/file.sha256"
 
-# The expected SHA256 value for comparison
-expected_sha256 = "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2"
+# Path to the local temp.sha256 file
+expected_sha256_file = "temp.sha256"
 
 # Step 1: Download the SHA256 value from the URL
 downloaded_sha256 = download_sha256(sha256_url)
 
-# Step 2: Compare the downloaded SHA256 with the expected value
-if downloaded_sha256:
-    validate_sha256(downloaded_sha256, expected_sha256)
+# Step 2: Read the expected SHA256 value from the temp.sha256 file
+expected_sha256 = read_expected_sha256(expected_sha256_file)
+
+# Step 3: Compare the downloaded SHA256 with the expected val
