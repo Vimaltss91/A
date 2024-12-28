@@ -1,56 +1,21 @@
-import requests
-
-def download_sha256(url):
+def insert_new_status(cursor, kwargs: dict) -> None:
+    """Inserts a new namespace status record into the database."""
+    query = """
+        INSERT INTO namespace_status (
+            nf_type, release_tag, ats_release_tag, namespace, is_csar, is_asm, is_tgz, is_internal_ats,
+            is_occ, is_pcf, is_converged, is_pcrf, upg_phase, play_id, tls_version, upg_rollback, official_build, 
+            priority, status, allocation_lock, owner, custom_message, cpu_estimate, parallel_count
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'NO', %s, %s, %s, %s
+        )
     """
-    Downloads the .sha256 file from the provided URL and returns its content.
-    """
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an error for HTTP issues
-        sha256_content = response.text.strip()  # Remove any leading/trailing whitespace
-        return sha256_content
-    except requests.exceptions.RequestException as e:
-        print(f"Error downloading .sha256 file: {e}")
-        return None
-
-def read_expected_sha256(file_path):
-    """
-    Reads the SHA256 value and filename from a file and returns the SHA256 value.
-    """
-    try:
-        with open(file_path, 'r') as f:
-            line = f.readline().strip()  # Read the first line and remove whitespace
-            sha256_value, _ = line.split(maxsplit=1)  # Split into SHA256 and filename
-            return sha256_value
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-    except ValueError:
-        print(f"Unexpected format in file: {file_path}")
-    return None
-
-def validate_sha256(downloaded_sha256, expected_sha256):
-    """
-    Compares the downloaded SHA256 with the expected SHA256.
-    """
-    if downloaded_sha256 == expected_sha256:
-        print("✅ SHA256 values match. Validation successful.")
-        return True
-    else:
-        print("❌ SHA256 values do not match. Validation failed.")
-        return False
-
-# URL to the .sha256 file
-sha256_url = "https://example.com/path/to/file.sha256"
-
-# Path to the local temp.sha256 file
-expected_sha256_file = "temp.sha256"
-
-# Step 1: Download the SHA256 value from the URL
-downloaded_sha256 = download_sha256(sha256_url)
-
-# Step 2: Read the expected SHA256 value from the temp.sha256 file
-expected_sha256 = read_expected_sha256(expected_sha256_file)
-
-# Step 3: Compare the downloaded SHA256 with the expected value
-if downloaded_sha256 and expected_sha256:
-    validate_sha256(downloaded_sha256, expected_sha256)
+    params = (
+        kwargs['nf_type'], kwargs['release_tag'], kwargs['ats_release_tag'], kwargs['namespace'],
+        kwargs['is_csar'], kwargs['is_asm'], kwargs['is_tgz'], kwargs['is_internal_ats'], kwargs['is_occ'],
+        kwargs['is_pcf'], kwargs['is_converged'], kwargs['is_pcrf'], kwargs['upg_phase'], kwargs['play_id'],
+        kwargs['tls_version'], kwargs['upg_rollback'], kwargs['official_build'], kwargs['priority'],
+        kwargs['status'], kwargs['owner'], kwargs['custom_message'], kwargs['cpu_estimate'], kwargs['parallel_count']
+    )
+    execute_query(cursor, query, params)
+    logging.info(f"Added NF '{kwargs['nf_type']}' with parallel_count '{kwargs['parallel_count']}' "
+                 f"for release tag '{kwargs['release_tag']}' in the database.")
