@@ -1,3 +1,31 @@
+def _handle_dynamic_namespace(self, cursor, kwargs: Dict) -> None:
+    """
+    Handles the insertion or update of dynamic namespaces.
+    """
+    existing_row = get_existing_status(cursor, kwargs)
+
+    if existing_row:
+        s_no, status, namespace, priority, report, release_tag, ats_release_tag = existing_row
+        if status == 'ASSIGNED':
+            logging.info(f"Namespace {namespace} has already been assigned.")
+        elif status == 'HARDCODE':
+            logging.info(f"Namespace {namespace} has already been hardcoded.")
+        else:
+            update_existing_status(cursor, s_no, "YET TO ASSIGN")
+    else:
+        kwargs['status'] = 'YET TO ASSIGN'
+        kwargs['namespace'] = ''
+        if kwargs['parallel_execution'] == "YES":
+            logging.info("Handling the parallel namespace")
+            for count in range(1, 4):  # Parallel counts 1, 2, and 3
+                kwargs['parallel_count'] = count
+                insert_new_status(cursor, kwargs)
+        else:
+            kwargs['parallel_count'] = None  # Single execution does not use parallel_count
+            insert_new_status(cursor, kwargs)
+
+
+
 def insert_new_status(cursor, kwargs: dict) -> None:
     """Inserts a new namespace status record into the database."""
     query = """
