@@ -17,138 +17,43 @@ def allocate_namespace(self, **kwargs) -> Optional[str]:
                 os.getenv('PARALLEL_EXECUTION') == 'true'
             )
 
-            all_existing_statuses = []
-            if is_parallel_execution:
-                logging.info("Parallel execution enabled.")
-                for parallel_count in range(1, 4):  # Parallel counts: 1, 2, 3
+            parallel_counts = [1, 2, 3] if is_parallel_execution else [None]
+
+            for parallel_count in parallel_counts:
+                if parallel_count:
                     kwargs['parallel_count'] = parallel_count
-                    existing_statuses = get_existing_status(cursor, kwargs)
-                    if existing_statuses:
-                        all_existing_statuses.extend(existing_statuses)
-            else:
-                # Non-parallel execution
-                logging.info("Non-parallel execution.")
+                    logging.info(f"Processing for parallel_count = {parallel_count}")
+                else:
+                    logging.info("Processing for non-parallel execution")
+
+                # Fetch existing statuses for the current parallel_count
                 existing_statuses = get_existing_status(cursor, kwargs)
+
                 if existing_statuses:
-                    all_existing_statuses.extend(existing_statuses)
+                    logging.info(f"Handling existing statuses for parallel_count = {parallel_count}")
+                    for status in existing_statuses:
+                        namespace_name = self._handle_assigned_status(cursor, status, pipeline_url, kwargs)
+                        if namespace_name:
+                            return namespace_name  # Exit as soon as a namespace is assigned
 
-            if all_existing_statuses:
-                logging.info("Handling all existing statuses for namespace allocation.")
-                all_assigned = True  # Flag to check if all are assigned
-                namespace_name = None
+                logging.info(f"Continuing with auto-assignment process for parallel_count = {parallel_count}")
 
-                for status in all_existing_statuses:
-                    temp_namespace_name = self._handle_assigned_status(cursor, status, pipeline_url, kwargs)
-                    if not temp_namespace_name:
-                        all_assigned = False  # If any record is not assigned, mark as False
-                    else:
-                        namespace_name = temp_namespace_name  # Store the last assigned namespace
+                # Fetch and log CPU requests for the current parallel_count
+                total_cpu_requests = self._fetch_and_log_cpu_requests(cursor, existing_statuses, kwargs)
+                if total_cpu_requests is None:
+                    logging.warning(f"No CPU requests available for parallel_count = {parallel_count}")
+                    continue  # Skip to the next parallel_count
 
-                if all_assigned:
-                    return namespace_name  # If all are assigned, return the namespace
+                # Find and lock an available namespace
+                namespace_name = find_and_lock_available_namespace(cursor, kwargs['nf_type'])
+                if namespace_name:
+                    update_status_and_lock(self.db_connection.connection, cursor, namespace_name, pipeline_url, kwargs)
+                    update_namespace_in_env(namespace_name)
+                    return namespace_name  # Exit as soon as a namespace is locked
 
-            logging.info("Continue with auto-assignment process.")
-
-            # Fetch and log CPU requests
-            total_cpu_requests = self._fetch_and_log_cpu_requests(cursor, all_existing_statuses, kwargs)
-            if total_cpu_requests is None:
-                return None
-
-            # Find and lock an available namespace
-            namespace_name = find_and_lock_available_namespace(cursor, kwargs['nf_type'])
-            if namespace_name:
-                update_status_and_lock(self.db_connection.connection, cursor, namespace_name, pipeline_url, kwargs)
-                update_namespace_in_env(namespace_name)
-                return namespace_name
-            else:
-                logging.warning("No available namespaces or they are locked.")
-                return None
+            logging.warning("No available namespaces or they are locked after processing all parallel counts.")
+            return None
 
     except Error as e:
         logging.error(f"Error during namespace allocation: {e}")
         raise NamespaceAllocationError("Namespace allocation failed.")
-
-
-
-def allocate_namespace(self, **kwargs) -> Optional[str]:
-    """
-    Allocates a namespace for the given parameters.
-    """
-    try:
-        with self.db_connection.get_cursor() as cursor:
-            pipeline_url = self._get_env_variable("CI_PIPELINE_URL")
-
-            # Handle upgrade case if play_id is provided
-            if kwargs.get('play_id'):
-                if self._handle_upgrade(cursor, kwargs):
-                    return None  # Exit if the upgrade was handled
-
-            # Fetch existing statuses (supports parallel and normal execution)
-            existing_statuses = get_existing_status(cursor, kwargs)
-
-            if existing_statuses:
-                logging.info("Handling existing statuses for namespace allocation.")
-                for status in existing_statuses:
-                    namespace_name = self._handle_assigned_status(cursor, status, pipeline_url, kwargs)
-                    if namespace_name:
-                        return namespace_name  # Return as soon as a namespace is assigned
-
-            logging.info("Continue with auto-assignment process.")
-
-            # Fetch and log CPU requests
-            total_cpu_requests = self._fetch_and_log_cpu_requests(cursor, existing_statuses, kwargs)
-            if total_cpu_requests is None:
-                return None
-
-            # Find and lock an available namespace
-            namespace_name = find_and_lock_available_namespace(cursor, kwargs['nf_type'])
-            if namespace_name:
-                update_status_and_lock(self.db_connection.connection, cursor, namespace_name, pipeline_url, kwargs)
-                update_namespace_in_env(namespace_name)
-                return namespace_name
-            else:
-                logging.warning("No available namespaces or they are locked.")
-                return None
-
-    except Error as e:
-        logging.error(f"Error during namespace allocation: {e}")
-        raise NamespaceAllocationError("Namespace allocation failed.")
-
-
-
-
-def get_existing_status(cursor, kwargs: dict) -> list:
-    """Retrieves the existing status for a namespace from the database with optional parallel execution."""
-    query = """
-        SELECT s_no, status, namespace, priority, official_build, release_tag, ats_release_tag
-        FROM namespace_status
-        WHERE nf_type = %s AND release_tag = %s AND ats_release_tag = %s AND is_csar = %s
-        AND is_asm = %s AND is_tgz = %s AND is_internal_ats = %s AND is_occ = %s
-        AND is_pcf = %s AND is_converged = %s AND is_pcrf = %s AND upg_phase = %s AND play_id = %s 
-        AND tls_version = %s AND upg_rollback = %s AND official_build = %s AND custom_message = %s
-    """
-    params_base = [
-        kwargs['nf_type'], kwargs['release_tag'], kwargs['ats_release_tag'], kwargs['is_csar'], kwargs['is_asm'],
-        kwargs['is_tgz'], kwargs['is_internal_ats'], kwargs['is_occ'], kwargs['is_pcf'],
-        kwargs['is_converged'], kwargs['is_pcrf'], kwargs['upg_phase'], kwargs['play_id'], kwargs['tls_version'],
-        kwargs['upg_rollback'], kwargs['official_build'], kwargs['custom_message']
-    ]
-
-    results = []
-
-    # Check for parallel execution condition
-    if os.getenv('CI_PROJECT_TITLE') == 'one-click-integration' and os.getenv("PARALLEL_EXECUTION") == 'true':
-        query += " AND parallel_count = %s"
-        # Execute the query for parallel_count 1, 2, and 3
-        for parallel_count in [1, 2, 3]:
-            params = params_base + [parallel_count]
-            execute_query(cursor, query, params)
-            result = cursor.fetchall()  # Fetch all rows for this iteration
-            if result:
-                results.extend(result)  # Add results to the list if any are found
-    else:
-        # Execute the query without parallel_count condition
-        execute_query(cursor, query, params_base)
-        results = cursor.fetchall()  # Fetch all rows for this query
-
-    return results
