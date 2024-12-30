@@ -1,3 +1,16 @@
+# Proceed to auto-assign for the current parallel_count
+namespace_name = find_and_lock_available_namespace(cursor, kwargs['nf_type'])
+if namespace_name:
+    update_status_and_lock(self.db_connection.connection, cursor, namespace_name, pipeline_url, kwargs)
+    update_namespace_in_env(namespace_name)
+    logging.info(f"Namespace {namespace_name} successfully locked and assigned.")
+    # Instead of returning, continue to the next parallel_count
+    continue  
+else:
+    logging.warning(f"No available namespaces found for parallel_count = {parallel_count}.")
+
+
+
 def allocate_namespace(self, **kwargs) -> Optional[str]:
     """
     Allocates a namespace for the given parameters.
