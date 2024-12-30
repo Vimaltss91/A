@@ -11,6 +11,78 @@ def allocate_namespace(self, **kwargs) -> Optional[str]:
                 if self._handle_upgrade(cursor, kwargs):
                     return None  # Exit if the upgrade was handled
 
+            # Check for parallel execution mode
+            is_parallel_execution = (
+                os.getenv('CI_PROJECT_TITLE') == 'one-click-integration' and
+                os.getenv('PARALLEL_EXECUTION') == 'true'
+            )
+
+            all_existing_statuses = []
+            if is_parallel_execution:
+                logging.info("Parallel execution enabled.")
+                for parallel_count in range(1, 4):  # Parallel counts: 1, 2, 3
+                    kwargs['parallel_count'] = parallel_count
+                    existing_statuses = get_existing_status(cursor, kwargs)
+                    if existing_statuses:
+                        all_existing_statuses.extend(existing_statuses)
+            else:
+                # Non-parallel execution
+                logging.info("Non-parallel execution.")
+                existing_statuses = get_existing_status(cursor, kwargs)
+                if existing_statuses:
+                    all_existing_statuses.extend(existing_statuses)
+
+            if all_existing_statuses:
+                logging.info("Handling all existing statuses for namespace allocation.")
+                all_assigned = True  # Flag to check if all are assigned
+                namespace_name = None
+
+                for status in all_existing_statuses:
+                    temp_namespace_name = self._handle_assigned_status(cursor, status, pipeline_url, kwargs)
+                    if not temp_namespace_name:
+                        all_assigned = False  # If any record is not assigned, mark as False
+                    else:
+                        namespace_name = temp_namespace_name  # Store the last assigned namespace
+
+                if all_assigned:
+                    return namespace_name  # If all are assigned, return the namespace
+
+            logging.info("Continue with auto-assignment process.")
+
+            # Fetch and log CPU requests
+            total_cpu_requests = self._fetch_and_log_cpu_requests(cursor, all_existing_statuses, kwargs)
+            if total_cpu_requests is None:
+                return None
+
+            # Find and lock an available namespace
+            namespace_name = find_and_lock_available_namespace(cursor, kwargs['nf_type'])
+            if namespace_name:
+                update_status_and_lock(self.db_connection.connection, cursor, namespace_name, pipeline_url, kwargs)
+                update_namespace_in_env(namespace_name)
+                return namespace_name
+            else:
+                logging.warning("No available namespaces or they are locked.")
+                return None
+
+    except Error as e:
+        logging.error(f"Error during namespace allocation: {e}")
+        raise NamespaceAllocationError("Namespace allocation failed.")
+
+
+
+def allocate_namespace(self, **kwargs) -> Optional[str]:
+    """
+    Allocates a namespace for the given parameters.
+    """
+    try:
+        with self.db_connection.get_cursor() as cursor:
+            pipeline_url = self._get_env_variable("CI_PIPELINE_URL")
+
+            # Handle upgrade case if play_id is provided
+            if kwargs.get('play_id'):
+                if self._handle_upgrade(cursor, kwargs):
+                    return None  # Exit if the upgrade was handled
+
             # Fetch existing statuses (supports parallel and normal execution)
             existing_statuses = get_existing_status(cursor, kwargs)
 
