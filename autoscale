@@ -29,29 +29,34 @@ def allocate_namespace(self, **kwargs) -> Optional[str]:
                 # Fetch existing statuses for the current parallel_count
                 existing_statuses = get_existing_status(cursor, kwargs)
 
-                if existing_statuses:
-                    logging.info(f"Handling existing statuses for parallel_count = {parallel_count}")
-                    for status in existing_statuses:
-                        namespace_name = self._handle_assigned_status(cursor, status, pipeline_url, kwargs)
-                        if namespace_name:
-                            return namespace_name  # Exit as soon as a namespace is assigned
-
-                logging.info(f"Continuing with auto-assignment process for parallel_count = {parallel_count}")
-
-                # Fetch and log CPU requests for the current parallel_count
-                total_cpu_requests = self._fetch_and_log_cpu_requests(cursor, existing_statuses, kwargs)
-                if total_cpu_requests is None:
-                    logging.warning(f"No CPU requests available for parallel_count = {parallel_count}")
+                if not existing_statuses:
+                    logging.info(f"No existing statuses found for parallel_count = {parallel_count}")
                     continue  # Skip to the next parallel_count
 
-                # Find and lock an available namespace
+                logging.info(f"Handling {len(existing_statuses)} existing statuses for parallel_count = {parallel_count}")
+
+                # Iterate over each existing status
+                for status in existing_statuses:
+                    namespace_name = self._handle_assigned_status(cursor, status, pipeline_url, kwargs)
+                    if namespace_name:
+                        logging.info(f"Namespace {namespace_name} successfully assigned for status: {status}")
+                        return namespace_name  # Exit on successful assignment
+
+                    # Fetch and log CPU requests for the current status
+                    total_cpu_requests = self._fetch_and_log_cpu_requests(cursor, [status], kwargs)
+                    if total_cpu_requests is None:
+                        logging.warning(f"No CPU requests available for status: {status}")
+                        continue  # Skip to the next status
+
+                # Proceed to auto-assign for the current parallel_count
                 namespace_name = find_and_lock_available_namespace(cursor, kwargs['nf_type'])
                 if namespace_name:
                     update_status_and_lock(self.db_connection.connection, cursor, namespace_name, pipeline_url, kwargs)
                     update_namespace_in_env(namespace_name)
-                    return namespace_name  # Exit as soon as a namespace is locked
+                    logging.info(f"Namespace {namespace_name} successfully locked and assigned.")
+                    return namespace_name  # Exit on successful locking
 
-            logging.warning("No available namespaces or they are locked after processing all parallel counts.")
+            logging.warning("No available namespaces or assignments after processing all parallel counts.")
             return None
 
     except Error as e:
