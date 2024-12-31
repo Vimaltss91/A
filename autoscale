@@ -1,6 +1,54 @@
 def update_namespace_in_env(namespace_name: str, parallel_count=None):
     """
     Updates the NAMESPACE variable in the environment file.
+    If the NAMESPACE already exists, it updates the value. 
+    If not, it appends the new NAMESPACE.
+    """
+    env_file = config.ENV_FILE
+    try:
+        # Read the lines from the file to check if the NAMESPACE exists
+        with open(env_file, 'r') as file:
+            lines = file.readlines()
+
+        updated = False  # Flag to track if update happened
+
+        with open(env_file, 'w') as file:  # Open the file in write mode to update/append
+            for line in lines:
+                if os.getenv("PARALLEL_EXECUTION") == 'true' and parallel_count is not None:
+                    # Check if the parallel_count already exists, then update
+                    if line.startswith(f"NAMESPACE_{parallel_count}="):
+                        file.write(f"NAMESPACE_{parallel_count}={namespace_name}\n")
+                        updated = True
+                    else:
+                        file.write(line)
+                else:
+                    # For non-parallel execution, update the regular NAMESPACE
+                    if line.startswith("NAMESPACE="):
+                        file.write(f"NAMESPACE={namespace_name}\n")
+                        updated = True
+                    else:
+                        file.write(line)
+
+            # If the NAMESPACE was not found, append it at the end
+            if not updated:
+                if os.getenv("PARALLEL_EXECUTION") == 'true' and parallel_count is not None:
+                    file.write(f"NAMESPACE_{parallel_count}={namespace_name}\n")
+                    logging.info(f"NAMESPACE_{parallel_count} updated to '{namespace_name}' in {env_file}")
+                else:
+                    file.write(f"NAMESPACE={namespace_name}\n")
+                    logging.info(f"NAMESPACE updated to '{namespace_name}' in {env_file}")
+
+    except IOError as e:
+        logging.error(f"Error updating NAMESPACE in {env_file}: {e}")
+
+
+
+
+
+
+def update_namespace_in_env(namespace_name: str, parallel_count=None):
+    """
+    Updates the NAMESPACE variable in the environment file.
     """
     env_file = config.ENV_FILE
     try:
