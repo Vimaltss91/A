@@ -1,3 +1,28 @@
+
+#!/bin/bash
+
+# Load environment variables from the file
+source bastion_paramter.env
+
+# Check if PARALLEL_NAMESPACE is true
+if [ "$PARALLEL_NAMESPACE" = "true" ]; then
+    # Extract the relevant part of CI_JOB_NAME_SLUG (e.g., namespace2)
+    NAMESPACE_KEY=$(echo "$CI_JOB_NAME_SLUG" | grep -oE "namespace[0-9]+")
+    
+    # Get the value of the corresponding NAMESPACE (e.g., NAMESPACE2)
+    if [ -n "$NAMESPACE_KEY" ]; then
+        # Dynamically fetch the value of NAMESPACE based on NAMESPACE_KEY
+        NAMESPACE=${!NAMESPACE_KEY}
+        echo "Selected NAMESPACE: $NAMESPACE"
+    else
+        echo "Error: Unable to extract namespace key from CI_JOB_NAME_SLUG"
+        exit 1
+    fi
+else
+    echo "PARALLEL_NAMESPACE is not true. No namespace selected."
+fi
+
+
 def update_namespace_in_env(namespace_name: str, parallel_count=None):
     """
     Updates the NAMESPACE variable in the environment file.
