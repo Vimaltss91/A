@@ -1,3 +1,36 @@
+def update_namespace_in_env(namespace_name: str, parallel_count=None):
+    """
+    Updates the NAMESPACE variable in the environment file.
+    """
+    env_file = config.ENV_FILE
+    try:
+        lines = read_lines(env_file)
+        with open(env_file, 'w') as file:
+            updated = False
+            
+            if os.getenv("PARALLEL_EXECUTION") == 'true' and parallel_count is not None:
+                # Update for parallel execution: NAMESPACE_1, NAMESPACE_2, NAMESPACE_3
+                file.write(f"NAMESPACE_{parallel_count}={namespace_name}\n")
+                updated = True
+            else:
+                # For non-parallel execution, or if no parallel_count is provided
+                for line in lines:
+                    if line.startswith("NAMESPACE="):
+                        file.write(f"NAMESPACE={namespace_name}\n")
+                        updated = True
+                    else:
+                        file.write(line)
+
+                if not updated:
+                    file.write(f"NAMESPACE={namespace_name}\n")
+
+        logging.info(f"NAMESPACE{('_' + str(parallel_count) if parallel_count else '')} updated to '{namespace_name}' in {env_file}")
+
+    except IOError as e:
+        logging.error(f"Error updating NAMESPACE in {env_file}: {e}")
+
+
+
 # Proceed to auto-assign for the current parallel_count
 namespace_name = find_and_lock_available_namespace(cursor, kwargs['nf_type'])
 if namespace_name:
