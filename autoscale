@@ -1,4 +1,4 @@
-
+NAMESPACE_KEY=$(echo "$NAMESPACE_KEY" | tr '[:lower:]' '[:upper:]')
 #!/bin/bash
 
 # Load environment variables from the file
