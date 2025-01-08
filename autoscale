@@ -1,3 +1,44 @@
+def _handle_dynamic_namespace(self, cursor, kwargs: Dict) -> None:
+    """
+    Handles the insertion or update of dynamic namespaces.
+    """
+    existing_rows = get_existing_status(cursor, kwargs)
+    row_count = len(existing_rows)
+
+    if existing_rows:
+        for existing_row in existing_rows:
+            if existing_row:
+                s_no, status, namespace, priority, report, release_tag, ats_release_tag = existing_row
+
+                if status == 'ASSIGNED':
+                    logging.info(f"Namespace {namespace} has already been assigned.")
+                elif status == 'HARDCODE':
+                    logging.info(f"Namespace {namespace} has already been Hardcoded.")
+                else:
+                    update_existing_status(cursor, s_no, "YET TO ASSIGN")
+
+        # Insert missing parallel counts based on the number of existing rows
+        if kwargs['parallel_execution'] == "YES":
+            if row_count < 3:
+                for count in range(row_count + 1, 4):  # Start from the next count and go to 3
+                    kwargs['parallel_count'] = count
+                    insert_new_status(cursor, kwargs)
+                    logging.info(f"Inserted new status for parallel_count = {count}")
+    else:
+        # No existing rows, insert for all parallel counts if parallel_execution is "YES"
+        kwargs['status'] = 'YET TO ASSIGN'
+        kwargs['namespace'] = ''
+        if kwargs['parallel_execution'] == "YES":
+            for count in range(1, 4):
+                kwargs['parallel_count'] = count
+                insert_new_status(cursor, kwargs)
+                logging.info(f"Inserted new status for parallel_count = {count}")
+        else:
+            insert_new_status(cursor, kwargs)
+            logging.info("Inserted new status for non-parallel execution")
+
+
+
 
 Both Hotfix-24.2.3 and 24.3.x-patch branches are referencing the 24.2.x-SNAPSHOT JAR version, which causes a conflict.
 
