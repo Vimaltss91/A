@@ -1,3 +1,7 @@
+
+Common services are components provided by the policy team and shared with other NFs. After building the common service, the release tag is incremented to the next version, such as 25.1.101. Examples of these common services include appinfo, audit, cmservice, and diam-connector. These services use the shared release tag 25.1.101 for the current build.
+
+
 def _handle_dynamic_namespace(self, cursor, kwargs: Dict) -> None:
     """
     Handles the insertion or update of dynamic namespaces.
