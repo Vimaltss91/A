@@ -1,3 +1,13 @@
+The Jetty source code can be downloaded from the open-source repository on GitHub. After making the necessary changes, the updated code can be pushed to our repository. Further modifications can be made in the feature branch to ensure the custom-built library is pulled from our repository.
+
+
+
+
+
+
+
+
+
 
 Common services are components provided by the policy team and shared with other NFs. After building the common service, the release tag is incremented to the next version, such as 25.1.101. Examples of these common services include appinfo, audit, cmservice, and diam-connector. These services use the shared release tag 25.1.101 for the current build.
 
