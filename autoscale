@@ -1,29 +1,29 @@
-Steps to Generate and Deploy Custom Jetty JAR
-Setup Details:
+### Steps to Generate and Deploy Custom Jetty JAR
 
-Environment: OCI (Bastion IP: 100.x.x.x)
-Container: Running Jetty Docker container
-Project Location: /root/
-Access the Container:
+**Setup Details:**  
+- **Environment:** OCI (Bastion IP: 100.x.x.x)  
+- **Container:** Running Jetty Docker container  
+- **Project Location:** `/root/`  
 
-SSH into the Bastion and exec into the Jetty container.
-Update JDK:
+1. **Access the Container:**
+   - SSH into the Bastion and exec into the Jetty container.
 
-bash
-Copy code
-export JAVA_HOME=/opt/jdk
-export PATH=$JAVA_HOME/bin:$PATH
-Build JAR:
+2. **Update JDK:**
+   ```bash
+   export JAVA_HOME=/opt/jdk
+   export PATH=$JAVA_HOME/bin:$PATH
+   ```
 
-bash
-Copy code
-mvn clean package -pl jetty-https
-Push JAR:
+3. **Build JAR:**
+   ```bash
+   mvn clean package -pl jetty-https
+   ```
 
-Upload to: https://artifact/maven-dev/org/eclipse/jetty
-Test:
+4. **Push JAR:**
+   - Upload to: `https://artifact/maven-dev/org/eclipse/jetty`
 
-Create branch 67627, trigger the pipeline, and test the image.
+5. **Test:**
+   - Create branch `67627`, trigger the pipeline, and test the image.
 
 
 
