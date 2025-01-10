@@ -1,3 +1,33 @@
+Steps to Generate and Deploy Custom Jetty JAR
+Setup Details:
+
+Environment: OCI (Bastion IP: 100.x.x.x)
+Container: Running Jetty Docker container
+Project Location: /root/
+Access the Container:
+
+SSH into the Bastion and exec into the Jetty container.
+Update JDK:
+
+bash
+Copy code
+export JAVA_HOME=/opt/jdk
+export PATH=$JAVA_HOME/bin:$PATH
+Build JAR:
+
+bash
+Copy code
+mvn clean package -pl jetty-https
+Push JAR:
+
+Upload to: https://artifact/maven-dev/org/eclipse/jetty
+Test:
+
+Create branch 67627, trigger the pipeline, and test the image.
+
+
+
+
 The Jetty source code can be downloaded from the open-source repository on GitHub. After making the necessary changes, the updated code can be pushed to our repository. Further modifications can be made in the feature branch to ensure the custom-built library is pulled from our repository.
 
 
