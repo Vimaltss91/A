@@ -1,91 +1,55 @@
-### Steps to Generate and Deploy Custom Jetty JAR
+### Auto Namespace Management for Parallel Execution/Deployment
 
-**Setup Details:**  
-- **Environment:** OCI (Bastion IP: 100.x.x.x)  
-- **Container:** Running Jetty Docker container  
-- **Project Location:** `/root/`  
+To support parallel execution and deployment, the following enhancements have been made:
 
-1. **Access the Container:**
-   - SSH into the Bastion and exec into the Jetty container.
+---
 
-2. **Update JDK:**
-   ```bash
-   export JAVA_HOME=/opt/jdk
-   export PATH=$JAVA_HOME/bin:$PATH
-   ```
+#### **Database Modifications**
+Two new columns are added to the MySQL database to manage parallel deployment configurations:
+1. **`parallel_execution`**: Accepts values `Yes` or `No` to indicate if the deployment supports parallel execution.
+2. **`parallel_count`**: Holds integer values (`1`, `2`, `3`, etc.) to uniquely identify rows for each parallel deployment instance.
 
-3. **Build JAR:**
-   ```bash
-   mvn clean package -pl jetty-https
-   ```
+---
 
-4. **Push JAR:**
-   - Upload to: `https://artifact/maven-dev/org/eclipse/jetty`
+#### **Pipeline Parameters**
+The **one-click-play pipeline** now includes the following parameters:
 
-5. **Test:**
-   - Create branch `67627`, trigger the pipeline, and test the image.
+1. **`PARALLEL_PKG_TYPE`**: Defines the deployment type. Possible values are:
+   - `tgz`: For TGZ package deployments.
+   - `csar`: For CSAR package deployments.
+   - `asm`: For ASM package deployments.
+   - `external`: For external deployments.
 
+2. **Namespace Parameters for Parallel Deployment**:
+   - **CSAR Parallel Deployment**:
+     - `CSAR_ASM_POLICY_NAMESPACE_1`
+     - `CSAR_ASM_POLICY_NAMESPACE_2`
+     - `CSAR_ASM_POLICY_NAMESPACE_3`
+   - **ASM Parallel Deployment**:
+     - `ASM_POLICY_NAMESPACE_1`
+     - `ASM_POLICY_NAMESPACE_2`
+     - `ASM_POLICY_NAMESPACE_3`
+   - **TGZ Parallel Deployment**:
+     - `TGZ_POLICY_NAMESPACE_1`
+     - `TGZ_POLICY_NAMESPACE_2`
+     - `TGZ_POLICY_NAMESPACE_3`
+   - **External Parallel Deployment**:
+     - `POLICY_NAMESPACE_1`
+     - `POLICY_NAMESPACE_2`
+     - `POLICY_NAMESPACE_3`
 
+---
 
+#### **Pipeline Behavior**
+1. **Triggering Parallel Deployment**:
+   - In the `export_downstream_job`, for each parallel deployment, three rows are inserted into the database with identical parameter values.
+   - Each row has a unique `parallel_count` value (`1`, `2`, or `3`).
 
-The Jetty source code can be downloaded from the open-source repository on GitHub. After making the necessary changes, the updated code can be pushed to our repository. Further modifications can be made in the feature branch to ensure the custom-built library is pulled from our repository.
+2. **Namespace Assignment**:
+   - During deployment, the pipeline fetches the appropriate row for each `parallel_count`.
+   - The namespace is assigned sequentially based on the `parallel_count` value.
 
+---
 
-
-
-
-
-
-
-
-
-Common services are components provided by the policy team and shared with other NFs. After building the common service, the release tag is incremented to the next version, such as 25.1.101. Examples of these common services include appinfo, audit, cmservice, and diam-connector. These services use the shared release tag 25.1.101 for the current build.
-
-
-def _handle_dynamic_namespace(self, cursor, kwargs: Dict) -> None:
-    """
-    Handles the insertion or update of dynamic namespaces.
-    """
-    existing_rows = get_existing_status(cursor, kwargs)
-    row_count = len(existing_rows)
-
-    if existing_rows:
-        for existing_row in existing_rows:
-            if existing_row:
-                s_no, status, namespace, priority, report, release_tag, ats_release_tag = existing_row
-
-                if status == 'ASSIGNED':
-                    logging.info(f"Namespace {namespace} has already been assigned.")
-                elif status == 'HARDCODE':
-                    logging.info(f"Namespace {namespace} has already been Hardcoded.")
-                else:
-                    update_existing_status(cursor, s_no, "YET TO ASSIGN")
-
-        # Insert missing parallel counts based on the number of existing rows
-        if kwargs['parallel_execution'] == "YES":
-            if row_count < 3:
-                for count in range(row_count + 1, 4):  # Start from the next count and go to 3
-                    kwargs['parallel_count'] = count
-                    insert_new_status(cursor, kwargs)
-                    logging.info(f"Inserted new status for parallel_count = {count}")
-    else:
-        # No existing rows, insert for all parallel counts if parallel_execution is "YES"
-        kwargs['status'] = 'YET TO ASSIGN'
-        kwargs['namespace'] = ''
-        if kwargs['parallel_execution'] == "YES":
-            for count in range(1, 4):
-                kwargs['parallel_count'] = count
-                insert_new_status(cursor, kwargs)
-                logging.info(f"Inserted new status for parallel_count = {count}")
-        else:
-            insert_new_status(cursor, kwargs)
-            logging.info("Inserted new status for non-parallel execution")
-
-
-
-
-Both Hotfix-24.2.3 and 24.3.x-patch branches are referencing the 24.2.x-SNAPSHOT JAR version, which causes a conflict.
-
-OCNGF-67375: Branch created from Hotfix.
-OCNGF-67387: Branch created from 24.3.x-patch.
-We should create a bug to align the JAR versions for each branch.
+#### **Other Features**
+All other features and functionalities remain consistent with the existing deployment process.
