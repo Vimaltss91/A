@@ -2,6 +2,8 @@ What should happen if the required Diam-Sim version is unavailable? Should it fa
 
 Previously, we utilized the VM.Standard.E3.Flex shape, which worked seamlessly with ATS. However, due to host unavailability issues with the E3 shape, we transitioned to the X7 shape as recommended by SWATGO.
 
+sum(rate(container_cpu_cfs_throttled_seconds_total{container!=""}[5m])) by (pod) > 0
+
 
 ### Auto Namespace Management for Parallel Execution/Deployment
 
