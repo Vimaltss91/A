@@ -1,3 +1,6 @@
+Danish, can you test the parallel execution notification using the CI/CD setup?
+Additionally, the namespaces are not in the o-devops format, so the auto-cleanup script could not detect them. As a result, it has been running for over 3 days.
+
 Yesterday, on the o-devops-pol16 namespace, the upgrade and rollback for the 15th NB was deployed. During testing, the job runner got stuck. I attempted to re-run the job, but it failed with a 400 BAD REQUEST error.
 
 To address this, I deleted the record from the UI. However, since a .lock file existed, the namespace wasn’t deleted. This resulted in the namespace being marked as available in the database.
