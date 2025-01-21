@@ -1,3 +1,16 @@
+kubectl get pod -A -o custom-columns='NAMESPACE:.metadata.namespace,CPU_REQUESTS:.spec.containers[*].resources.requests.cpu' | awk '
+BEGIN { print "Namespace\tTotal_CPU_Requests" }
+NR > 1 {
+  cpu_sum[$1] += ($2 ~ "m" ? $2 + 0 : $2 * 1000)
+}
+END {
+  for (namespace in cpu_sum) {
+    print namespace, "\t", cpu_sum[namespace] "m"
+  }
+}'
+
+
+
 Danish, can you test the parallel execution notification using the CI/CD setup?
 Additionally, the namespaces are not in the o-devops format, so the auto-cleanup script could not detect them. As a result, it has been running for over 3 days.
 
