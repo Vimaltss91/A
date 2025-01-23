@@ -1,3 +1,77 @@
+To configure JFrog with authentication for npm, you can follow these steps:
+
+Steps to Configure JFrog with npm Authentication:
+1. Set Up Authentication with JFrog
+Log in to your JFrog Artifactory instance.
+Navigate to your User Profile (top-right corner).
+Scroll down to Authentication Settings and generate an API Key or retrieve your Access Token.
+2. Configure .npmrc for JFrog
+You need to configure your local .npmrc file to use your JFrog registry and authenticate with your credentials.
+
+Use the following command to add your JFrog repository as a registry:
+
+bash
+Copy
+Edit
+npm config set registry https://<JFROG_DOMAIN>/artifactory/api/npm/<REPOSITORY_NAME>/
+Replace:
+
+<JFROG_DOMAIN> with your JFrog domain (e.g., mycompany.jfrog.io).
+<REPOSITORY_NAME> with your npm repository name in JFrog (e.g., npm-local).
+Add your authentication token or username/password:
+
+bash
+Copy
+Edit
+npm config set _auth <BASE64_ENCODED_USERNAME:PASSWORD>
+OR
+
+bash
+Copy
+Edit
+npm config set _authToken <YOUR_ACCESS_TOKEN>
+For _auth, encode your username and password in Base64:
+bash
+Copy
+Edit
+echo -n "username:password" | base64
+For _authToken, replace <YOUR_ACCESS_TOKEN> with your JFrog access token or API key.
+Set your email (optional but sometimes required):
+
+bash
+Copy
+Edit
+npm config set email <YOUR_EMAIL>
+3. Verify the Configuration
+Check your .npmrc configuration:
+bash
+Copy
+Edit
+npm config list
+You should see the registry and authentication values configured.
+4. Test the Connection
+Run the following command to ensure it works:
+bash
+Copy
+Edit
+npm whoami
+If successful, it will return the username associated with your JFrog credentials.
+Example .npmrc Configuration:
+If you prefer to edit your .npmrc manually, it should look like this:
+
+ini
+Copy
+Edit
+registry=https://<JFROG_DOMAIN>/artifactory/api/npm/<REPOSITORY_NAME>/
+_auth=<BASE64_ENCODED_USERNAME:PASSWORD>
+email=<YOUR_EMAIL>
+Notes:
+Ensure you replace placeholders with actual values specific to your JFrog instance.
+If using npm in a CI/CD pipeline, use environment variables for sensitive data like _auth or _authToken.
+Let me know if you need help with anything specific!
+
+
+
 kubectl get pod -A -o custom-columns='NAMESPACE:.metadata.namespace,CPU_REQUESTS:.spec.containers[*].resources.requests.cpu' | awk '
 BEGIN { print "Namespace\tTotal_CPU_Requests" }
 NR > 1 {
