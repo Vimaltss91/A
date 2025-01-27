@@ -1,3 +1,19 @@
+git log --pretty=format:"%h %an %ar %s" --numstat | awk '
+NF == 3 { insert+=$1; delete+=$2; next }
+NF != 3 { print insert, delete, $0; insert=0; delete=0 }
+' | sort -k1,1n -k2,2n | tail -n 10
+
+
+
+git rev-list --objects --all | \
+git cat-file --batch-check='%(objectname) %(objecttype) %(size) %(rest)' | \
+sort -k3 -n -r | head -n 10
+
+
+du -sh .git
+
+
+
 To configure JFrog with authentication for npm, you can follow these steps:
 
 Steps to Configure JFrog with npm Authentication:
