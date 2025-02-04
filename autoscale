@@ -1,3 +1,6 @@
+
+Hi team, I created a DevOps project with a private endpoint enabled, but I'm unable to clone or push to it. However, when I disable the private endpoint, I can successfully clone and push.
+
 Rakesh has already approved my OCNA and YubiKey access (and I have received the YubiKey).
 
 The next step is to create a BOAT group and add the user to it. Only then will the CFS team proceed with creating the POC compartment.
