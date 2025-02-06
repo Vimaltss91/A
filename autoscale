@@ -1,14 +1,8 @@
+Hi Team,
 
-Hi team, I created a DevOps project with a private endpoint enabled, but I'm unable to clone or push to it. However, when I disable the private endpoint, I can successfully clone and push.
+We’ve noticed that the PR template (as mentioned here) is now supported. However, I don’t see this option available in our project. Could someone help identify what might be missing?
 
-Rakesh has already approved my OCNA and YubiKey access (and I have received the YubiKey).
-
-The next step is to create a BOAT group and add the user to it. Only then will the CFS team proceed with creating the POC compartment.
-
-However, when I add a user to the BOAT group, the request is sent to their immediate manager for approval. As a prerequisite, the manager must also have OCNA and YubiKey access to approve the request.
-
-
-Rakesh has just initiated the OCNA and YubiKey access process. Only after completing this will he be able to access the OCI DevOps portal and approve the request.
+Thanks in advance!
 
 
 git log --pretty=format:"%h %an %ar %s" --numstat | awk '
