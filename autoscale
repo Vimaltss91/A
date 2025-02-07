@@ -1,6 +1,4 @@
-Hello Team,
-
-We are using Oracle Kubernetes Engine (OKE) and exploring options to run Jenkins job agents on it. Could you please share any relevant documentation or guidance for this setup?
+If you’re encountering issues with the Gradle build, please perform a down-merge from the dev branch, as it was uplifted with the new Gradle version yesterday. Additionally, ensure the pre-dev branch has also been down-merged if this hasn’t been done since yesterday.
 
 
 Hi Team,
