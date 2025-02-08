@@ -1,3 +1,14 @@
+def upgrade_feature(variables: dict) -> bool:
+    # Check if any UPG_FEATURE_i is set to 'true'
+    feature_check = any(variables.get(f'UPG_FEATURE_{i}', '').lower() == 'true' for i in range(1, 5))
+
+    # Check if UPG_PHASE is 'INSTALL', 'UPGRADE', or 'ROLLBACK'
+    phase_check = variables.get('UPG_PHASE', '').upper() in ['INSTALL', 'UPGRADE', 'ROLLBACK']
+
+    # Return True if either condition is met
+    return feature_check or phase_check
+
+
 If you’re encountering issues with the Gradle build, please perform a down-merge from the dev branch, as it was uplifted with the new Gradle version yesterday. Additionally, ensure the pre-dev branch has also been down-merged if this hasn’t been done since yesterday.
 
 
