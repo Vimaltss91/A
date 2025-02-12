@@ -1,3 +1,6 @@
+As part of our open source build process for the Java project, the pipeline should support source archives in TGZ format. Currently, only the ZIP format is supported. Below is the pipeline configuration for TGZ format.
+
+
 Hello team,
 
 I have tried the following approaches:
