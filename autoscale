@@ -1,3 +1,12 @@
+Hello team,
+
+I have tried the following approaches:
+
+I downloaded the source code as a TGZ archive and pushed it to the PHX region (phx.com). However, the pipeline is failing to recognize the source when provided in TGZ format—the logs indicate that only ZIP format is supported—and it does not support a direct Git clone.
+
+The McAfee scan is failing on the internal PHX repository due to an SSL certificate issue.
+
+
 
 https://shibboleth.net/downloads/java-opensaml/
 Hi Satish,
