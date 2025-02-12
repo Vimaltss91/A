@@ -1,3 +1,5 @@
+In our open source build process, users are expected to provide a custom POM source URL. However, the pipeline is currently not retrieving the URL from the user-provided input. We need to update the pipeline so that it correctly utilizes the URL specified by the user.
+
 As part of our open source build process for the Java project, the pipeline should support source archives in TGZ format. Currently, only the ZIP format is supported. Below is the pipeline configuration for TGZ format.
 
 
