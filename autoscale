@@ -1,11 +1,4 @@
-I’ve attempted to build the package and discussed the issue with Benson. Here are the key points:
+The workaround build requires confirmation from Benson. Since we're extracting the .tgz file and repackaging it as a .zip, he mentioned it might cause checksum issues. Additionally, the manifest is currently generated without any dependencies, so this build includes only the main package.
 
-TGZ Format Issue:
-The pipeline currently supports only ZIP format for source code, which is why the build is failing when using TGZ.
 
-Workaround:
-As a temporary solution (pending Benson's confirmation), I extracted the TGZ source code and repackaged it as a ZIP file.
-
-Faced an issue with the POM URL provided by the user—it wasn’t accepted.
-As a result, the manifest/JSON file was created manually.
-Additionally, there’s a unit test failure due to connection issues, which has prevented the JAR file from being pushed.
+One more thing—can you confirm which version of the opensaml-security-api package we're building? Is it version 5.1.3 or 4.3.2?
