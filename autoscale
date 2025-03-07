@@ -1,4 +1,5 @@
-The workaround build requires confirmation from Benson. Since we're extracting the .tgz file and repackaging it as a .zip, he mentioned it might cause checksum issues. Additionally, the manifest is currently generated without any dependencies, so this build includes only the main package.
-
-
-One more thing—can you confirm which version of the opensaml-security-api package we're building? Is it version 5.1.3 or 4.3.2?
+SELECT event_time, user, host, sql_text
+FROM performance_schema.events_statements_history
+WHERE sql_text LIKE 'DELETE%'
+ORDER BY event_time DESC
+LIMIT 10;
