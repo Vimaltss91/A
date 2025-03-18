@@ -1,3 +1,5 @@
+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
+
 SELECT event_time, user, host, sql_text
 FROM performance_schema.events_statements_history
 WHERE sql_text LIKE 'DELETE%'
