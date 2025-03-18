@@ -1,3 +1,5 @@
+curl -H "Authorization: token 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" https://api.github.com/repos/josdejong/jsoneditor/tags
+
 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
 
 SELECT event_time, user, host, sql_text
