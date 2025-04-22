@@ -1,3 +1,11 @@
 cat /sys/fs/cgroup/memory/memory.limit_in_bytes
 cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us
 docker inspect <container_id> --format='Memory: {{.HostConfig.Memory}}, NanoCPUs: {{.HostConfig.NanoCpus}}'
+
+#!/bin/bash
+while true; do
+  echo "[$(date)]" >> docker_resource.log
+  docker stats --no-stream >> docker_resource.log
+  sleep 10
+done
+
