@@ -1,3 +1,69 @@
+Absolutely! Here's a cleaner, Confluence-friendly version that's easy to paste and aligns well with documentation best practices:
+
+---
+
+## 🛠️ Debugging: How to Check Node Logs
+
+To debug a pod, follow the steps below to identify the node it was running on and fetch its logs:
+
+---
+
+### 🔎 Step 1: Identify the Node Running the Pod
+
+Use a Prometheus query to determine which node the pod was running on.
+
+- **Get the Prometheus link:**  
+  Run the following script from the OCCNP deployment tools:
+  ```bash
+  ./occnp-deployment-tools/master/public/script.sh
+  ```
+
+- **Example Prometheus query:**
+  ```promql
+  kube_pod_info{namespace="o-devops-pol9", pod=~"o-devops-pol9-occnp-alternate-route.*"}
+  ```
+  > 📝 *Modify the query based on your namespace and pod name pattern.*  
+  > Adjust the time window in Prometheus according to when the issue occurred to find the corresponding `node` parameter (this represents the node IP).
+
+---
+
+### 🖥️ Step 2: SSH into the Worker Node
+
+Once you have the node IP:
+
+- **For OCI (Oracle Cloud Infrastructure):**
+  - Use the **same private key** as used for the bastion host.
+  - The **username** is usually: `opc`
+
+---
+
+### 📄 Step 3: Retrieve the Logs
+
+Use `journalctl` to fetch logs for the relevant time period:
+
+```bash
+journalctl --since "2025-04-22 21:03" --until "2025-04-22 21:06" > debug.log
+```
+
+> 🛠️ *You can fine-tune the command with more specific filters if needed.*
+
+---
+
+Let me know if you want this styled for Confluence macros (like panels or code blocks) or exported in a particular format!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### 🔍 How to Check Node Logs for Debugging
 
 1. **Identify the Node Hosting the Pod**  
