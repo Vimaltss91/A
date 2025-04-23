@@ -1,11 +1,31 @@
-cat /sys/fs/cgroup/memory/memory.limit_in_bytes
-cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us
-docker inspect <container_id> --format='Memory: {{.HostConfig.Memory}}, NanoCPUs: {{.HostConfig.NanoCpus}}'
+### 🔍 How to Check Node Logs for Debugging
 
-#!/bin/bash
-while true; do
-  echo "[$(date)]" >> docker_resource.log
-  docker stats --no-stream >> docker_resource.log
-  sleep 10
-done
+1. **Identify the Node Hosting the Pod**  
+   To determine which node a specific pod was running on, use a Prometheus query.  
+   - **Get the Prometheus link**:  
+     Run the script from the OCCNP deployment tools repository:  
+     ```bash
+     ./occnp-deployment-tools/master/public/script.sh
+     ```
+   - **Query Example**:
+     ```promql
+     kube_pod_info{namespace="o-devops-pol9", pod=~"o-devops-pol9-occnp-alternate-route.*"}
+     ```
+   - Modify the time window in the Prometheus UI based on when the issue occurred to locate the relevant pod's node IP.
 
+2. **Log into the Worker Node**
+   - Use the obtained **node IP**.
+   - For OCI environments:
+     - Use the **same private key** as the bastion.
+     - The **username** is usually `opc`.
+
+3. **Fetch the Logs**
+   Use the `journalctl` command to extract logs within the required time range:
+   ```bash
+   journalctl --since "2025-04-22 21:03" --until "2025-04-22 21:06" > debug.log
+   ```
+   - You can adjust the time range or filter the logs further as needed.
+
+---
+
+Let me know if you'd like it saved as a `.txt` or `.md` file or integrated into a documentation template.
