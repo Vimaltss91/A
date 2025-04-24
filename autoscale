@@ -1,5 +1,3 @@
-As per my understanding, we need to check how the Spring Boot plugins are built for BFS. (Maybe we can check with Benson.)
-If it is published only as a JAR, the dependencies need to be hardcoded like this.
-If it is built as a plugin with an ID, we need to check its plugin ID to define the repository accordingly.
-
-My guess is that it might be built as a JAR only, but I will confirm this with Benson.
+The above-mentioned location is actually the Spring Boot plugin JAR.
+However, if the Spring Boot plugin is built and published with a plugin ID, we can use that plugin ID to reference the actual POM.
+If only the JAR exists and the plugin is not published with a plugin ID, we need to hardcode the Spring Boot plugin JAR as a dependency.
