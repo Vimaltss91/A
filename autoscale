@@ -1,3 +1,12 @@
-The above-mentioned location is actually the Spring Boot plugin JAR.
-However, if the Spring Boot plugin is built and published with a plugin ID, we can use that plugin ID to reference the actual POM.
-If only the JAR exists and the plugin is not published with a plugin ID, we need to hardcode the Spring Boot plugin JAR as a dependency.
+Subject: Python/Node Virtual Repository for Open Source Build
+
+Hi Ivan,
+
+We’ve set up a Python virtual repository that prioritizes our opensource-release repository, with a fallback to the OCI PyPI registry (which mirrors the public PyPI). The goal is to pull all packages from the opensource-release repo. However, there are transitive dependencies that haven’t been built from source, and those are currently being fetched from the OCI PyPI registry.
+
+This setup is similar to how we configure precedence in build.gradle for Java builds—where we prioritize the opensource repo, but still allow resolution from repo1 for transitive dependencies.
+
+Please let us know if you have any concerns.
+
+Best regards,
+[Your Name]
