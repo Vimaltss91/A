@@ -1,3 +1,10 @@
+We’ve set up a Python virtual repository, and all packages are consumed from this virtual repo. This virtual repository is configured with the opensource-release-python repository as the primary source, with a fallback to the OCI PyPI registry (a mirror of the public PyPI).
+
+The goal is to retrieve all packages from the opensource-release repository. However, some transitive dependencies that haven't been built from source are currently being pulled from the OCI PyPI registry.
+
+This approach is similar to how we configure repository precedence in build.gradle for Java builds—where we give priority to the opensource repository but still resolve transitive dependencies from repo1 when necessary.
+
+
 Subject: Python/Node Virtual Repository for Open Source Build
 
 Hi Ivan,
