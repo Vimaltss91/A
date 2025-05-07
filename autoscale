@@ -1,1 +1,8 @@
 awk 'NR > 1 { gsub(/%/, "", $6); if ($6 > 30) print }' docker_stats.log
+
+awk 'NR > 1 && match($0, /[0-9.]+%/) {
+    mem = substr($0, RSTART, RLENGTH);
+    gsub(/%/, "", mem);
+    if (mem + 0 > 30) print $0;
+}' docker_stats.log
+
