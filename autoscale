@@ -1,3 +1,6 @@
+awk '$1 != "CONTAINER" { mem=$6; gsub(/%/, "", mem); if (mem+0 > 30) print }' docker_stats.log
+
+
 awk '$1 != "CONTAINER" && $6+0 > 30 { print }' docker_stats.log
 
 awk 'NR > 1 { gsub(/%/, "", $6); if ($6 > 30) print }' docker_stats.log
