@@ -1,13 +1,6 @@
-awk '$1 != "CONTAINER" { mem=$6; gsub(/%/, "", mem); if (mem+0 > 30) print }' docker_stats.log
-
-
-awk '$1 != "CONTAINER" && $6+0 > 30 { print }' docker_stats.log
-
-awk 'NR > 1 { gsub(/%/, "", $6); if ($6 > 30) print }' docker_stats.log
-
-awk 'NR > 1 && match($0, /[0-9.]+%/) {
-    mem = substr($0, RSTART, RLENGTH);
-    gsub(/%/, "", mem);
-    if (mem + 0 > 30) print $0;
-}' docker_stats.log
-
+sudo loginctl enable-linger $USER
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+export DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/bus
+systemctl --user start podman.socket
+systemctl --user enable podman.socket
+machinectl shell $USER@  # provides full user session
