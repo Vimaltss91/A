@@ -1,3 +1,7 @@
+Hi team,
+In OKE, modifying the default scheduler (e.g., setting NodeResourcesFit to MostAllocated for bin-packing) is not supported, as the control plane is managed by Oracle.
+To achieve bin-packing, deploy a custom scheduler with the MostAllocated strategy or use a mutating webhook to route pods to it by default.
+
 sudo loginctl enable-linger $USER
 export XDG_RUNTIME_DIR=/run/user/$(id -u)
 export DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/bus
