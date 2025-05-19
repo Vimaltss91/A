@@ -1,113 +1,17 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: preferred-system-deploy
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system-app
-  template:
-    metadata:
-      labels:
-        app: system-app
-    spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-              - key: system
-                operator: In
-                values:
-                - "true"
-      containers:
-      - name: nginx
-        image: nginx
+Hi Benson,
 
+Some of the NPM packages built from source and pushed to the repository are corrupted, which may cause build failures. I understand that we have some validation in place for Java packages before they are pushed.
 
+Could you please check if any additional validation is required for NPM packages as well?
 
-[ "$ENABLE_DEV_PYPI" = true ] && unset COMSVC_PYTHON_REGISTRY && COMSVC_PYTHON_REGISTRY="$COMSVC_DEV_PYTHON_REGISTRY"
-
-
-Here is a corrected and more professional version of your message:
-
----
-
-Hi team,
-
-Some corrupted packages were pushed to the **dev** and **release** repositories. These have now been removed. The affected packages are:
-
-* `lodash`
-* `opentelemetry`
-
-Please verify if these packages can be fixed or configured to be fetched online. Also, we need to ensure they are not included as part of the dependency package during publishing.
-
-Below is the process I followed for pushing packages from the dev repo to the release repo:
-
-### NPM Package Validation Process:
-
-1. When packages are pushed to the **dev** repository, validate them by building the `cmservice` and `policy-runtime` projects using the following parameters:
-
-   * `POLICY_RELEASE_TAG`
-   * `OPENSOURCE_BUILD=true`
-   * `ENABLE_DEV_NPM=true`
-
-2. The build should complete successfully without any issues.
-
-3. Once all dev packages are pushed, perform a full build and test the deployment. In the past, we have observed runtime failures during deployment even when the build passed.
-
-4. After testing the dev repository:
-
-   * Fix any corrupted packages by either repushing them or configuring them to be fetched online.
-   * Once verified, push the packages to the **release** repository.
-
-5. After pushing to the release repository, run the build for **PRE** and **cmservice** to ensure that the release build is not broken.
-
----
-
-Let me know if you want this formatted for email or presentation.
-
-
-
-Hi team,
-
-Some corrupted packages were pushed to the dev and release repositories. These have now been removed. The affected packages are:
+Below are some of the corrupted packages that were removed from the release/dev open-source repository:
 
 lodash
 
-opentelemetry
+Our pipeline attempted to consume the NPM package, but it failed due to the corruption.
 
-Please verify if these packages can be fixed or configured to be fetched online. Also, we need to ensure they are not included as part of the dependency package during publishing.
-
-Below is the process I followed for pushing packages from the dev repo to the release repo:
-
-NPM Package Validation Process:
-When packages are pushed to the dev repository, validate them by building the cmservice and policy-runtime projects using the following parameters:
-
-POLICY_RELEASE_TAG
-
-OPENSOURCE_BUILD=true
-
-ENABLE_DEV_NPM=true
-
-The build should complete successfully without any issues.
-
-Once all dev packages are pushed, perform a full build and test the deployment. In the past, we have observed runtime failures during deployment even when the build passed.
-
-After testing the dev repository:
-
-Fix any corrupted packages by either repushing them or configuring them to be fetched online.
-
-Once verified, push the packages to the release repository.
-
-After pushing to the release repository, run the build for PRE and cmservice to ensure that the release build is not broken.
-
-
-Hi team,
-In OKE, modifying the default scheduler (e.g., setting NodeResourcesFit to MostAllocated for bin-packing) is not supported, as the control plane is managed by Oracle.
-To achieve bin-packing, deploy a custom scheduler with the MostAllocated strategy or use a mutating webhook to route pods to it by default.
+Thanks,
+[Your Name]
 
 sudo loginctl enable-linger $USER
 export XDG_RUNTIME_DIR=/run/user/$(id -u)
