@@ -1,21 +1,68 @@
-Hi Benson,
+stages:
+  - list
+  - trigger
 
-Some of the NPM packages built from source and pushed to the repository are corrupted, which may cause build failures. I understand that we have some validation in place for Java packages before they are pushed.
+list_variable:
+  stage: list
+  script:
+    - echo "Environment Variables:"
+    - env
 
-Could you please check if any additional validation is required for NPM packages as well?
+trigger_jar:
+  stage: trigger
+  trigger:
+    project: one-click-jar
+    strategy: depend
 
-Below are some of the corrupted packages that were removed from the release/dev open-source repository:
+trigger_common_svc:
+  stage: trigger
+  needs: [trigger_jar]
+  trigger:
+    project: one-click-common-svc
+    strategy: depend
 
-lodash
+trigger_cnpolicy:
+  stage: trigger
+  needs: [trigger_common_svc]
+  trigger:
+    project: one-click-cnpolicy
+    strategy: depend
 
-Our pipeline attempted to consume the NPM package, but it failed due to the corruption.
+trigger_bsf:
+  stage: trigger
+  needs: [trigger_common_svc]
+  trigger:
+    project: one-click-bsf
+    strategy: depend
 
-Thanks,
-[Your Name]
+trigger_ats:
+  stage: trigger
+  needs: [trigger_common_svc]
+  trigger:
+    project: one-click-ats
+    strategy: depend
 
-sudo loginctl enable-linger $USER
-export XDG_RUNTIME_DIR=/run/user/$(id -u)
-export DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/bus
-systemctl --user start podman.socket
-systemctl --user enable podman.socket
-machinectl shell $USER@  # provides full user session
+
+
+stages:
+  - step1
+  - step2
+  - final
+
+job_step1:
+  stage: step1
+  script:
+    - echo "Running job_step1 for $CI_PROJECT_NAME"
+
+job_step2:
+  stage: step1
+  script:
+    - echo "Running job_step2 for $CI_PROJECT_NAME"
+
+job_final:
+  stage: final
+  needs:
+    - job_step1
+    - job_step2
+  script:
+    - echo "Running final job for $CI_PROJECT_NAME"
