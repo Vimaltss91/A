@@ -1,7 +1,1 @@
-Hi Team,
-
-We are trying to implement Micronaut with a custom JRE service image. I understand that the SCP team has already implemented Micronaut with a JRE image.
-
-Is there a Confluence page detailing how it was implemented, or can I set up a call to understand the implementation process?
-
-Thanks,
+Hi Benson, what is the correct approach to build the project locally using the build from source packages? In the pipeline, the credentials are defined as global variables, but when building locally, it pulls them from repo1
