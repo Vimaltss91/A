@@ -1,68 +1,7 @@
-stages:
-  - list
-  - trigger
+Hi Team,
 
-list_variable:
-  stage: list
-  script:
-    - echo "Environment Variables:"
-    - env
+We are trying to implement Micronaut with a custom JRE service image. I understand that the SCP team has already implemented Micronaut with a JRE image.
 
-trigger_jar:
-  stage: trigger
-  trigger:
-    project: one-click-jar
-    strategy: depend
+Is there a Confluence page detailing how it was implemented, or can I set up a call to understand the implementation process?
 
-trigger_common_svc:
-  stage: trigger
-  needs: [trigger_jar]
-  trigger:
-    project: one-click-common-svc
-    strategy: depend
-
-trigger_cnpolicy:
-  stage: trigger
-  needs: [trigger_common_svc]
-  trigger:
-    project: one-click-cnpolicy
-    strategy: depend
-
-trigger_bsf:
-  stage: trigger
-  needs: [trigger_common_svc]
-  trigger:
-    project: one-click-bsf
-    strategy: depend
-
-trigger_ats:
-  stage: trigger
-  needs: [trigger_common_svc]
-  trigger:
-    project: one-click-ats
-    strategy: depend
-
-
-
-stages:
-  - step1
-  - step2
-  - final
-
-job_step1:
-  stage: step1
-  script:
-    - echo "Running job_step1 for $CI_PROJECT_NAME"
-
-job_step2:
-  stage: step1
-  script:
-    - echo "Running job_step2 for $CI_PROJECT_NAME"
-
-job_final:
-  stage: final
-  needs:
-    - job_step1
-    - job_step2
-  script:
-    - echo "Running final job for $CI_PROJECT_NAME"
+Thanks,
