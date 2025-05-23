@@ -1,4 +1,1 @@
-I followed the process used by the SCP team to create a JRE-based image. I used GraalVM as the builder to generate the required modules and copied them to the base image. However, it doesn't seem to work—it throws an error during startup. Is this the correct approach to build a JRE using GraalVM?
-
-
-Hi Benson, what is the correct approach to build the project locally using the build from source packages? In the pipeline, the credentials are defined as global variables, but when building locally, it pulls them from repo1
+I installed the Graal JDK in the runner image and attempted to build the JRE image, but the application still failed to start, throwing an error during startup. Additionally, the org.graalvm.sdk module was included as an extra dependency for GraalVM.
