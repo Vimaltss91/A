@@ -1,1 +1,1 @@
-According to the Confluence page shared by the Benson team, they used odo-ol8 as the base image. However, I installed it on top of the runner image instead. I'm not sure if this could have any impact.
+Should we proceed with the JDK image instead of the custom JRE, since we may not be able to complete the investigation and research by next week?
