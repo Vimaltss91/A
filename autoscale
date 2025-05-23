@@ -1,1 +1,1 @@
-I installed the Graal JDK in the runner image and attempted to build the JRE image, but the application still failed to start, throwing an error during startup. Additionally, the org.graalvm.sdk module was included as an extra dependency for GraalVM.
+According to the Confluence page shared by the Benson team, they used odo-ol8 as the base image. However, I installed it on top of the runner image instead. I'm not sure if this could have any impact.
