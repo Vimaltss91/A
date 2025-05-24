@@ -1,1 +1,7 @@
-I will continue to work on this, but I may or may not be able to complete it by next week due to unforeseen issues. I had planned to connect with Benson, but he is currently on PTO. I will discuss it with him on Monday.
+BuildSrc Module:
+Should we name the project bom-dependencies for the BuildSrc module?
+
+Shared JARs:
+The nrf-common JAR has been renamed to cnc-ocnrf-common, and a new JAR, cnc-jetty-client, has been introduced. Corresponding changes have been made in the common-service-handlers project/TPD.
+However, it's unclear whether other common service JARs have also been renamed using the "CNC" prefix. For example, it appears that the GW module has been renamed to use the "cnc" prefix.
+Should we adopt the "CNC" naming convention consistently across all NF modules?
