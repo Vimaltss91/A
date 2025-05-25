@@ -1,3 +1,6 @@
+jdk.nio.mapmode, jdk.zipfs, java.nio, java.logging,jdk.unsupported,java.sql,jdk.crypto.ec,jdk.zipfs
+
+
 BuildSrc Module:
 Should we name the project bom-dependencies for the BuildSrc module?
 
