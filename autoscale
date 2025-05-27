@@ -1,3 +1,61 @@
+mkdir temp_folder
+cd temp_folder
+
+for project in "${projectIDArray[@]}"
+do
+  projectGroup=$(echo $project | awk -F '/' '{print $1}')
+  projectName=$(echo $project | awk -F '/' '{print $2}')
+
+  echo "Updating submodules for project: $projectName on branch: $BRANCH_NAME"
+
+  if git clone -b "$BRANCH_NAME" https://${CLOUDLAB_USER_NAME}:${CLOUDLAB_USER_TOKEN}@cloudlab.us.oracle.com/${projectGroup}/${projectName}.git; then
+    cd "${projectName}"
+
+    updatedModules=()
+
+    # === Plugin Submodule ===
+    if [[ -d "plugin" && -n "$COMMIT_ID" ]]; then
+      echo "Processing plugin submodule..."
+      git submodule update --init -- plugin
+      cd plugin && git checkout "$COMMIT_ID" && cd ..
+      updatedModules+=("plugin")
+    elif [[ -d "plugin" && -z "$COMMIT_ID" ]]; then
+      echo "project:${projectName} status:Skipped plugin (no COMMIT_ID)" >> ../../${SUMMARY_FILE}
+    elif [[ ! -d "plugin" ]]; then
+      echo "project:${projectName} status:Skipped plugin (directory missing)" >> ../../${SUMMARY_FILE}
+    fi
+
+    # === buildSrc Submodule ===
+    if [[ -d "buildSrc" && -n "$MC_COMMIT_ID" ]]; then
+      echo "Processing buildSrc submodule..."
+      git submodule update --init -- buildSrc
+      cd buildSrc && git checkout "$MC_COMMIT_ID" && cd ..
+      updatedModules+=("buildSrc")
+    elif [[ -d "buildSrc" && -z "$MC_COMMIT_ID" ]]; then
+      echo "project:${projectName} status:Skipped buildSrc (no MC_COMMIT_ID)" >> ../../${SUMMARY_FILE}
+    elif [[ ! -d "buildSrc" ]]; then
+      echo "project:${projectName} status:Skipped buildSrc (directory missing)" >> ../../${SUMMARY_FILE}
+    fi
+
+    # === Commit if any submodule was updated ===
+    if [[ ${#updatedModules[@]} -gt 0 ]]; then
+      git status
+      git add .
+
+      commitMessage="NoJira: updated submodules: ${updatedModules[*]}"
+      git commit -m "$commitMessage"
+      git push
+
+      commit_id=$(git rev-parse HEAD)
+      echo "project:${projectName} status:Updated [${updatedModules[*]}] Commit_id:${commit_id}" >> ../../${SUMMARY_FILE}
+    fi
+
+    cd ..
+  fi
+done
+
+
+
 jdk.nio.mapmode, jdk.zipfs, java.nio, java.logging,jdk.unsupported,java.sql,jdk.crypto.ec,jdk.zipfs
 
 
