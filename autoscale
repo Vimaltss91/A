@@ -1,3 +1,40 @@
+submodule_update:
+  extends: .job_runner_tag
+  stage: automation_process
+  script:
+    - echo "Submodule Update Process Starts"
+
+    # Get latest commit of current repo
+    - commit_id=$(git log -1 --pretty=format:"%H")
+    - echo "last commit id = $commit_id"
+
+    # Attempt to get latest commit from mc-contracintaint repo
+    - |
+      echo "Fetching MC_COMMIT_ID from mc-contracintaint..."
+      repo_url="https://gitlab.com/5g-common/mc-contracintaint.git"
+      branch="$CI_COMMIT_BRANCH"
+      
+      # Clone shallow and check branch exists
+      if git ls-remote --heads "$repo_url" "$branch" | grep "$branch" > /dev/null; then
+        mc_commit_id=$(git ls-remote "$repo_url" "refs/heads/$branch" | cut -f1)
+        echo "MC_COMMIT_ID = $mc_commit_id"
+        echo "MC_COMMIT_ID=${mc_commit_id}" >> variables.env
+      else
+        echo "Branch '$branch' not found in mc-contracintaint repo. Skipping MC_COMMIT_ID."
+      fi
+
+    # Always write COMMIT_ID from current repo
+    - echo "COMMIT_ID=${commit_id}" >> variables.env
+
+  artifacts:
+    reports:
+      dotenv: variables.env
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+
+
+
 mkdir temp_folder
 cd temp_folder
 
