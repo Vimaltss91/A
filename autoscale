@@ -1,3 +1,78 @@
+Here’s a clearer and more professional version of your instructions, suitable for Confluence documentation:
+
+---
+
+## 🔧 Accessing Third-Party Libraries from the IAD Repository
+
+Our project relies on third-party libraries hosted in a secure IAD repository. Access to this repository requires credentials, which must be configured as environment variables for both local development and CI pipelines.
+
+### 📦 CI/CD Pipeline Configuration
+
+In CI pipelines, the required credentials are injected via environment variables. For local development, users must configure these credentials manually.
+
+---
+
+## 🧑‍💻 Local Development Setup
+
+To configure access to the IAD repository on your local machine, follow these steps:
+
+### 1. **Request Access via OIM**
+
+1. Navigate to the **Oracle Identity Manager (OIM)** portal.
+2. Search for the following resource:
+
+   ```
+   cgbu-cnc-comsvc
+   ```
+3. Select the role:
+
+   ```
+   cgbu-cnc-comsvc-reader
+   ```
+4. Add the role to your cart and provide a valid justification for access.
+5. Submit the request and wait for approval.
+
+---
+
+### 2. **Generate an Identity Token**
+
+1. Go to [https://artifacthub.oraclecorp.com](https://artifacthub.oraclecorp.com)
+2. Click on **Edit Profile**.
+3. Click on **Generate Identity Token**.
+4. Copy and save the generated token securely.
+
+---
+
+### 3. **Set Environment Variables**
+
+Set the following environment variables in your terminal or development environment:
+
+```bash
+export COMSVC_ARTIFACTORY_USERNAME="your.email@oracle.com"
+export COMSVC_ARTIFACTORY_PASSWORD="your-generated-token"
+```
+
+> 🔐 **Note:** Never commit these credentials to version control.
+
+---
+
+### 4. **Build the Project**
+
+Once the credentials are set, you can build the Gradle project:
+
+```bash
+./gradlew build
+```
+
+Gradle should now be able to fetch dependencies from the IAD repository successfully.
+
+---
+
+Let me know if you'd like this converted into a downloadable Markdown or Confluence-friendly format.
+
+
+
+
 submodule_update:
   extends: .job_runner_tag
   stage: automation_process
