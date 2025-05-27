@@ -17,8 +17,17 @@ do
     if [[ -d "plugin" && -n "$COMMIT_ID" ]]; then
       echo "Processing plugin submodule..."
       git submodule update --init -- plugin
-      cd plugin && git checkout "$COMMIT_ID" && cd ..
-      updatedModules+=("plugin")
+      cd plugin
+      current_plugin_commit=$(git rev-parse HEAD)
+
+      if [[ "$current_plugin_commit" != "$COMMIT_ID" ]]; then
+        git fetch origin
+        git checkout "$COMMIT_ID"
+        updatedModules+=("plugin")
+      else
+        echo "plugin is already at commit $COMMIT_ID"
+      fi
+      cd ..
     elif [[ -d "plugin" && -z "$COMMIT_ID" ]]; then
       echo "project:${projectName} status:Skipped plugin (no COMMIT_ID)" >> ../../${SUMMARY_FILE}
     elif [[ ! -d "plugin" ]]; then
@@ -29,15 +38,24 @@ do
     if [[ -d "buildSrc" && -n "$MC_COMMIT_ID" ]]; then
       echo "Processing buildSrc submodule..."
       git submodule update --init -- buildSrc
-      cd buildSrc && git checkout "$MC_COMMIT_ID" && cd ..
-      updatedModules+=("buildSrc")
+      cd buildSrc
+      current_buildsrc_commit=$(git rev-parse HEAD)
+
+      if [[ "$current_buildsrc_commit" != "$MC_COMMIT_ID" ]]; then
+        git fetch origin
+        git checkout "$MC_COMMIT_ID"
+        updatedModules+=("buildSrc")
+      else
+        echo "buildSrc is already at commit $MC_COMMIT_ID"
+      fi
+      cd ..
     elif [[ -d "buildSrc" && -z "$MC_COMMIT_ID" ]]; then
       echo "project:${projectName} status:Skipped buildSrc (no MC_COMMIT_ID)" >> ../../${SUMMARY_FILE}
     elif [[ ! -d "buildSrc" ]]; then
       echo "project:${projectName} status:Skipped buildSrc (directory missing)" >> ../../${SUMMARY_FILE}
     fi
 
-    # === Commit if any submodule was updated ===
+    # === Commit if submodules actually changed ===
     if [[ ${#updatedModules[@]} -gt 0 ]]; then
       git status
       git add .
@@ -48,21 +66,10 @@ do
 
       commit_id=$(git rev-parse HEAD)
       echo "project:${projectName} status:Updated [${updatedModules[*]}] Commit_id:${commit_id}" >> ../../${SUMMARY_FILE}
+    else
+      echo "project:${projectName} status:No changes detected, nothing to commit" >> ../../${SUMMARY_FILE}
     fi
 
     cd ..
   fi
 done
-
-
-
-jdk.nio.mapmode, jdk.zipfs, java.nio, java.logging,jdk.unsupported,java.sql,jdk.crypto.ec,jdk.zipfs
-
-
-BuildSrc Module:
-Should we name the project bom-dependencies for the BuildSrc module?
-
-Shared JARs:
-The nrf-common JAR has been renamed to cnc-ocnrf-common, and a new JAR, cnc-jetty-client, has been introduced. Corresponding changes have been made in the common-service-handlers project/TPD.
-However, it's unclear whether other common service JARs have also been renamed using the "CNC" prefix. For example, it appears that the GW module has been renamed to use the "cnc" prefix.
-Should we adopt the "CNC" naming convention consistently across all NF modules?
