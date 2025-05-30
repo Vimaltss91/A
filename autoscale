@@ -1,207 +1,59 @@
-# Get the JAR name for a validator based on CNC_ENABLED
-get_jar_name() {
-    local base_name="$1"
+import os
+from ruamel.yaml import YAML
 
-    # Ensure base_name is provided
-    if [[ -z "$base_name" ]]; then
-        echo "Error: Validator base name is required" >&2
-        return 1
-    fi
+yaml_file_path = "third-party-dependencies/services_versions.yml"
 
-    # Return prefixed or plain name based on CNC_ENABLED flag
-    if [[ "${CNC_ENABLED,,}" == "true" ]]; then
-        echo "cnc-$base_name"
-    else
-        echo "$base_name"
-    fi
-}
+APIGW_VERSION = os.environ.get("APIGW_VERSION")
+NRFCLIENT_VERSION = os.environ.get("NRFCLIENT_VERSION")
+NRFCOMMON_VERSION = os.environ.get("NRFCOMMON_VERSION")
+DEBUGTOOLS_VERSION = os.environ.get("DEBUGTOOLS_VERSION")
+NFTTEST_VERSION = os.environ.get("NFTTEST_VERSION")
+CNC_ENABLE = os.environ.get("ENABLE_CNC", "false").lower() == "true"  # default false
 
+# Helper function to apply prefix
+def get_jar_name(name):
+    return f"cnc-{name}" if CNC_ENABLE else name
 
+APIGW_ARTIFACTS = [
+    {
+        "helm_charts": ["ingress_gateway", "egress_gateway", "alternate_route"]
+    },
+    {
+        "docker_images": [
+            "ingress_gateway",
+            "egress_gateway",
+            "alternate_route",
+            "configurationinit",
+            "configurationupdate",
+            "common_config_hook"
+        ]
+    },
+    {
+        "jar_libs": [
+            get_jar_name("commonconfigclient"),
+            get_jar_name("commonconfigserver"),
+            get_jar_name("commonconfigvalidator"),
+            get_jar_name("alternateroutevalidator"),
+            get_jar_name("ingressvalidator"),
+            get_jar_name("egressvalidator")
+        ]
+    }
+]
 
-Here’s a clearer and more professional version of your instructions, suitable for Confluence documentation:
+NRFCLIENT_ARTIFACTS = [
+    {
+        "helm_charts": ["nrf-client"]
+    },
+    {
+        "docker_images": ["nrf-client"]
+    },
+    {
+        "jar_libs": [get_jar_name("nrfclientvalidator")]
+    }
+]
 
----
-
-## 🔧 Accessing Third-Party Libraries from the IAD Repository
-
-Our project relies on third-party libraries hosted in a secure IAD repository. Access to this repository requires credentials, which must be configured as environment variables for both local development and CI pipelines.
-
-### 📦 CI/CD Pipeline Configuration
-
-In CI pipelines, the required credentials are injected via environment variables. For local development, users must configure these credentials manually.
-
----
-
-## 🧑‍💻 Local Development Setup
-
-To configure access to the IAD repository on your local machine, follow these steps:
-
-### 1. **Request Access via OIM**
-
-1. Navigate to the **Oracle Identity Manager (OIM)** portal.
-2. Search for the following resource:
-
-   ```
-   cgbu-cnc-comsvc
-   ```
-3. Select the role:
-
-   ```
-   cgbu-cnc-comsvc-reader
-   ```
-4. Add the role to your cart and provide a valid justification for access.
-5. Submit the request and wait for approval.
-
----
-
-### 2. **Generate an Identity Token**
-
-1. Go to [https://artifacthub.oraclecorp.com](https://artifacthub.oraclecorp.com)
-2. Click on **Edit Profile**.
-3. Click on **Generate Identity Token**.
-4. Copy and save the generated token securely.
-
----
-
-### 3. **Set Environment Variables**
-
-Set the following environment variables in your terminal or development environment:
-
-```bash
-export COMSVC_ARTIFACTORY_USERNAME="your.email@oracle.com"
-export COMSVC_ARTIFACTORY_PASSWORD="your-generated-token"
-```
-
-> 🔐 **Note:** Never commit these credentials to version control.
-
----
-
-### 4. **Build the Project**
-
-Once the credentials are set, you can build the Gradle project:
-
-```bash
-./gradlew build
-```
-
-Gradle should now be able to fetch dependencies from the IAD repository successfully.
-
----
-
-Let me know if you'd like this converted into a downloadable Markdown or Confluence-friendly format.
-
-
-
-
-submodule_update:
-  extends: .job_runner_tag
-  stage: automation_process
-  script:
-    - echo "Submodule Update Process Starts"
-
-    # Get latest commit of current repo
-    - commit_id=$(git log -1 --pretty=format:"%H")
-    - echo "last commit id = $commit_id"
-
-    # Attempt to get latest commit from mc-contracintaint repo
-    - |
-      echo "Fetching MC_COMMIT_ID from mc-contracintaint..."
-      repo_url="https://gitlab.com/5g-common/mc-contracintaint.git"
-      branch="$CI_COMMIT_BRANCH"
-      
-      # Clone shallow and check branch exists
-      if git ls-remote --heads "$repo_url" "$branch" | grep "$branch" > /dev/null; then
-        mc_commit_id=$(git ls-remote "$repo_url" "refs/heads/$branch" | cut -f1)
-        echo "MC_COMMIT_ID = $mc_commit_id"
-        echo "MC_COMMIT_ID=${mc_commit_id}" >> variables.env
-      else
-        echo "Branch '$branch' not found in mc-contracintaint repo. Skipping MC_COMMIT_ID."
-      fi
-
-    # Always write COMMIT_ID from current repo
-    - echo "COMMIT_ID=${commit_id}" >> variables.env
-
-  artifacts:
-    reports:
-      dotenv: variables.env
-
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-
-
-
-mkdir temp_folder
-cd temp_folder
-
-for project in "${projectIDArray[@]}"
-do
-  projectGroup=$(echo $project | awk -F '/' '{print $1}')
-  projectName=$(echo $project | awk -F '/' '{print $2}')
-
-  echo "Updating submodules for project: $projectName on branch: $BRANCH_NAME"
-
-  if git clone -b "$BRANCH_NAME" https://${CLOUDLAB_USER_NAME}:${CLOUDLAB_USER_TOKEN}@cloudlab.us.oracle.com/${projectGroup}/${projectName}.git; then
-    cd "${projectName}"
-
-    updatedModules=()
-
-    # === Plugin Submodule ===
-    if [[ -d "plugin" && -n "$COMMIT_ID" ]]; then
-      echo "Processing plugin submodule..."
-      git submodule update --init -- plugin
-      cd plugin
-      current_plugin_commit=$(git rev-parse HEAD)
-
-      if [[ "$current_plugin_commit" != "$COMMIT_ID" ]]; then
-        git fetch origin
-        git checkout "$COMMIT_ID"
-        updatedModules+=("plugin")
-      else
-        echo "plugin is already at commit $COMMIT_ID"
-      fi
-      cd ..
-    elif [[ -d "plugin" && -z "$COMMIT_ID" ]]; then
-      echo "project:${projectName} status:Skipped plugin (no COMMIT_ID)" >> ../../${SUMMARY_FILE}
-    elif [[ ! -d "plugin" ]]; then
-      echo "project:${projectName} status:Skipped plugin (directory missing)" >> ../../${SUMMARY_FILE}
-    fi
-
-    # === buildSrc Submodule ===
-    if [[ -d "buildSrc" && -n "$MC_COMMIT_ID" ]]; then
-      echo "Processing buildSrc submodule..."
-      git submodule update --init -- buildSrc
-      cd buildSrc
-      current_buildsrc_commit=$(git rev-parse HEAD)
-
-      if [[ "$current_buildsrc_commit" != "$MC_COMMIT_ID" ]]; then
-        git fetch origin
-        git checkout "$MC_COMMIT_ID"
-        updatedModules+=("buildSrc")
-      else
-        echo "buildSrc is already at commit $MC_COMMIT_ID"
-      fi
-      cd ..
-    elif [[ -d "buildSrc" && -z "$MC_COMMIT_ID" ]]; then
-      echo "project:${projectName} status:Skipped buildSrc (no MC_COMMIT_ID)" >> ../../${SUMMARY_FILE}
-    elif [[ ! -d "buildSrc" ]]; then
-      echo "project:${projectName} status:Skipped buildSrc (directory missing)" >> ../../${SUMMARY_FILE}
-    fi
-
-    # === Commit if submodules actually changed ===
-    if [[ ${#updatedModules[@]} -gt 0 ]]; then
-      git status
-      git add .
-
-      commitMessage="NoJira: updated submodules: ${updatedModules[*]}"
-      git commit -m "$commitMessage"
-      git push
-
-      commit_id=$(git rev-parse HEAD)
-      echo "project:${projectName} status:Updated [${updatedModules[*]}] Commit_id:${commit_id}" >> ../../${SUMMARY_FILE}
-    else
-      echo "project:${projectName} status:No changes detected, nothing to commit" >> ../../${SUMMARY_FILE}
-    fi
-
-    cd ..
-  fi
-done
+NRFCOMMON_ARTIFACTS = [
+    {
+        "jar_libs": [get_jar_name("nrfcommon")]
+    }
+]
