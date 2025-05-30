@@ -1,59 +1,53 @@
-import os
-from ruamel.yaml import YAML
+#!/usr/bin/env bash
 
-yaml_file_path = "third-party-dependencies/services_versions.yml"
+# --- CONFIG ---
+CLOUDLAB_API="https://cloudlab.us.oracle.com/api/v4"
+TOKEN_HEADER="PRIVATE-TOKEN: ${CLOUDLAB_USER_TOKEN}"
 
-APIGW_VERSION = os.environ.get("APIGW_VERSION")
-NRFCLIENT_VERSION = os.environ.get("NRFCLIENT_VERSION")
-NRFCOMMON_VERSION = os.environ.get("NRFCOMMON_VERSION")
-DEBUGTOOLS_VERSION = os.environ.get("DEBUGTOOLS_VERSION")
-NFTTEST_VERSION = os.environ.get("NFTTEST_VERSION")
-CNC_ENABLE = os.environ.get("ENABLE_CNC", "false").lower() == "true"  # default false
+# --- Step 1: Get TPD_COMMIT_ID ---
+TPD_COMMIT_ID=$(curl --silent --fail --header "$TOKEN_HEADER" \
+    "$CLOUDLAB_API/projects/10134/repository/commits/${FEATURE_BRANCH}" | jq -r '.id') || TPD_COMMIT_ID=""
 
-# Helper function to apply prefix
-def get_jar_name(name):
-    return f"cnc-{name}" if CNC_ENABLE else name
+# --- Step 2: Get MC_COMMIT_ID from project 1011 ---
+MC_COMMIT_ID=$(curl --silent --fail --header "$TOKEN_HEADER" \
+    "$CLOUDLAB_API/projects/1011/repository/commits/${FEATURE_BRANCH}" | jq -r '.id') || MC_COMMIT_ID=""
 
-APIGW_ARTIFACTS = [
-    {
-        "helm_charts": ["ingress_gateway", "egress_gateway", "alternate_route"]
-    },
-    {
-        "docker_images": [
-            "ingress_gateway",
-            "egress_gateway",
-            "alternate_route",
-            "configurationinit",
-            "configurationupdate",
-            "common_config_hook"
-        ]
-    },
-    {
-        "jar_libs": [
-            get_jar_name("commonconfigclient"),
-            get_jar_name("commonconfigserver"),
-            get_jar_name("commonconfigvalidator"),
-            get_jar_name("alternateroutevalidator"),
-            get_jar_name("ingressvalidator"),
-            get_jar_name("egressvalidator")
-        ]
-    }
-]
+# --- Step 3: Validate both commit IDs ---
+if [[ -z "$TPD_COMMIT_ID" ]]; then
+    echo "❌ TPD COMMIT ID for branch '${FEATURE_BRANCH}' not found. Please check if the branch exists in project 10134."
+    exit 1
+fi
 
-NRFCLIENT_ARTIFACTS = [
-    {
-        "helm_charts": ["nrf-client"]
-    },
-    {
-        "docker_images": ["nrf-client"]
-    },
-    {
-        "jar_libs": [get_jar_name("nrfclientvalidator")]
-    }
-]
+if [[ -z "$MC_COMMIT_ID" ]]; then
+    echo "⚠️  MC COMMIT ID not found for branch '${FEATURE_BRANCH}' in project 1011. Proceeding without it."
+else
+    echo "✅ Found MC_COMMIT_ID: $MC_COMMIT_ID"
+fi
 
-NRFCOMMON_ARTIFACTS = [
-    {
-        "jar_libs": [get_jar_name("nrfcommon")]
-    }
-]
+# --- Step 4: Trigger the pipeline ---
+TRIGGER_URL="$CLOUDLAB_API/projects/27760/trigger/pipeline"
+
+# Construct curl arguments
+CURL_FORM_ARGS=(
+    --form "token=${CI_JOB_TOKEN}"
+    --form "ref=dev"
+    --form "variables[BRANCH_NAME]=${FEATURE_BRANCH}"
+    --form "variables[IGNORE_MISSING_BRANCHES]=true"
+    --form "variables[COMMIT_ID]=${TPD_COMMIT_ID}"
+)
+
+# Include MC_COMMIT_ID only if present
+if [[ -n "$MC_COMMIT_ID" ]]; then
+    CURL_FORM_ARGS+=(--form "variables[MC_COMMIT_ID]=${MC_COMMIT_ID}")
+fi
+
+# Make the API call
+PIPELINE_ID=$(curl --silent "${CURL_FORM_ARGS[@]}" "$TRIGGER_URL" | jq -r '.id')
+
+# --- Step 5: Check result ---
+if [[ "$PIPELINE_ID" == "null" || -z "$PIPELINE_ID" ]]; then
+    echo "❌ Failed to trigger the pipeline."
+    exit 1
+fi
+
+echo "✅ Pipeline triggered with ID: $PIPELINE_ID"
