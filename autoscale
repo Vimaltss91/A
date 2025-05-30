@@ -3,6 +3,30 @@
 # Target version
 NEW_VERSION="25.1.100"
 
+# Loop over all build.gradle files
+find . -type f -name "build.gradle" | while read -r file; do
+    echo "Processing $file"
+
+    # Use awk to skip lines with 'setVersion' and replace others
+    awk -v ver="\"$NEW_VERSION\"" '
+    /setVersion/ {
+        print; next
+    }
+    {
+        gsub(/"CNECOMMON_VERSION"/, ver)
+        gsub(/"PCFCOMMON_VERSION"/, ver)
+        gsub(/"PCRFCOMMON_VERSION"/, ver)
+        print
+    }' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+done
+
+
+
+#!/usr/bin/env bash
+
+# Target version
+NEW_VERSION="25.1.100"
+
 # Search and replace in all build.gradle files
 find . -type f -name "build.gradle" | while read -r file; do
     echo "Updating $file"
