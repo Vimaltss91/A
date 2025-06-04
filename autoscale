@@ -1,5 +1,7 @@
-Hey team, we're seeing intermittent failures when uploading/downloading to Artifactory. Often, we have to retry multiple times before it works.
+Subject: Intermittent Connectivity Issues with Artifactory
 
-Can we look into this and see if we can improve the reliability? Let me know if any logs or details are needed.
+Description:
+We are experiencing intermittent connectivity issues with Artifactory. Upload and download operations are frequently failing on the first attempt and require multiple retries to complete successfully. This issue has become more frequent over the past few days, impacting our development and CI/CD workflows.
 
-Thanks!
+Request:
+Please investigate the root cause and provide guidance or a resolution to ensure reliable connectivity to Artifactory.
