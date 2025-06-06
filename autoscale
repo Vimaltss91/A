@@ -1,7 +1,87 @@
-Subject: Intermittent Connectivity Issues with Artifactory
+# Update system
+sudo yum update -y
 
-Description:
-We are experiencing intermittent connectivity issues with Artifactory. Upload and download operations are frequently failing on the first attempt and require multiple retries to complete successfully. This issue has become more frequent over the past few days, impacting our development and CI/CD workflows.
+# Install required tools and Python
+sudo yum install -y wget unzip curl python3 java-11-openjdk xorg-x11-server-Xvfb \
+    alsa-lib libXScrnSaver gtk3 nss libXcomposite libXcursor libXdamage \
+    libXrandr libXtst libgbm
 
-Request:
-Please investigate the root cause and provide guidance or a resolution to ensure reliable connectivity to Artifactory.
+# Install pip
+sudo python3 -m ensurepip --upgrade
+
+
+cat <<EOF | sudo tee /etc/yum.repos.d/google-chrome.repo
+[google-chrome]
+name=google-chrome
+baseurl=https://dl.google.com/linux/chrome/rpm/stable/x86_64
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+EOF
+
+sudo yum install -y google-chrome-stable
+
+
+# Get Chrome version
+CHROME_VERSION=$(google-chrome --version | grep -oP '[0-9.]+' | head -1 | cut -d. -f1)
+
+# Get compatible ChromeDriver version
+CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
+
+# Download and install
+wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
+unzip chromedriver_linux64.zip
+sudo mv chromedriver /usr/local/bin/
+chmod +x /usr/local/bin/chromedriver
+
+
+pip3 install selenium
+
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+
+driver = webdriver.Chrome(options=options)
+
+driver.get("https://example.com")
+print("Page Title:", driver.title)
+
+driver.quit()
+
+
+python3 selenium_test.py
+
+python3 selenium_test.py
+
+
+
+sudo yum install -y xorg-x11-server-Xvfb
+
+
+# Check if xvfb-run exists
+which xvfb-run
+
+# If not, create a basic version:
+sudo tee /usr/local/bin/xvfb-run > /dev/null <<'EOF'
+#!/bin/bash
+XVFB_WHD=${XVFB_WHD:-1280x720x24}
+XVFB_DISPLAY=${XVFB_DISPLAY:-:99}
+
+Xvfb $XVFB_DISPLAY -screen 0 $XVFB_WHD &
+XVFB_PID=$!
+
+export DISPLAY=$XVFB_DISPLAY
+"$@"
+
+kill $XVFB_PID
+EOF
+
+sudo chmod +x /usr/local/bin/xvfb-run
+
+xvfb-run python3 selenium_test.py
+
