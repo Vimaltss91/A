@@ -85,3 +85,25 @@ sudo chmod +x /usr/local/bin/xvfb-run
 
 xvfb-run python3 selenium_test.py
 
+
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+# NOT headless — will need Xvfb
+# options.add_argument('--headless')  # <-- comment this out
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+
+driver = webdriver.Chrome(options=options)
+driver.set_window_size(1920, 1080)
+driver.get("https://example.com")
+
+# Take screenshot
+driver.save_screenshot("screenshot.png")
+print("Screenshot saved.")
+
+driver.quit()
+
+
