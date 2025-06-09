@@ -1,3 +1,60 @@
+# Install Firefox browser
+sudo dnf install -y firefox
+
+# Install Python and pip
+sudo dnf install -y python3 python3-pip
+
+# Install Selenium
+pip3 install selenium
+
+# Download latest GeckoDriver (Firefox WebDriver)
+GECKO_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep tag_name | cut -d '"' -f4)
+wget "https://github.com/mozilla/geckodriver/releases/download/$GECKO_VERSION/geckodriver-$GECKO_VERSION-linux64.tar.gz"
+
+# Extract and move to path
+tar -xzf geckodriver-$GECKO_VERSION-linux64.tar.gz
+sudo mv geckodriver /usr/local/bin/
+sudo chmod +x /usr/local/bin/geckodriver
+rm -f geckodriver-$GECKO_VERSION-linux64.tar.gz
+
+
+-----------COde -------
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.common.by import By
+import time
+
+# ⚠️ GUI mode — do NOT enable headless
+options = Options()
+# Do not add headless here
+# options.add_argument('--headless')
+
+# Optional: set screen size
+options.add_argument("--width=1920")
+options.add_argument("--height=1080")
+
+# Launch browser
+driver = webdriver.Firefox(options=options)
+
+# Open website
+driver.get("https://www.w3schools.com/howto/howto_html_file_upload_button.asp")
+time.sleep(2)
+
+# Simulate file upload (optional example)
+upload = driver.find_element(By.XPATH, '//input[@type="file"]')
+upload.send_keys("/home/youruser/sample.txt")  # Replace with actual path
+
+# Screenshot (optional)
+driver.save_screenshot("firefox_gui_screenshot.png")
+print("✅ GUI test completed. Screenshot saved.")
+
+driver.quit()
+
+-----------------------
+
+
+
+
 Since some packages have already been pushed to the dev repository, the CM service pipeline is currently broken due to the corrupted packages. I’ve already informed Benson via email that this is blocking our testing and the promotion to the release repository
 
 Okay, I’ll check and coordinate with Bharat. Since we've already pushed the packages to the dev repository and some of them are corrupted, we're still unable to identify the root cause. As a result, it's blocking our testing and further promotion to the release repository
