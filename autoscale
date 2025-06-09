@@ -1,3 +1,29 @@
+all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def constraintBundle = ocpmLibs.bundles.ocpmConstraints.get()
+
+        constraintBundle.each {
+            def String constraintEntry = it
+            def (constraintGroup, constraintModule, constraintVersion) = constraintEntry.tokenize(":")
+            
+            if (details.requested.group == constraintGroup && details.requested.name == constraintModule) {
+                details.useVersion constraintVersion
+                details.because 'Constraint defined in 3rd party catalog'
+            }
+        }
+
+        // ✅ Manual Jetty constraint (outside the bundle)
+        if (details.requested.group == "org.eclipse.jetty" && details.requested.name == "jetty-server") {
+            details.useVersion "12.0.21"
+            details.because "Jetty version override (manual)"
+        }
+    }
+}
+
+
+
+
+
 # Update system
 sudo yum update -y
 
