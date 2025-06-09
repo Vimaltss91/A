@@ -1,3 +1,28 @@
+sudo dnf groupinstall -y "Server with GUI"
+sudo dnf install -y epel-release
+sudo dnf install -y xrdp tigervnc-server xfce4-session firefox
+
+# Enable XRDP service
+sudo systemctl enable xrdp
+sudo systemctl start xrdp
+
+# Allow xrdp in firewall
+sudo firewall-cmd --add-port=3389/tcp --permanent
+sudo firewall-cmd --reload
+
+# Set XFCE as default session for all users
+echo "startxfce4" > ~/.Xclients
+chmod +x ~/.Xclients
+
+# Optional: set for system default (not just current user)
+sudo bash -c 'echo PREFERRED=/usr/bin/startxfce4 > /etc/sysconfig/desktop'
+
+# Reboot to apply everything
+sudo reboot
+
+
+
+
 # Install Firefox browser
 sudo dnf install -y firefox
 
