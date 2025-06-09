@@ -1,3 +1,6 @@
+I have sent an email to Benson, mentioning that many Node packages are corrupted and require debugging and manual removal. This is a time-consuming and repetitive process for each package, so I’ve stated that the Node packages are currently blocked from being moved to the release repository
+
+
 Hi Benson,
 
 Some of the Node packages were previously pushed in a corrupted state. We have rectified a few of them last week, purged the affected versions, and successfully moved the clean packages to the release repository.
