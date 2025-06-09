@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -e
+
+echo "🧱 Installing GUI, XFCE, XRDP on Oracle Linux 8..."
+
+# Enable EPEL
+sudo dnf install -y epel-release
+sudo dnf config-manager --set-enabled ol8_developer_EPEL
+sudo dnf update -y
+
+# Install desktop environment & XFCE
+sudo dnf groupinstall -y "Server with GUI"
+sudo dnf install -y xfce* lightdm tigervnc-server
+
+# Set LightDM as default display manager
+sudo systemctl disable gdm || true
+sudo systemctl enable lightdm
+
+# Enable graphical target
+sudo systemctl set-default graphical.target
+
+# Install and start XRDP
+sudo dnf install -y xrdp
+sudo systemctl enable --now xrdp
+
+# Configure XRDP to launch XFCE
+echo "startxfce4" > ~/.Xclients
+chmod +x ~/.Xclients
+
+sudo sed -i 's/^test -x/#test -x/' /etc/xrdp/startwm.sh
+echo "startxfce4" | sudo tee -a /etc/xrdp/startwm.sh
+
+# Allow RDP through firewall
+sudo firewall-cmd --permanent --add-port=3389/tcp
+sudo firewall-cmd --reload
+
+echo "✅ Setup complete. You can now reboot and connect via RDP (port 3389)."
+echo "🔐 Don't forget to set a password with: sudo passwd <your-username>"
