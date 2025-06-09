@@ -1,3 +1,29 @@
+
+Create or update your .xsession or .Xclients file in your home directory:
+
+echo "exec startxfce4" > ~/.xsession
+echo "startxfce4" > ~/.Xclients
+chmod +x ~/.xsession ~/.Xclients
+
+
+or 
+Ensure /etc/xrdp/startwm.sh is configured correctly:
+
+sudo sed -i 's/^test -x/#test -x/' /etc/xrdp/startwm.sh
+sudo sed -i 's/^exec/#exec/' /etc/xrdp/startwm.sh
+
+sudo tee -a /etc/xrdp/startwm.sh > /dev/null <<EOF
+startxfce4
+EOF
+
+sudo setenforce 0
+
+
+sudo systemctl restart xrdp
+sudo reboot
+
+
+
 #!/bin/bash
 
 set -e
