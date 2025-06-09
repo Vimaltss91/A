@@ -1,3 +1,6 @@
+Multiple packages were pushed to the dev repository, but the error messages don’t clearly indicate which package is corrupted. Additional debugging is required to identify the specific corrupted package
+
+
 sudo dnf groupinstall -y "Server with GUI"
 sudo dnf install -y epel-release
 sudo dnf install -y xrdp tigervnc-server xfce4-session firefox
