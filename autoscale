@@ -1,3 +1,14 @@
+Hi Benson,
+
+Some of the Node packages were previously pushed in a corrupted state. We have rectified a few of them last week, purged the affected versions, and successfully moved the clean packages to the release repository.
+
+However, the remaining packages have only been pushed to the development repository, and several of them are still corrupted. This is currently blocking us from moving them to the release repository.
+
+Additionally, the corrupted packages have to be manually removed from Artifactory each time, which is not scalable.
+
+
+
+
 all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         def constraintBundle = ocpmLibs.bundles.ocpmConstraints.get()
