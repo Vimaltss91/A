@@ -37,3 +37,55 @@ sudo firewall-cmd --reload
 
 echo "✅ Setup complete. You can now reboot and connect via RDP (port 3389)."
 echo "🔐 Don't forget to set a password with: sudo passwd <your-username>"
+
+
+------------------------------------------
+-------------------------------------------
+
+#!/bin/bash
+
+set -e
+
+echo "🌐 Installing Google Chrome..."
+sudo dnf install -y wget
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+sudo dnf localinstall -y google-chrome-stable_current_x86_64.rpm
+
+echo "🐍 Installing Python, pip, Selenium..."
+sudo dnf install -y python3 python3-pip
+pip3 install selenium
+
+echo "🧰 Installing ChromeDriver..."
+CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+' | head -1)
+CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | grep -A1 "$CHROME_VERSION" | grep -oP '\/([^\/]+)\/chromedriver-linux64\.zip' | cut -d'/' -f2 | head -1)
+
+wget -O chromedriver.zip "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+unzip chromedriver.zip
+sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+sudo chmod +x /usr/local/bin/chromedriver
+rm -rf chromedriver.zip chromedriver-linux64
+
+echo "🧪 Creating sample Selenium script..."
+
+cat <<EOF > selenium_file_picker_test.py
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
+
+options = webdriver.ChromeOptions()
+driver = webdriver.Chrome(options=options)
+
+driver.get("https://www.w3schools.com/howto/howto_html_file_upload_button.asp")
+time.sleep(3)
+
+upload_input = driver.find_element(By.XPATH, '//input[@type="file"]')
+upload_input.click()  # Opens native file picker popup
+
+print("✅ File picker popup should be visible now. You can interact with it manually or with PyAutoGUI.")
+
+time.sleep(15)
+driver.quit()
+EOF
+
+echo "✅ Selenium and Chrome are ready."
+echo "▶️ Run the test using: python3 selenium_file_picker_test.py"
