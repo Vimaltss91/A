@@ -1,3 +1,5 @@
+Since some packages have already been pushed to the dev repository, the CM service pipeline is currently broken due to the corrupted packages. I’ve already informed Benson via email that this is blocking our testing and the promotion to the release repository
+
 Okay, I’ll check and coordinate with Bharat. Since we've already pushed the packages to the dev repository and some of them are corrupted, we're still unable to identify the root cause. As a result, it's blocking our testing and further promotion to the release repository
 
 I have sent an email to Benson, mentioning that many Node packages are corrupted and require debugging and manual removal. This is a time-consuming and repetitive process for each package, so I’ve stated that the Node packages are currently blocked from being moved to the release repository
