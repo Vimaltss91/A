@@ -133,3 +133,40 @@ print("Screenshot saved.")
 driver.quit()
 
 
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import tempfile
+import time
+
+# ✅ Create a temporary user-data-dir to avoid profile lock/session errors
+temp_profile = tempfile.mkdtemp()
+
+options = Options()
+# ⚠️ DO NOT use headless mode if you need GUI interaction like file picker
+# options.add_argument('--headless')  # Uncomment ONLY if running headless
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument(f'--user-data-dir={temp_profile}')
+
+# ✅ Launch Chrome
+driver = webdriver.Chrome(options=options)
+
+# Optional: set window size if needed
+driver.set_window_size(1920, 1080)
+
+# ✅ Navigate to test page
+driver.get("https://example.com")
+
+# Wait for page to load
+time.sleep(2)
+
+# ✅ Take screenshot
+driver.save_screenshot("screenshot.png")
+print("✅ Screenshot saved at screenshot.png")
+
+# ✅ Clean up
+driver.quit()
+
+
+
