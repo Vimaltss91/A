@@ -1,3 +1,33 @@
+Title:
+Upload failures to Artifactory from IAD runner farm (Podracer jobs)
+
+Description:
+Hi team,
+
+We are experiencing a recurring issue when attempting to upload large files from the Podracer runner to Artifactory. This issue appears more frequently when running jobs on the IAD runner farm (#3227, TM_i97t8, OKE IAD Runner Farm) compared to the PHX runner farm.
+
+While there have been some successful jobs on the IAD runner farm, failures are noticeably more common.
+
+Could you please check if there is any known issue with the IAD runner farm? Are uploads from this farm typically successful, or are there any current limitations we should be aware of?
+
+Sample Job Links:
+✅ PHX Success:
+
+PHX Job 1
+
+PHX Job 2
+
+❌ IAD Failure:
+
+IAD Job 1
+
+IAD Job 2
+
+IAD Job 3
+
+
+
+
 Multiple packages were pushed to the dev repository, but the error messages don’t clearly indicate which package is corrupted. Additional debugging is required to identify the specific corrupted package
 
 
