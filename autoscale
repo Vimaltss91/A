@@ -1,3 +1,22 @@
+Hi Benson,
+
+We are seeing multiple issues with node packages that are not identified by the deployment/ATS, but they break the UI page. On checking, we found that the job packages are built using npm pack and the files are pushed, but not all packages work correctly with just npm pack.
+
+For example, if the source code is in TypeScript, it needs to be built first using npm run build (which generates the module), and only then should npm pack be run. Since BFS is not done for most of these packages, we need to identify and remove such problematic packages (or possibly rebuild all packages created for this PI).
+
+Can we please update the open source pipeline to first run npm run build and skip file validation (similar to how it's done for Java)?
+
+Example: The yaml package's dist folder module is missing — this happened because BFS was not done. You can refer to yaml from the public repo for comparison.
+
+
+
+
+
+
+
+
+
+
 Title:
 Upload failures to Artifactory from IAD runner farm (Podracer jobs)
 
