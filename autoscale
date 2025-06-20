@@ -1,3 +1,21 @@
+Subject: Service Mesh - Multi Config Support for Envoy Filter in 25.1.200
+
+Hi Rajiv,
+
+We wanted to check with you regarding the service mesh configuration for custom values (configKey and configValue) in the Envoy filter.
+
+Currently, the Policy ASM supports only a single key-value pair for custom configuration. However, starting from the UDR team's 25.1.200 release, support for multiple key-value configurations has been added.
+
+Do we have any specific customer requirements that need this multi-config support in 25.1.200? Based on the need and priority, we can plan to include it in 25.1.200 or consider it for a later release.
+
+Please find below the reference details for the ASM config chart related to 25.1.200.
+
+Thanks,
+[Your Name]
+
+
+
+
 Hi Benson,
 
 We are seeing multiple issues with node packages that are not identified by the deployment/ATS, but they break the UI page. On checking, we found that the job packages are built using npm pack and the files are pushed, but not all packages work correctly with just npm pack.
