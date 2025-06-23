@@ -1,6 +1,86 @@
+
+import gitlab
+import os
+from typing import List, Dict
+
+# Configuration
+GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
+GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")  # Store token in environment variable
+REPOS = ["project1", "project2"]  # List of repository names (replace with your repos)
+
+def get_gitlab_client() -> gitlab.Gitlab:
+    """Initialize and return a GitLab client."""
+    if not GITLAB_TOKEN:
+        raise ValueError("GITLAB_TOKEN environment variable not set")
+    return gitlab.Gitlab(GITLAB_URL, private_token=GITLAB_TOKEN)
+
+def find_project(client: gitlab.Gitlab, repo_name: str) -> Dict:
+    """Find a project by name and return its details."""
+    projects = client.projects.list(search=repo_name, owned=True, all=True)
+    for project in projects:
+        if project.name.lower() == repo_name.lower():
+            return project
+    raise ValueError(f"Project {repo_name} not found")
+
+def get_pipeline_schedules(project: Dict) -> List[Dict]:
+    """Retrieve all pipeline schedules for a given project."""
+    return project.pipelineschedules.list()
+
+def disable_schedule(project: Dict, schedule: Dict) -> None:
+    """Disable a pipeline schedule by setting active to False."""
+    schedule.active = False
+    schedule.save()
+    print(f"Disabled schedule ID {schedule.id} for project {project.name}")
+
+def main():
+    try:
+        # Initialize GitLab client
+        gl = get_gitlab_client()
+
+        # Iterate through repositories
+        for repo_name in REPOS:
+            print(f"\nProcessing repository: {repo_name}")
+            try:
+                # Find project
+                project = find_project(gl, repo_name)
+                
+                # Get pipeline schedules
+                schedules = get_pipeline_schedules(project)
+                
+                if not schedules:
+                    print(f"No pipeline schedules found for {repo_name}")
+                    continue
+                
+                # Process each schedule
+                for schedule in schedules:
+                    print(f"\nSchedule ID: {schedule.id}")
+                    print(f"Description: {schedule.description}")
+                    print(f"Cron: {schedule.cron}")
+                    print(f"Active: {schedule.active}")
+                    print(f"Owner: {schedule.owner['name']} ({schedule.owner['username']})")
+                    
+                    # Disable the schedule
+                    disable_schedule(project, schedule)
+                    
+            except ValueError as e:
+                print(f"Error processing {repo_name}: {str(e)}")
+            except Exception as e:
+                print(f"Unexpected error for {repo_name}: {str(e)}")
+                
+    except Exception as e:
+        print(f"Failed to initialize GitLab client: {str(e)}")
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+----------------------------------------------
+---------------------------------------------
+
 import requests
 import urllib.parse
-
 # --- Config ---
 GITLAB_URL = "https://gitlab.com"
 ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
