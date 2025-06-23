@@ -1,4 +1,102 @@
+```python
+import requests
+import os
+from typing import List, Dict
+from urllib.parse import quote
 
+# Configuration
+GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
+GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")  # Store token in environment variable
+REPOS = ["namespace/project1", "namespace/project2"]  # List of repository paths (e.g., group/project)
+
+# API Endpoints
+API_BASE = f"{GITLAB_URL}/api/v4"
+
+def get_headers() -> Dict:
+    """Return headers with authorization token."""
+    if not GITLAB_TOKEN:
+        raise ValueError("GITLAB_TOKEN environment variable not set")
+    return {"Private-Token": GITLAB_TOKEN}
+
+def get_project_id(repo_path: str) -> int:
+    """Get project ID by repository path."""
+    encoded_path = quote(repo_path, safe="")
+    url = f"{API_BASE}/projects/{encoded_path}"
+    response = requests.get(url, headers=get_headers())
+    if response.status_code != 200:
+        raise ValueError(f"Project {repo_path} not found: {response.text}")
+    return response.json()["id"]
+
+def get_pipeline_schedules(project_id: int) -> List[Dict]:
+    """Retrieve all pipeline schedules for a project."""
+    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules"
+    response = requests.get(url, headers=get_headers())
+    if response.status_code != 200:
+        raise ValueError(f"Failed to get schedules for project ID {project_id}: {response.text}")
+    return response.json()
+
+def disable_schedule(project_id: int, schedule_id: int) -> None:
+    """Disable a pipeline schedule by setting active to False."""
+    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules/{schedule_id}"
+    data = {"active": False}
+    response = requests.put(url, headers=get_headers(), json=data)
+    if response.status_code != 200:
+        raise ValueError(f"Failed to disable schedule ID {schedule_id}: {response.text}")
+    print(f"Disabled schedule ID {schedule_id} for project ID {project_id}")
+
+def main():
+    try:
+        # Iterate through repositories
+        for repo_path in REPOS:
+            print(f"\nProcessing repository: {repo_path}")
+            try:
+                # Get project ID
+                project_id = get_project_id(repo_path)
+                
+                # Get pipeline schedules
+                schedules = get_pipeline_schedules(project_id)
+                
+                if not schedules:
+                    print(f"No pipeline schedules found for {repo_path}")
+                    continue
+                
+                # Process each schedule
+                for schedule in schedules:
+                    print(f"\nSchedule ID: {schedule['id']}")
+                    print(f"Description: {schedule['description']}")
+                    print(f"Cron: {schedule['cron']}")
+                    print(f"Active: {schedule['active']}")
+                    print(f"Owner: {schedule['owner']['name']} ({schedule['owner']['username']})")
+                    
+                    # Disable the schedule
+                    disable_schedule(project_id, schedule["id"])
+                    
+            except ValueError as e:
+                print(f"Error processing {repo_path}: {str(e)}")
+            except Exception as e:
+                print(f"Unexpected error for {repo_path}: {str(e)}")
+                
+    except Exception as e:
+        print(f"Failed to process repositories: {str(e)}")
+
+if __name__ == "__main__":
+    main()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------------------
+----------------------------------
 import gitlab
 import os
 from typing import List, Dict
