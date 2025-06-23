@@ -1,1 +1,57 @@
+import requests
+import urllib.parse
+
+# --- Config ---
+GITLAB_URL = "https://gitlab.com"
+ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
+PROJECTS = [
+    "group/project1",
+    "group/project2",
+    "group/projectN"
+]
+
+HEADERS = {
+    "PRIVATE-TOKEN": ACCESS_TOKEN,
+    "Content-Type": "application/json"
+}
+
+def get_pipeline_schedules(project_path):
+    encoded_path = urllib.parse.quote_plus(project_path)
+    url = f"{GITLAB_URL}/api/v4/projects/{encoded_path}/pipeline_schedules"
+    response = requests.get(url, headers=HEADERS)
+    response.raise_for_status()
+    return response.json()
+
+def disable_schedule(project_path, schedule_id):
+    encoded_path = urllib.parse.quote_plus(project_path)
+    url = f"{GITLAB_URL}/api/v4/projects/{encoded_path}/pipeline_schedules/{schedule_id}"
+    response = requests.put(url, json={"active": False}, headers=HEADERS)
+    if response.status_code == 200:
+        print(f"→ Disabled schedule ID {schedule_id}")
+    else:
+        print(f"Failed to disable schedule ID {schedule_id}: {response.status_code} - {response.text}")
+
+# --- Main ---
+for project in PROJECTS:
+    print(f"\n--- Checking project: {project} ---")
+    try:
+        schedules = get_pipeline_schedules(project)
+        if not schedules:
+            print("No schedules found.")
+            continue
+
+        for sched in schedules:
+            sid = sched["id"]
+            cron = sched["cron"]
+            active = sched["active"]
+            owner = sched.get("owner", {}).get("username", "unknown")
+
+            print(f"Schedule ID: {sid}, Cron: {cron}, Owner: {owner}, Active: {active}")
+            if active:
+                disable_schedule(project, sid)
+
+    except requests.exceptions.HTTPError as e:
+        print(f"Error accessing project {project}: {e}")
+    except Exception as e:
+        print(f"Unexpected error in {project}: {e}")
 
