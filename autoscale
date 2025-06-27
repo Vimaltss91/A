@@ -1,3 +1,62 @@
+import argparse
+from jira import JIRA
+import logging
+import sys
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+def connect_jira(jira_server, jira_user, jira_password):
+    """
+    Connect to Jira and return the JIRA client object.
+    Args:
+        jira_server (str): URL of the Jira instance (e.g., https://your-domain.atlassian.net)
+        jira_user (str): Username or email for Jira
+        jira_password (str): Password or API token for Jira
+    Returns:
+        JIRA object or None if connection fails
+    """
+    try:
+        log.info(f"Connecting to Jira: {jira_server}")
+        jira_options = {'server': jira_server}
+        jira = JIRA(options=jira_options, basic_auth=(jira_user, jira_password))
+        return jira
+    except Exception as e:
+        log.error(f"Failed to connect to Jira: {e}")
+        return None
+
+def main():
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Login to Jira and list projects")
+    parser.add_argument('--server', required=True, help="Jira server URL (e.g., https://your-domain.atlassian.net)")
+    parser.add_argument('--username', required=True, help="Jira username or email")
+    parser.add_argument('--password', required=True, help="Jira password or API token")
+    args = parser.parse_args()
+
+    # Connect to Jira
+    jira_client = connect_jira(args.server, args.username, args.password)
+    if not jira_client:
+        sys.exit(1)
+
+    # Test connection by listing projects
+    try:
+        projects = jira_client.projects()
+        log.info("Successfully connected to Jira. Listing projects:")
+        for project in projects:
+            print(f"Project: {project.key} - {project.name}")
+    except Exception as e:
+        log.error(f"Failed to fetch projects: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
 Certainly! Here's a polished and professional version of your summary:
 
 ---
