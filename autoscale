@@ -1,3 +1,10 @@
+Regarding the contract test resource:
+
+Currently, we have only 5 runners available to handle the contract tests. Due to limitations with the current E3 instance type, we’re unable to scale beyond this runner count.
+
+To address this, we plan to switch to the E5 shape, which supports better scalability. However, Docker is not supported on E5 instances, so we will need to migrate our setup to use Podman and Podman Compose instead.
+
+
 import argparse
 from jira import JIRA
 import logging
