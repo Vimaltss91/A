@@ -1,3 +1,5 @@
+curl -X GET http://vega-bastion:500/v2/_catalog
+
 Regarding the contract test resource:
 
 Currently, we have only 5 runners available to handle the contract tests. Due to limitations with the current E3 instance type, we’re unable to scale beyond this runner count.
