@@ -1,3 +1,6 @@
+curl -X GET http://vega-bastion:500/v2/my-image/tags/list
+
+
 curl -X GET http://vega-bastion:500/v2/_catalog
 
 Regarding the contract test resource:
