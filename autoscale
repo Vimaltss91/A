@@ -1,3 +1,55 @@
+def is_cnc_enabled(version: str) -> bool:
+    """
+    Returns True if version >= 25.2.200
+    """
+    try:
+        # Extract numeric part (before any '-')
+        base_version = version.split('-')[0]
+
+        # Handle cases like '25.2.' or '25.2'
+        parts = [p for p in base_version.split('.') if p]
+
+        # Fill missing parts with 0 (e.g., 25.2 -> 25.2.0)
+        while len(parts) < 3:
+            parts.append('0')
+
+        major, minor, patch = map(int, parts[:3])
+
+        threshold = (25, 2, 200)
+        current = (major, minor, patch)
+
+        return current >= threshold
+
+    except Exception as e:
+        print(f"Error parsing version '{version}': {e}")
+        return False
+
+
+# Example usage
+versions = [
+    "25.2.100",   # False
+    "25.2.200",   # True
+    "25.2.201",   # True
+    "25.3.0",     # True
+    "26.0.0",     # True
+    "25.1.250",   # False
+    "25.2.",      # False
+]
+
+for v in versions:
+    CNC_ENABLED = is_cnc_enabled(v)
+    print(f"Version: {v} -> CNC_ENABLED = {CNC_ENABLED}")
+
+
+
+
+
+
+
+
+
+
+
 curl -X GET http://vega-bastion:500/v2/my-image/tags/list
 
 
