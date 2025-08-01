@@ -49,7 +49,7 @@ def get_old_pipelines():
                 if created_at < cutoff_date:
                     pipelines.append({"id": pipeline["id"], "created_at": created_at})
                 else:
-                    # Since pipelines are sorted ascending, we can stop if we hit a newer pipeline
+                    # Since pipelines are sorted ascending, stop if we hit a newer pipeline
                     return pipelines
                     
             page += 1
@@ -60,16 +60,61 @@ def get_old_pipelines():
             
     return pipelines
 
-def delete_pipeline(pipeline_id):
+def delete_jobs_in_pipeline(pipeline_id):
     """
-    Delete a pipeline by its ID.
+    Delete all jobs in a pipeline, ensuring logs and artifacts are removed.
     """
     try:
+        url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/pipelines/{pipeline_id}/jobs"
+        response = requests.get(url, headers=HEADERS)
+        
+        if response.status_code == 429:
+            logger.warning("Rate limit hit while fetching jobs, sleeping for 10 seconds")
+            time.sleep(10)
+            return False
+            
+        response.raise_for_status()
+        jobs = response.json()
+
+        for job in jobs:
+            job_id = job["id"]
+            try:
+                job_delete_url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/jobs/{job_id}"
+                response = requests.delete(job_delete_url, headers=HEADERS)
+                
+                if response.status_code == 429:
+                    logger.warning(f"Rate limit hit while deleting job ID {job_id}, sleeping for 10 seconds")
+                    time.sleep(10)
+                    continue
+                    
+                response.raise_for_status()
+                logger.info(f"Deleted job ID: {job_id} (logs and artifacts removed)")
+            except requests.RequestException as e:
+                logger.error(f"Error deleting job ID {job_id}: {str(e)}")
+                continue
+                
+        return True
+        
+    except requests.RequestException as e:
+        logger.error(f"Error fetching jobs for pipeline ID {pipeline_id}: {str(e)}")
+        return False
+
+def delete_pipeline(pipeline_id):
+    """
+    Delete a pipeline and its jobs by ID.
+    """
+    try:
+        # First, delete all jobs in the pipeline
+        if not delete_jobs_in_pipeline(pipeline_id):
+            logger.warning(f"Skipping pipeline deletion due to job deletion failure for pipeline ID: {pipeline_id}")
+            return False
+            
+        # Then, delete the pipeline itself
         url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/pipelines/{pipeline_id}"
         response = requests.delete(url, headers=HEADERS)
         
         if response.status_code == 429:
-            logger.warning("Rate limit hit, sleeping for 10 seconds")
+            logger.warning("Rate limit hit while deleting pipeline, sleeping for 10 seconds")
             time.sleep(10)
             return False
             
@@ -83,7 +128,7 @@ def delete_pipeline(pipeline_id):
 
 def main():
     """
-    Main function to fetch and delete old pipelines.
+    Main function to fetch and delete old pipelines and their jobs.
     """
     try:
         pipelines = get_old_pipelines()
@@ -94,9 +139,9 @@ def main():
             created_at = pipeline["created_at"]
             logger.info(f"Processing pipeline ID: {pipeline_id}, created: {created_at}")
             if delete_pipeline(pipeline_id):
-                logger.info(f"Deleted pipeline ID: {pipeline_id}")
+                logger.info(f"Completed deletion for pipeline ID: {pipeline_id}")
             else:
-                logger.warning(f"Failed to delete pipeline ID: {pipeline_id}")
+                logger.warning(f"Failed to fully delete pipeline ID: {pipeline_id}")
                 
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
@@ -104,686 +149,3 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-
-
-
-
-
-
-
-
-docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 -d mysql:latest
-
-
-import mysql.connector
-from mysql.connector import Error
-
-try:
-    # Database connection parameters
-    connection = mysql.connector.connect(
-        host="127.0.0.1",  # Use 127.0.0.1 instead of localhost
-        port=3306,
-        user="root",
-        password="your_password",  # Replace with your MySQL password
-        database="your_db"        # Replace with your database name
-    )
-
-    if connection.is_connected():
-        cursor = connection.cursor()
-        cursor.execute("SHOW DATABASES")  # Example query to list databases
-        databases = cursor.fetchall()
-        print("Databases:", databases)
-
-        # Example query to fetch data from a table
-        cursor.execute("SELECT * FROM your_table")  # Replace with your table name
-        rows = cursor.fetchall()
-        for row in rows:
-            print(row)
-
-except Error as e:
-    print("Error while connecting to MySQL:", e)
-
-finally:
-    if 'connection' in locals() and connection.is_connected():
-        cursor.close()
-        connection.close()
-        print("MySQL connection closed.")
-
-
-
-def is_cnc_enabled(version: str) -> bool:
-    """
-    Returns True if version >= 25.2.200
-    """
-    try:
-        # Extract numeric part (before any '-')
-        base_version = version.split('-')[0]
-
-        # Handle cases like '25.2.' or '25.2'
-        parts = [p for p in base_version.split('.') if p]
-
-        # Fill missing parts with 0 (e.g., 25.2 -> 25.2.0)
-        while len(parts) < 3:
-            parts.append('0')
-
-        major, minor, patch = map(int, parts[:3])
-
-        threshold = (25, 2, 200)
-        current = (major, minor, patch)
-
-        return current >= threshold
-
-    except Exception as e:
-        print(f"Error parsing version '{version}': {e}")
-        return False
-
-
-# Example usage
-versions = [
-    "25.2.100",   # False
-    "25.2.200",   # True
-    "25.2.201",   # True
-    "25.3.0",     # True
-    "26.0.0",     # True
-    "25.1.250",   # False
-    "25.2.",      # False
-]
-
-for v in versions:
-    CNC_ENABLED = is_cnc_enabled(v)
-    print(f"Version: {v} -> CNC_ENABLED = {CNC_ENABLED}")
-
-
-
-
-
-
-
-
-
-
-
-curl -X GET http://vega-bastion:500/v2/my-image/tags/list
-
-
-curl -X GET http://vega-bastion:500/v2/_catalog
-
-Regarding the contract test resource:
-
-Currently, we have only 5 runners available to handle the contract tests. Due to limitations with the current E3 instance type, we’re unable to scale beyond this runner count.
-
-To address this, we plan to switch to the E5 shape, which supports better scalability. However, Docker is not supported on E5 instances, so we will need to migrate our setup to use Podman and Podman Compose instead.
-
-
-import argparse
-from jira import JIRA
-import logging
-import sys
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
-
-def connect_jira(jira_server, jira_user, jira_password):
-    """
-    Connect to Jira and return the JIRA client object.
-    Args:
-        jira_server (str): URL of the Jira instance (e.g., https://your-domain.atlassian.net)
-        jira_user (str): Username or email for Jira
-        jira_password (str): Password or API token for Jira
-    Returns:
-        JIRA object or None if connection fails
-    """
-    try:
-        log.info(f"Connecting to Jira: {jira_server}")
-        jira_options = {'server': jira_server}
-        jira = JIRA(options=jira_options, basic_auth=(jira_user, jira_password))
-        return jira
-    except Exception as e:
-        log.error(f"Failed to connect to Jira: {e}")
-        return None
-
-def main():
-    # Set up argument parser
-    parser = argparse.ArgumentParser(description="Login to Jira and list projects")
-    parser.add_argument('--server', required=True, help="Jira server URL (e.g., https://your-domain.atlassian.net)")
-    parser.add_argument('--username', required=True, help="Jira username or email")
-    parser.add_argument('--password', required=True, help="Jira password or API token")
-    args = parser.parse_args()
-
-    # Connect to Jira
-    jira_client = connect_jira(args.server, args.username, args.password)
-    if not jira_client:
-        sys.exit(1)
-
-    # Test connection by listing projects
-    try:
-        projects = jira_client.projects()
-        log.info("Successfully connected to Jira. Listing projects:")
-        for project in projects:
-            print(f"Project: {project.key} - {project.name}")
-    except Exception as e:
-        log.error(f"Failed to fetch projects: {e}")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
-
-
-
-
-
-
-Certainly! Here's a polished and professional version of your summary:
-
----
-
-**Overall Summary:**
-
-I have contributed to several critical functions that had a significant impact on our deliverables, especially during periods of resource constraints. My key contributions include:
-
-* **Automated Namespace Allocation**: Designed and implemented automated namespace allocation for both single and parallel namespaces. This innovation significantly reduced ATS runtime and improved resource utilization.
-
-* **Cloud Lab Migration Support**: Played a major role in researching and supporting the migration to OCI DevOps and evaluating the CE edition of CloudLab, aiding our transition strategy.
-
-* **Source Build and Integration**: Actively contributed to building from source, integrating components, and resolving issues encountered during implementation.
-
-* **Issue Resolution for Pipeline Stability**: Addressed multiple intermittent issues to ensure smooth and uninterrupted pipeline execution across environments.
-
-* **Extended Support and Collaboration**: Provided extended support during weekends and after hours, particularly during main branch blocks, release-related activities, and OCI maintenance windows—ensuring the team remained unblocked and progress continued during regular weekdays.
-
----
-
-Let me know if you'd like a shorter version or if this will be part of a formal document or self-appraisal.
-
-
-I will support the team with extended hours and during weekends as needed. Additionally, I will assist with OCI maintenance on weekends to ensure that dev and DevOps teams are not blocked during weekdays.
-
-As part of the code development, ensure that edge cases are properly handled. Whenever scripts require test cases, include unit tests to validate their functionality.
-
-
-Resolve intermittent environment-related issues, such as stuck runners or unit test cases, which hinder the team's ability to deliver daily tasks, ensuring timely fixes and unblocking progress.
-
-Establish Jira goals based on discussions with the pre-dev or Build from Source team to ensure tasks are completed efficiently.
-
-
-As part of pipeline innovation, we successfully introduced automated namespace assignment in OCI. This has enabled the pre-dev team and DevOps to deploy without resource constraints, addressing a long-standing major concern. Additionally, the assigned namespaces have facilitated parallel deployments, reducing ATS result times by one-third, significantly boosting the development team's productivity.
-
-Furthermore, multiple steps have been implemented to efficiently utilize OCI resources, including taking down namespaces after runs, scaling down operations, and validating known failures. We are also automating manual interventions as much as possible to streamline the process.
-
-
-Consistently communicate with the entire audience via Slack or email to address any blocker issues or release-related activities.
-
-Collaborate with DevOps and development teams to enhance processes, conduct reviews, and provide mutual support.
-Hold discussions with DevOps on future tasks, including OCI and pipeline-related activities across NF.
-
-
-
-
-
-
-
-
-import requests
-import os
-from typing import List, Dict
-from urllib.parse import quote
-
-# Configuration
-GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
-GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")  # Store token in environment variable
-REPOS = ["namespace/project1", "namespace/project2"]  # List of repository paths (e.g., group/project)
-
-# API Endpoints
-API_BASE = f"{GITLAB_URL}/api/v4"
-
-def get_headers() -> Dict:
-    """Return headers with authorization token."""
-    if not GITLAB_TOKEN:
-        raise ValueError("GITLAB_TOKEN environment variable not set")
-    return {"Private-Token": GITLAB_TOKEN}
-
-def get_project_id(repo_path: str) -> int:
-    """Get project ID by repository path."""
-    encoded_path = quote(repo_path, safe="")
-    url = f"{API_BASE}/projects/{encoded_path}"
-    response = requests.get(url, headers=get_headers())
-    if response.status_code != 200:
-        raise ValueError(f"Project {repo_path} not found: {response.text}")
-    return response.json()["id"]
-
-def get_pipeline_schedules(project_id: int) -> List[Dict]:
-    """Retrieve all pipeline schedules for a project, handling pagination."""
-    schedules = []
-    page = 1
-    per_page = 100  # Maximum allowed by GitLab API
-    
-    while True:
-        url = f"{API_BASE}/projects/{project_id}/pipeline_schedules?page={page}&per_page={per_page}"
-        response = requests.get(url, headers=get_headers())
-        if response.status_code != 200:
-            raise ValueError(f"Failed to get schedules for project ID {project_id}: {response.text}")
-        
-        page_schedules = response.json()
-        if not page_schedules:  # No more schedules
-            break
-            
-        schedules.extend(page_schedules)
-        page += 1
-    
-    return schedules
-
-def take_ownership(project_id: int, schedule_id: int) -> None:
-    """Take ownership of a pipeline schedule."""
-    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules/{schedule_id}/take_ownership"
-    response = requests.post(url, headers=get_headers())
-    if response.status_code != 200:
-        raise ValueError(f"Failed to take ownership of schedule ID {schedule_id}: {response.text}")
-    print(f"Took ownership of schedule ID {schedule_id} for project ID {project_id}")
-
-def disable_schedule(project_id: int, schedule_id: int) -> None:
-    """Disable a pipeline schedule by setting active to False."""
-    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules/{schedule_id}"
-    data = {"active": False}
-    response = requests.put(url, headers=get_headers(), json=data)
-    if response.status_code != 200:
-        raise ValueError(f"Failed to disable schedule ID {schedule_id}: {response.text}")
-    print(f"Disabled schedule ID {schedule_id} for project ID {project_id}")
-
-def main():
-    try:
-        # Iterate through repositories
-        for repo_path in REPOS:
-            print(f"\nProcessing repository: {repo_path}")
-            try:
-                # Get project ID
-                project_id = get_project_id(repo_path)
-                
-                # Get all pipeline schedules
-                schedules = get_pipeline_schedules(project_id)
-                
-                if not schedules:
-                    print(f"No pipeline schedules found for {repo_path}")
-                    continue
-                
-                print(f"Found {len(schedules)} schedules for {repo_path}")
-                
-                # Process each schedule
-                for schedule in schedules:
-                    print(f"\nSchedule ID: {schedule['id']}")
-                    print(f"Description: {schedule['description']}")
-                    print(f"Cron: {schedule['cron']}")
-                    print(f"Active: {schedule['active']}")
-                    print(f"Current Owner: {schedule['owner']['name']} ({schedule['owner']['username']})")
-                    
-                    # Take ownership
-                    take_ownership(project_id, schedule["id"])
-                    
-                    # Disable the schedule
-                    disable_schedule(project_id, schedule["id"])
-                    
-            except ValueError as e:
-                print(f"Error processing {repo_path}: {str(e)}")
-            except Exception as e:
-                print(f"Unexpected error for {repo_path}: {str(e)}")
-                
-    except Exception as e:
-        print(f"Failed to process repositories: {str(e)}")
-
-if __name__ == "__main__":
-    main()
-
-
-
-
-------------------------
------------------------
-import requests
-import os
-from typing import List, Dict
-from urllib.parse import quote
-
-# Configuration
-GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
-GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")  # Store token in environment variable
-REPOS = ["namespace/project1", "namespace/project2"]  # List of repository paths (e.g., group/project)
-
-# API Endpoints
-API_BASE = f"{GITLAB_URL}/api/v4"
-
-def get_headers() -> Dict:
-    """Return headers with authorization token."""
-    if not GITLAB_TOKEN:
-        raise ValueError("GITLAB_TOKEN environment variable not set")
-    return {"Private-Token": GITLAB_TOKEN}
-
-def get_project_id(repo_path: str) -> int:
-    """Get project ID by repository path."""
-    encoded_path = quote(repo_path, safe="")
-    url = f"{API_BASE}/projects/{encoded_path}"
-    response = requests.get(url, headers=get_headers())
-    if response.status_code != 200:
-        raise ValueError(f"Project {repo_path} not found: {response.text}")
-    return response.json()["id"]
-
-def get_pipeline_schedules(project_id: int) -> List[Dict]:
-    """Retrieve all pipeline schedules for a project."""
-    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules"
-    response = requests.get(url, headers=get_headers())
-    if response.status_code != 200:
-        raise ValueError(f"Failed to get schedules for project ID {project_id}: {response.text}")
-    return response.json()
-
-def take_ownership(project_id: int, schedule_id: int) -> None:
-    """Take ownership of a pipeline schedule."""
-    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules/{schedule_id}/take_ownership"
-    response = requests.post(url, headers=get_headers())
-    if response.status_code != 200:
-        raise ValueError(f"Failed to take ownership of schedule ID {schedule_id}: {response.text}")
-    print(f"Took ownership of schedule ID {schedule_id} for project ID {project_id}")
-
-def disable_schedule(project_id: int, schedule_id: int) -> None:
-    """Disable a pipeline schedule by setting active to False."""
-    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules/{schedule_id}"
-    data = {"active": False}
-    response = requests.put(url, headers=get_headers(), json=data)
-    if response.status_code != 200:
-        raise ValueError(f"Failed to disable schedule ID {schedule_id}: {response.text}")
-    print(f"Disabled schedule ID {schedule_id} for project ID {project_id}")
-
-def main():
-    try:
-        # Iterate through repositories
-        for repo_path in REPOS:
-            print(f"\nProcessing repository: {repo_path}")
-            try:
-                # Get project ID
-                project_id = get_project_id(repo_path)
-                
-                # Get pipeline schedules
-                schedules = get_pipeline_schedules(project_id)
-                
-                if not schedules:
-                    print(f"No pipeline schedules found for {repo_path}")
-                    continue
-                
-                # Process each schedule
-                for schedule in schedules:
-                    print(f"\nSchedule ID: {schedule['id']}")
-                    print(f"Description: {schedule['description']}")
-                    print(f"Cron: {schedule['cron']}")
-                    print(f"Active: {schedule['active']}")
-                    print(f"Current Owner: {schedule['owner']['name']} ({schedule['owner']['username']})")
-                    
-                    # Take ownership
-                    take_ownership(project_id, schedule["id"])
-                    
-                    # Disable the schedule
-                    disable_schedule(project_id, schedule["id"])
-                    
-            except ValueError as e:
-                print(f"Error processing {repo_path}: {str(e)}")
-            except Exception as e:
-                print(f"Unexpected error for {repo_path}: {str(e)}")
-                
-    except Exception as e:
-        print(f"Failed to process repositories: {str(e)}")
-
-if __name__ == "__main__":
-    main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
---------------------------------------
---------------------------------------
-```python
-import requests
-import os
-from typing import List, Dict
-from urllib.parse import quote
-
-# Configuration
-GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
-GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")  # Store token in environment variable
-REPOS = ["namespace/project1", "namespace/project2"]  # List of repository paths (e.g., group/project)
-
-# API Endpoints
-API_BASE = f"{GITLAB_URL}/api/v4"
-
-def get_headers() -> Dict:
-    """Return headers with authorization token."""
-    if not GITLAB_TOKEN:
-        raise ValueError("GITLAB_TOKEN environment variable not set")
-    return {"Private-Token": GITLAB_TOKEN}
-
-def get_project_id(repo_path: str) -> int:
-    """Get project ID by repository path."""
-    encoded_path = quote(repo_path, safe="")
-    url = f"{API_BASE}/projects/{encoded_path}"
-    response = requests.get(url, headers=get_headers())
-    if response.status_code != 200:
-        raise ValueError(f"Project {repo_path} not found: {response.text}")
-    return response.json()["id"]
-
-def get_pipeline_schedules(project_id: int) -> List[Dict]:
-    """Retrieve all pipeline schedules for a project."""
-    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules"
-    response = requests.get(url, headers=get_headers())
-    if response.status_code != 200:
-        raise ValueError(f"Failed to get schedules for project ID {project_id}: {response.text}")
-    return response.json()
-
-def disable_schedule(project_id: int, schedule_id: int) -> None:
-    """Disable a pipeline schedule by setting active to False."""
-    url = f"{API_BASE}/projects/{project_id}/pipeline_schedules/{schedule_id}"
-    data = {"active": False}
-    response = requests.put(url, headers=get_headers(), json=data)
-    if response.status_code != 200:
-        raise ValueError(f"Failed to disable schedule ID {schedule_id}: {response.text}")
-    print(f"Disabled schedule ID {schedule_id} for project ID {project_id}")
-
-def main():
-    try:
-        # Iterate through repositories
-        for repo_path in REPOS:
-            print(f"\nProcessing repository: {repo_path}")
-            try:
-                # Get project ID
-                project_id = get_project_id(repo_path)
-                
-                # Get pipeline schedules
-                schedules = get_pipeline_schedules(project_id)
-                
-                if not schedules:
-                    print(f"No pipeline schedules found for {repo_path}")
-                    continue
-                
-                # Process each schedule
-                for schedule in schedules:
-                    print(f"\nSchedule ID: {schedule['id']}")
-                    print(f"Description: {schedule['description']}")
-                    print(f"Cron: {schedule['cron']}")
-                    print(f"Active: {schedule['active']}")
-                    print(f"Owner: {schedule['owner']['name']} ({schedule['owner']['username']})")
-                    
-                    # Disable the schedule
-                    disable_schedule(project_id, schedule["id"])
-                    
-            except ValueError as e:
-                print(f"Error processing {repo_path}: {str(e)}")
-            except Exception as e:
-                print(f"Unexpected error for {repo_path}: {str(e)}")
-                
-    except Exception as e:
-        print(f"Failed to process repositories: {str(e)}")
-
-if __name__ == "__main__":
-    main()
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
------------------------------------
-----------------------------------
-import gitlab
-import os
-from typing import List, Dict
-
-# Configuration
-GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
-GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")  # Store token in environment variable
-REPOS = ["project1", "project2"]  # List of repository names (replace with your repos)
-
-def get_gitlab_client() -> gitlab.Gitlab:
-    """Initialize and return a GitLab client."""
-    if not GITLAB_TOKEN:
-        raise ValueError("GITLAB_TOKEN environment variable not set")
-    return gitlab.Gitlab(GITLAB_URL, private_token=GITLAB_TOKEN)
-
-def find_project(client: gitlab.Gitlab, repo_name: str) -> Dict:
-    """Find a project by name and return its details."""
-    projects = client.projects.list(search=repo_name, owned=True, all=True)
-    for project in projects:
-        if project.name.lower() == repo_name.lower():
-            return project
-    raise ValueError(f"Project {repo_name} not found")
-
-def get_pipeline_schedules(project: Dict) -> List[Dict]:
-    """Retrieve all pipeline schedules for a given project."""
-    return project.pipelineschedules.list()
-
-def disable_schedule(project: Dict, schedule: Dict) -> None:
-    """Disable a pipeline schedule by setting active to False."""
-    schedule.active = False
-    schedule.save()
-    print(f"Disabled schedule ID {schedule.id} for project {project.name}")
-
-def main():
-    try:
-        # Initialize GitLab client
-        gl = get_gitlab_client()
-
-        # Iterate through repositories
-        for repo_name in REPOS:
-            print(f"\nProcessing repository: {repo_name}")
-            try:
-                # Find project
-                project = find_project(gl, repo_name)
-                
-                # Get pipeline schedules
-                schedules = get_pipeline_schedules(project)
-                
-                if not schedules:
-                    print(f"No pipeline schedules found for {repo_name}")
-                    continue
-                
-                # Process each schedule
-                for schedule in schedules:
-                    print(f"\nSchedule ID: {schedule.id}")
-                    print(f"Description: {schedule.description}")
-                    print(f"Cron: {schedule.cron}")
-                    print(f"Active: {schedule.active}")
-                    print(f"Owner: {schedule.owner['name']} ({schedule.owner['username']})")
-                    
-                    # Disable the schedule
-                    disable_schedule(project, schedule)
-                    
-            except ValueError as e:
-                print(f"Error processing {repo_name}: {str(e)}")
-            except Exception as e:
-                print(f"Unexpected error for {repo_name}: {str(e)}")
-                
-    except Exception as e:
-        print(f"Failed to initialize GitLab client: {str(e)}")
-
-if __name__ == "__main__":
-    main()
-
-
-
-
-----------------------------------------------
----------------------------------------------
-
-import requests
-import urllib.parse
-# --- Config ---
-GITLAB_URL = "https://gitlab.com"
-ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
-PROJECTS = [
-    "group/project1",
-    "group/project2",
-    "group/projectN"
-]
-
-HEADERS = {
-    "PRIVATE-TOKEN": ACCESS_TOKEN,
-    "Content-Type": "application/json"
-}
-
-def get_pipeline_schedules(project_path):
-    encoded_path = urllib.parse.quote_plus(project_path)
-    url = f"{GITLAB_URL}/api/v4/projects/{encoded_path}/pipeline_schedules"
-    response = requests.get(url, headers=HEADERS)
-    response.raise_for_status()
-    return response.json()
-
-def disable_schedule(project_path, schedule_id):
-    encoded_path = urllib.parse.quote_plus(project_path)
-    url = f"{GITLAB_URL}/api/v4/projects/{encoded_path}/pipeline_schedules/{schedule_id}"
-    response = requests.put(url, json={"active": False}, headers=HEADERS)
-    if response.status_code == 200:
-        print(f"→ Disabled schedule ID {schedule_id}")
-    else:
-        print(f"Failed to disable schedule ID {schedule_id}: {response.status_code} - {response.text}")
-
-# --- Main ---
-for project in PROJECTS:
-    print(f"\n--- Checking project: {project} ---")
-    try:
-        schedules = get_pipeline_schedules(project)
-        if not schedules:
-            print("No schedules found.")
-            continue
-
-        for sched in schedules:
-            sid = sched["id"]
-            cron = sched["cron"]
-            active = sched["active"]
-            owner = sched.get("owner", {}).get("username", "unknown")
-
-            print(f"Schedule ID: {sid}, Cron: {cron}, Owner: {owner}, Active: {active}")
-            if active:
-                disable_schedule(project, sid)
-
-    except requests.exceptions.HTTPError as e:
-        print(f"Error accessing project {project}: {e}")
-    except Exception as e:
-        print(f"Unexpected error in {project}: {e}")
-
