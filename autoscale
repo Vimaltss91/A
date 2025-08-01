@@ -1,4 +1,119 @@
-    docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 -d mysql:latest
+```python
+#!/usr/bin/env python3
+import requests
+from datetime import datetime, timedelta
+import logging
+import time
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Configuration
+GITLAB_URL = "https://gitlab.com"  # Replace with your GitLab instance URL
+ACCESS_TOKEN = "your_access_token"  # Replace with your Personal Access Token
+PROJECT_ID = "your_project_id"  # Replace with your Project ID
+DAYS_OLD = 365  # Delete pipelines older than 1 year
+
+# API headers
+HEADERS = {"Private-Token": ACCESS_TOKEN}
+
+def get_old_pipelines():
+    """
+    Fetch pipelines older than DAYS_OLD for the specified project.
+    Returns a list of pipeline IDs and their creation dates.
+    """
+    pipelines = []
+    page = 1
+    cutoff_date = datetime.now() - timedelta(days=DAYS_OLD)
+    logger.info(f"Fetching pipelines older than {cutoff_date}")
+
+    while True:
+        try:
+            url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/pipelines?page={page}&per_page=100&sort=asc"
+            response = requests.get(url, headers=HEADERS)
+            
+            if response.status_code == 429:
+                logger.warning("Rate limit hit, sleeping for 10 seconds")
+                time.sleep(10)
+                continue
+                
+            response.raise_for_status()
+            data = response.json()
+            
+            if not data:
+                break
+                
+            for pipeline in data:
+                created_at = datetime.strptime(pipeline["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                if created_at < cutoff_date:
+                    pipelines.append({"id": pipeline["id"], "created_at": created_at})
+                else:
+                    # Since pipelines are sorted ascending, we can stop if we hit a newer pipeline
+                    return pipelines
+                    
+            page += 1
+            
+        except requests.RequestException as e:
+            logger.error(f"Error fetching pipelines: {str(e)}")
+            return pipelines
+            
+    return pipelines
+
+def delete_pipeline(pipeline_id):
+    """
+    Delete a pipeline by its ID.
+    """
+    try:
+        url = f"{GITLAB_URL}/api/v4/projects/{PROJECT_ID}/pipelines/{pipeline_id}"
+        response = requests.delete(url, headers=HEADERS)
+        
+        if response.status_code == 429:
+            logger.warning("Rate limit hit, sleeping for 10 seconds")
+            time.sleep(10)
+            return False
+            
+        response.raise_for_status()
+        logger.info(f"Successfully deleted pipeline ID: {pipeline_id}")
+        return True
+        
+    except requests.RequestException as e:
+        logger.error(f"Error deleting pipeline ID {pipeline_id}: {str(e)}")
+        return False
+
+def main():
+    """
+    Main function to fetch and delete old pipelines.
+    """
+    try:
+        pipelines = get_old_pipelines()
+        logger.info(f"Found {len(pipelines)} pipelines older than {DAYS_OLD} days")
+        
+        for pipeline in pipelines:
+            pipeline_id = pipeline["id"]
+            created_at = pipeline["created_at"]
+            logger.info(f"Processing pipeline ID: {pipeline_id}, created: {created_at}")
+            if delete_pipeline(pipeline_id):
+                logger.info(f"Deleted pipeline ID: {pipeline_id}")
+            else:
+                logger.warning(f"Failed to delete pipeline ID: {pipeline_id}")
+                
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+
+if __name__ == "__main__":
+    main()
+```
+
+
+
+
+
+
+
+
+
+docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 -d mysql:latest
 
 
 import mysql.connector
